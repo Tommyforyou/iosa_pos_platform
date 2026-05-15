@@ -1,0 +1,18 @@
+# Laravel
+backend/vendor/
+backend/node_modules/
+backend/.env
+backend/storage/*.key
+
+# Flutter
+pos_app/.dart_tool/
+pos_app/build/
+pos_app/.packages
+pos_app/.flutter-plugins
+pos_app/.flutter-plugins-dependencies
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
