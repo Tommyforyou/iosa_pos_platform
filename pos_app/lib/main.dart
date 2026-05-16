@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'services/api_service.dart';
 import 'screens/table_screen.dart';
 import 'screens/kitchen_screen.dart';
+import 'screens/home_screen.dart';
+
 
 void main() {
   runApp(const IOSAPOSApp());
@@ -19,8 +21,7 @@ class IOSAPOSApp extends StatelessWidget {
         colorSchemeSeed: Colors.blueGrey,
         useMaterial3: true,
       ),
-       home: const TableScreen(),
-       //home: const KitchenScreen(),      
+      home: const HomeScreen(),   
     );
   }
 }

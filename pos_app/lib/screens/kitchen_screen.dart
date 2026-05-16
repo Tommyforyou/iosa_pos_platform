@@ -1,6 +1,32 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
+/*
+|--------------------------------------------------------------------------
+| Kitchen Screen
+|--------------------------------------------------------------------------
+| This screen is the Kitchen Display System (KDS).
+|
+| Purpose:
+| - Show active kitchen orders
+| - Show item preparation statuses
+| - Allow kitchen staff to update order progress
+|
+| Workflow:
+| pending
+|    ↓
+| preparing
+|    ↓
+| ready
+|    ↓
+| served
+|
+| This screen is intended for:
+| - kitchen monitors
+| - tablets
+| - cashier verification
+| - food preparation workflow management
+*/
 class KitchenScreen extends StatefulWidget {
   const KitchenScreen({super.key});
 
@@ -9,17 +35,45 @@ class KitchenScreen extends StatefulWidget {
 }
 
 class _KitchenScreenState extends State<KitchenScreen> {
+  /*
+  |--------------------------------------------------------------------------
+  | API Service
+  |--------------------------------------------------------------------------
+  | Handles communication with Laravel backend.
+  */
   final ApiService apiService = ApiService();
 
+  /*
+  |--------------------------------------------------------------------------
+  | Screen State
+  |--------------------------------------------------------------------------
+  | orders: active kitchen orders from backend
+  | isLoading: controls loading spinner state
+  */
   List<dynamic> orders = [];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Initial Kitchen Load
+    |--------------------------------------------------------------------------
+    | Load active orders immediately when kitchen screen opens.
+    */
     loadOrders();
   }
 
+  /*
+  |--------------------------------------------------------------------------
+  | Load Kitchen Orders
+  |--------------------------------------------------------------------------
+  | Loads active restaurant orders from Laravel.
+  |
+  | These are displayed on the kitchen display screen.
+  */
   Future<void> loadOrders() async {
     try {
       final data = await apiService.getKitchenOrders();
@@ -37,9 +91,28 @@ class _KitchenScreenState extends State<KitchenScreen> {
     }
   }
 
+  /*
+  |--------------------------------------------------------------------------
+  | Table Name Helper
+  |--------------------------------------------------------------------------
+  | Determines how order source is displayed.
+  |
+  | Examples:
+  | - Table 4
+  | - Takeaway
+  | - Delivery
+  */
   String tableName(dynamic order) {
-    if (order['table'] == null) {
+    if (order['order_type'] == 'takeaway') {
       return 'Takeaway';
+    }
+
+    if (order['order_type'] == 'delivery') {
+      return 'Delivery';
+    }
+
+    if (order['table'] == null) {
+      return 'No Table';
     }
 
     return order['table']['table_name'] ?? 'Table';
@@ -48,23 +121,50 @@ class _KitchenScreenState extends State<KitchenScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      /*
+      |--------------------------------------------------------------------------
+      | Background Styling
+      |--------------------------------------------------------------------------
+      */
       backgroundColor: const Color(0xFFF8FAFC),
+
+      /*
+      |--------------------------------------------------------------------------
+      | App Bar
+      |--------------------------------------------------------------------------
+      */
       appBar: AppBar(
         title: const Text('Kitchen Display'),
+
         actions: [
+          /*
+          |--------------------------------------------------------------------------
+          | Manual Refresh Button
+          |--------------------------------------------------------------------------
+          | Reloads latest kitchen orders.
+          */
           IconButton(
             onPressed: () {
               setState(() {
                 isLoading = true;
               });
+
               loadOrders();
             },
             icon: const Icon(Icons.refresh),
           ),
         ],
       ),
+
+      /*
+      |--------------------------------------------------------------------------
+      | Main Kitchen Body
+      |--------------------------------------------------------------------------
+      */
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
           : orders.isEmpty
               ? const Center(
                   child: Text(
@@ -75,6 +175,13 @@ class _KitchenScreenState extends State<KitchenScreen> {
               : GridView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: orders.length,
+
+                  /*
+                  |--------------------------------------------------------------------------
+                  | Kitchen Grid Layout
+                  |--------------------------------------------------------------------------
+                  | Each card represents one restaurant order.
+                  */
                   gridDelegate:
                       const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
@@ -82,17 +189,44 @@ class _KitchenScreenState extends State<KitchenScreen> {
                     mainAxisSpacing: 16,
                     childAspectRatio: 0.85,
                   ),
+
                   itemBuilder: (context, index) {
                     final order = orders[index];
                     final items = order['items'] as List<dynamic>;
 
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Kitchen Status Checks
+                    |--------------------------------------------------------------------------
+                    | Used to dynamically enable/disable action buttons.
+                    */
+                    final allPreparing = items.every(
+                      (item) => item['kitchen_status'] == 'preparing',
+                    );
+
+                    final allReady = items.every(
+                      (item) => item['kitchen_status'] == 'ready',
+                    );
+
+                    final allServed = items.every(
+                      (item) => item['kitchen_status'] == 'served',
+                    );
+
                     return Card(
                       elevation: 5,
+
                       child: Padding(
                         padding: const EdgeInsets.all(14),
+
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+
                           children: [
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Order Header
+                            |--------------------------------------------------------------------------
+                            */
                             Text(
                               tableName(order),
                               style: const TextStyle(
@@ -100,15 +234,24 @@ class _KitchenScreenState extends State<KitchenScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+
                             const SizedBox(height: 4),
+
                             Text(
                               order['order_number'],
                               style: const TextStyle(
                                 color: Colors.grey,
                               ),
                             ),
+
                             const Divider(height: 24),
 
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Kitchen Item List
+                            |--------------------------------------------------------------------------
+                            | Displays all products inside the order.
+                            */
                             Expanded(
                               child: ListView.builder(
                                 itemCount: items.length,
@@ -116,12 +259,18 @@ class _KitchenScreenState extends State<KitchenScreen> {
                                   final item = items[itemIndex];
 
                                   return Padding(
-                                    padding:
-                                        const EdgeInsets.only(bottom: 10),
+                                    padding: const EdgeInsets.only(bottom: 10),
+
                                     child: Row(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
+
                                       children: [
+                                        /*
+                                        |--------------------------------------------------------------------------
+                                        | Quantity Badge
+                                        |--------------------------------------------------------------------------
+                                        */
                                         CircleAvatar(
                                           radius: 14,
                                           child: Text(
@@ -130,12 +279,20 @@ class _KitchenScreenState extends State<KitchenScreen> {
                                                 .replaceAll('.000', ''),
                                           ),
                                         ),
+
                                         const SizedBox(width: 10),
+
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
+
                                             children: [
+                                              /*
+                                              |--------------------------------------------------------------------------
+                                              | Product Name
+                                              |--------------------------------------------------------------------------
+                                              */
                                               Text(
                                                 item['product_name'],
                                                 style: const TextStyle(
@@ -143,6 +300,25 @@ class _KitchenScreenState extends State<KitchenScreen> {
                                                       FontWeight.bold,
                                                 ),
                                               ),
+
+                                              /*
+                                              |--------------------------------------------------------------------------
+                                              | Kitchen Status Display
+                                              |--------------------------------------------------------------------------
+                                              */
+                                              Text(
+                                                'Status: ${item['kitchen_status']}',
+                                                style: const TextStyle(
+                                                  color: Colors.blueGrey,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+
+                                              /*
+                                              |--------------------------------------------------------------------------
+                                              | Optional Kitchen Notes
+                                              |--------------------------------------------------------------------------
+                                              */
                                               if (item['notes'] != null)
                                                 Text(
                                                   item['notes'],
@@ -161,13 +337,112 @@ class _KitchenScreenState extends State<KitchenScreen> {
                             ),
 
                             const SizedBox(height: 8),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: () {},
-                                icon: const Icon(Icons.restaurant),
-                                label: const Text('Mark Preparing'),
-                              ),
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Kitchen Action Buttons
+                            |--------------------------------------------------------------------------
+                            | Controls full kitchen preparation workflow.
+                            */
+                            Column(
+                              children: [
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Set To Preparing
+                                |--------------------------------------------------------------------------
+                                */
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed:
+                                        allPreparing || allReady || allServed
+                                            ? null
+                                            : () async {
+                                                for (final item in items) {
+                                                  await apiService
+                                                      .updateKitchenItemStatus(
+                                                    itemId: item['id'],
+                                                    kitchenStatus:
+                                                        'preparing',
+                                                  );
+                                                }
+
+                                                await loadOrders();
+                                              },
+                                    icon: const Icon(Icons.restaurant),
+                                    label: Text(
+                                      allPreparing || allReady || allServed
+                                          ? 'Preparing Started'
+                                          : 'Set All To Preparing',
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 8),
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Mark Ready
+                                |--------------------------------------------------------------------------
+                                */
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: allReady || allServed
+                                        ? null
+                                        : () async {
+                                            for (final item in items) {
+                                              await apiService
+                                                  .updateKitchenItemStatus(
+                                                itemId: item['id'],
+                                                kitchenStatus: 'ready',
+                                              );
+                                            }
+
+                                            await loadOrders();
+                                          },
+                                    icon:
+                                        const Icon(Icons.check_circle_outline),
+                                    label: Text(
+                                      allReady || allServed
+                                          ? 'Ready'
+                                          : 'Mark Ready',
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 8),
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Mark Served
+                                |--------------------------------------------------------------------------
+                                */
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: allServed
+                                        ? null
+                                        : () async {
+                                            for (final item in items) {
+                                              await apiService
+                                                  .updateKitchenItemStatus(
+                                                itemId: item['id'],
+                                                kitchenStatus: 'served',
+                                              );
+                                            }
+
+                                            await loadOrders();
+                                          },
+                                    icon: const Icon(Icons.done_all),
+                                    label: Text(
+                                      allServed
+                                          ? 'Served'
+                                          : 'Mark Served',
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),

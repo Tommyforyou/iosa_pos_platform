@@ -9,6 +9,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class RestaurantOrder extends Model
 {
     protected $fillable = [
+        
+        /*
+        |--------------------------------------------------------------------------
+        | Core Order Information
+        |--------------------------------------------------------------------------
+        */
         'business_id',
         'restaurant_table_id',
         'user_id',
@@ -16,6 +22,20 @@ class RestaurantOrder extends Model
         'order_type',
         'status',
         'notes',
+
+        /*
+        |--------------------------------------------------------------------------
+        | Payment Fields
+        |--------------------------------------------------------------------------
+        */
+
+        'payment_status',
+        'payment_method',
+        'subtotal',
+        'tax_amount',
+        'discount_amount',
+        'total_amount',
+        'paid_at',        
     ];
 
     public function business(): BelongsTo
