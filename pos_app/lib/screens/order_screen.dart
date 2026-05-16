@@ -24,9 +24,46 @@ class _OrderScreenState extends State<OrderScreen> {
   @override
   void initState() {
     super.initState();
-    loadProducts();
+    loadInitialData();
   }
+  
+  Future<void> loadInitialData() async {
+    try {
+      final productData = await apiService.getProducts();
+      final activeOrderData = await apiService.getActiveOrderByTable(
+        widget.table['id'],
+      );
 
+      final List<Map<String, dynamic>> existingCart = [];
+
+      if (activeOrderData['success'] == true &&
+          activeOrderData['order'] != null &&
+          activeOrderData['order']['items'] != null) {
+        for (final item in activeOrderData['order']['items']) {
+          existingCart.add({
+            'id': item['product_id'],
+            'name': item['product_name'],
+            'price': double.parse(item['unit_price'].toString()),
+            'quantity': int.parse(
+              item['quantity'].toString().split('.').first,
+            ),
+          });
+        }
+      }
+
+      setState(() {
+        products = productData;
+        cart = existingCart;
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+
+      setState(() {
+        isLoading = false;
+      });
+    }
+}
   Future<void> loadProducts() async {
     try {
       final data = await apiService.getProducts();
@@ -228,7 +265,36 @@ class _OrderScreenState extends State<OrderScreen> {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                        onPressed: cart.isEmpty
+                            ? null
+                            : () async {
+                                try {
+                                  final result = await apiService.saveRestaurantOrder(
+                                    restaurantTableId: widget.table['id'],
+                                    items: cart,
+                                    notes: null,
+                                  );
+
+                                  if (!context.mounted) return;
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(result['message'] ?? 'Order sent to kitchen'),
+                                    ),
+                                  );
+
+                                  Navigator.pop(context);
+                                } catch (e) {
+                                  if (!context.mounted) return;
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(e.toString()),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
                           icon: const Icon(Icons.send),
                           label: const Text('Send to Kitchen'),
                         ),
