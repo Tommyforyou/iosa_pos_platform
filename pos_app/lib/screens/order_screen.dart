@@ -65,6 +65,18 @@ class _OrderScreenState extends State<OrderScreen> {
 
   bool isLoading = true;
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | Active Order ID
+  |--------------------------------------------------------------------------
+  | Stores the database order id after draft/order is created.
+  | Needed when converting draft items to kitchen items.
+  */
+
+  int? activeOrderId;
+
+
   @override
   void initState() {
     super.initState();
@@ -123,6 +135,9 @@ class _OrderScreenState extends State<OrderScreen> {
       if (activeOrderData['success'] == true &&
           activeOrderData['order'] != null &&
           activeOrderData['order']['items'] != null) {
+        
+        activeOrderId = activeOrderData['order']['id'];
+
         for (final item in activeOrderData['order']['items']) {
           existingCart.add({
             'id': item['product_id'],
@@ -191,6 +206,7 @@ class _OrderScreenState extends State<OrderScreen> {
         });
       }
     });
+    saveDraft();
   }
 
   /*
@@ -213,26 +229,38 @@ class _OrderScreenState extends State<OrderScreen> {
   |--------------------------------------------------------------------------
   | Send Order To Kitchen
   |--------------------------------------------------------------------------
-  | Sends only newly added items.
+  | Converts saved draft items into pending kitchen items.
   |
-  | Existing items were already saved earlier, so resending full cart would
-  | duplicate order items in the database.
+  | Important:
+  | - items are first saved as draft
+  | - this method changes draft → pending
+  | - kitchen display only sees pending/preparing/ready/served items
   */
+
   Future<void> sendOrderToKitchen() async {
     try {
-      final result = await apiService.saveRestaurantOrder(
-        restaurantTableId: widget.table?['id'],
-        orderType: widget.orderType,
-        items: newItems,
-        notes: null,
-      );
+      /*
+      |--------------------------------------------------------------------------
+      | Ensure Latest Cart Is Saved As Draft
+      |--------------------------------------------------------------------------
+      */
+
+      await saveDraft();
+
+      if (activeOrderId == null) {
+        throw Exception('No active order found to send to kitchen.');
+      }
 
       /*
       |--------------------------------------------------------------------------
-      | Clear New Items After Successful Save
+      | Send Draft Items To Kitchen
       |--------------------------------------------------------------------------
-      | Prevents accidental duplicate send if user remains on the screen.
       */
+
+      final result = await apiService.sendDraftItemsToKitchen(
+        orderId: activeOrderId!,
+      );
+
       newItems.clear();
 
       if (!mounted) return;
@@ -489,7 +517,7 @@ class _OrderScreenState extends State<OrderScreen> {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton.icon(
-                          onPressed: newItems.isEmpty
+                          onPressed: cart.isEmpty
                               ? null
                               : sendOrderToKitchen,
                           icon: const Icon(Icons.send),
@@ -558,9 +586,37 @@ class _OrderScreenState extends State<OrderScreen> {
         }
       }
     });
+    saveDraft();
   }
 
+  /*
+  |--------------------------------------------------------------------------
+  | Save Draft Order
+  |--------------------------------------------------------------------------
+  | Saves the current cart to database as draft.
+  |
+  | This prevents order items from disappearing if the waiter/cashier
+  | leaves the screen before pressing Send to Kitchen.
+  */
 
+  Future<void> saveDraft() async {
+    if (cart.isEmpty) {
+      return;
+    }
+
+    try {
+      final result = await apiService.saveDraftRestaurantOrder(
+        restaurantTableId: widget.table?['id'],
+        orderType: widget.orderType,
+        items: cart,
+        notes: null,
+      );
+
+      activeOrderId = result['order_id'];
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
 
 
 }

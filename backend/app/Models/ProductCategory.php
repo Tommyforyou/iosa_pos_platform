@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductCategory extends Model
 {
@@ -26,4 +28,30 @@ class ProductCategory extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Upload Category Image
+    |--------------------------------------------------------------------------
+    | Uploads and stores category image for POS display.
+    */
+    public function uploadImage(Request $request, ProductCategory $category)
+    {
+        $validated = $request->validate([
+            'image' => ['required', 'image', 'max:2048'],
+        ]);
+
+        $path = $request->file('image')
+            ->store('categories', 'public');
+
+        $category->update([
+            'image_path' => $path,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Category image uploaded successfully',
+            'image_url' => asset('storage/' . $path),
+        ]);
+    }    
 }

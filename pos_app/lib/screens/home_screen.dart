@@ -5,6 +5,7 @@ import 'order_screen.dart';
 import 'billing_screen.dart';
 import 'dashboard_screen.dart';
 import 'daily_sales_report_screen.dart';
+import 'counter_pos_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -171,6 +172,16 @@ class HomeScreen extends StatelessWidget {
               onTap: () => openScreen(
                 context,
                 const DailySalesReportScreen(),
+              ),
+            ),
+
+            _HomeCard(
+              title: 'Counter POS',
+              subtitle: 'Fast order and payment',
+              icon: Icons.fastfood,
+              onTap: () => openScreen(
+                context,
+                const CounterPosScreen(),
               ),
             ),
           ],

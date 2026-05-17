@@ -236,6 +236,59 @@ Route::patch(
 );
 
 
+
+/*
+|--------------------------------------------------------------------------
+| Save Draft Restaurant Order
+|--------------------------------------------------------------------------
+| Saves order items as draft before sending to kitchen.
+*/
+Route::post(
+    'restaurant-orders/draft',
+    [RestaurantOrderController::class, 'saveDraftOrder']
+);
+
+/*
+|--------------------------------------------------------------------------
+| Send Draft Items To Kitchen
+|--------------------------------------------------------------------------
+*/
+
+Route::patch(
+    'restaurant-orders/{orderId}/send-to-kitchen',
+    [RestaurantOrderController::class, 'sendDraftItemsToKitchen']
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| Counter POS Order Payment
+|--------------------------------------------------------------------------
+| Used for KFC-style fast counter ordering.
+*/
+
+Route::post(
+    'counter-orders',
+    [RestaurantOrderController::class, 'counterOrderPayment']
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| Product / Category Image Uploads
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    'products/{product}/image',
+    [ProductController::class, 'uploadImage']
+);
+
+Route::post(
+    'categories/{category}/image',
+    [ProductCategoryController::class, 'uploadImage']
+);
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');

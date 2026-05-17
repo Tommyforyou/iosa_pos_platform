@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
+
+import '../utils/receipt_pdf.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -193,18 +196,30 @@ class ReceiptScreen extends StatelessWidget {
               | Print Button Placeholder
               |--------------------------------------------------------------------------
               */
-              ElevatedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Printer integration will be added next.',
-                      ),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.print),
-                label: const Text('Print Receipt'),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.print),
+
+                  label: const Text('PRINT RECEIPT'),
+
+                  onPressed: () async {
+                    final pdfData = await generateReceiptPdf(
+                      order: order,
+                      paymentMethod: paymentMethod,
+                      subtotal: subtotal,
+                      taxAmount: taxAmount,
+                      discountAmount: discountAmount,
+                      totalAmount: totalAmount,
+                    );
+
+                    await Printing.layoutPdf(
+                      onLayout: (format) async => pdfData,
+                    );
+                  },
+                ),
               ),
 
               const SizedBox(height: 8),

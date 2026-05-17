@@ -222,7 +222,7 @@ class RestaurantOrderController extends Controller
         $validated = $request->validate([
             'kitchen_status' => [
                 'required',
-                'in:pending,preparing,ready,served,cancelled',
+                'in:draft,pending,preparing,ready,served,cancelled',
             ],
         ]);
 
@@ -370,6 +370,14 @@ class RestaurantOrderController extends Controller
                     'status' => 'available',
                 ]);
             }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Deduct Inventory Stock
+            |--------------------------------------------------------------------------
+            */
+
+            $this->deductStockForOrder($order);
 
             DB::commit();
 
@@ -642,4 +650,458 @@ class RestaurantOrderController extends Controller
         ]);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Save Draft Restaurant Order
+    |--------------------------------------------------------------------------
+    | Used while waiter/cashier is still selecting items.
+    |
+    | Purpose:
+    | - prevent cart from disappearing when screen is closed
+    | - save unsent items as draft
+    | - do NOT show draft items in kitchen yet
+    |
+    | Workflow:
+    | draft → pending → preparing → ready → served
+    */
+    public function saveDraftOrder(Request $request)
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Validate Draft Order Request
+        |--------------------------------------------------------------------------
+        */
+        $validated = $request->validate([
+            'restaurant_table_id' => ['nullable', 'exists:restaurant_tables,id'],
+            'order_type' => ['required', 'in:dine_in,takeaway,delivery'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.id' => ['required', 'exists:products,id'],
+            'items.*.name' => ['required', 'string'],
+            'items.*.quantity' => ['required', 'numeric', 'min:1'],
+            'items.*.price' => ['required', 'numeric', 'min:0'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            /*
+            |--------------------------------------------------------------------------
+            | Find Or Create Active Order
+            |--------------------------------------------------------------------------
+            | For dine-in, reuse active table order.
+            | For takeaway/delivery, create a draft order if no order id exists yet.
+            */
+            $order = null;
+
+            if (
+                $validated['order_type'] === 'dine_in' &&
+                !empty($validated['restaurant_table_id'])
+            ) {
+                $order = RestaurantOrder::where(
+                        'restaurant_table_id',
+                        $validated['restaurant_table_id']
+                    )
+                    ->whereIn('status', [
+                        'open',
+                        'sent_to_kitchen',
+                        'preparing',
+                    ])
+                    ->first();
+            }
+
+            if (!$order) {
+                $order = RestaurantOrder::create([
+                    'business_id' => 1,
+                    'restaurant_table_id' => $validated['restaurant_table_id'] ?? null,
+                    'user_id' => null,
+                    'order_number' => 'ORD-' . time(),
+                    'order_type' => $validated['order_type'],
+                    'status' => 'open',
+                    'notes' => $validated['notes'] ?? null,
+                ]);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Remove Existing Draft Items
+            |--------------------------------------------------------------------------
+            | This prevents duplicate draft rows when waiter saves repeatedly.
+            | Already sent kitchen items are kept untouched.
+            */
+            RestaurantOrderItem::where('restaurant_order_id', $order->id)
+                ->where('kitchen_status', 'draft')
+                ->delete();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Save Current Draft Items
+            |--------------------------------------------------------------------------
+            */
+            foreach ($validated['items'] as $item) {
+                RestaurantOrderItem::create([
+                    'restaurant_order_id' => $order->id,
+                    'product_id' => $item['id'],
+                    'product_name' => $item['name'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['price'],
+                    'kitchen_status' => 'draft',
+                ]);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Occupy Table For Dine-In Draft
+            |--------------------------------------------------------------------------
+            | Even draft dine-in orders should reserve/occupy the table.
+            */
+            if (
+                $validated['order_type'] === 'dine_in' &&
+                !empty($validated['restaurant_table_id'])
+            ) {
+                RestaurantTable::where('id', $validated['restaurant_table_id'])
+                    ->update([
+                        'status' => 'occupied',
+                    ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Draft order saved successfully',
+                'order_id' => $order->id,
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Send Draft Items To Kitchen
+    |--------------------------------------------------------------------------
+    | Converts all draft items into pending kitchen items.
+    |
+    | Workflow:
+    | draft → pending → preparing → ready → served
+    */
+    public function sendDraftItemsToKitchen($orderId)
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Find Active Order
+        |--------------------------------------------------------------------------
+        */
+
+        $order = RestaurantOrder::findOrFail($orderId);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Convert Draft Items To Pending
+        |--------------------------------------------------------------------------
+        */
+
+        RestaurantOrderItem::where(
+                'restaurant_order_id',
+                $order->id
+            )
+            ->where('kitchen_status', 'draft')
+            ->update([
+                'kitchen_status' => 'pending',
+            ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update Order Status
+        |--------------------------------------------------------------------------
+        */
+
+        $order->update([
+            'status' => 'sent_to_kitchen',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Items sent to kitchen successfully',
+        ]);
+    }
+    /*
+    |--------------------------------------------------------------------------
+    | Counter Order With Immediate Payment
+    |--------------------------------------------------------------------------
+    | Used for fast-food / KFC-style counter workflow.
+    |
+    | This endpoint does everything in one transaction:
+    | - creates takeaway order
+    | - saves order items
+    | - sends items directly to kitchen as pending
+    | - records payment
+    | - marks order as paid
+    | - returns full order data for receipt preview
+    |
+    | Workflow:
+    | Counter Cart → Pay Immediately → Kitchen Receives Order → Receipt
+    */
+    public function counterOrderPayment(Request $request)
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Validate Counter Order Request
+        |--------------------------------------------------------------------------
+        */
+        $validated = $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.id' => ['required', 'exists:products,id'],
+            'items.*.name' => ['required', 'string'],
+            'items.*.quantity' => ['required', 'numeric', 'min:1'],
+            'items.*.price' => ['required', 'numeric', 'min:0'],
+
+            'payment_method' => [
+                'required',
+                'in:cash,card,juice,cheque,complimentary,mixed',
+            ],
+
+            'subtotal' => ['required', 'numeric'],
+            'tax_amount' => ['required', 'numeric'],
+            'discount_amount' => ['required', 'numeric'],
+            'discount_percentage' => ['required', 'numeric'],
+            'total_amount' => ['required', 'numeric'],
+
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            /*
+            |--------------------------------------------------------------------------
+            | Create Counter / Takeaway Order
+            |--------------------------------------------------------------------------
+            | Counter POS orders do not use table numbers.
+            */
+            $order = RestaurantOrder::create([
+                'business_id' => 1,
+                'restaurant_table_id' => null,
+                'user_id' => null,
+                'order_number' => 'ORD-' . time(),
+                'order_type' => 'takeaway',
+                'status' => 'sent_to_kitchen',
+                'notes' => $validated['notes'] ?? null,
+
+                /*
+                |--------------------------------------------------------------------------
+                | Payment Fields
+                |--------------------------------------------------------------------------
+                */
+                'payment_status' => 'paid',
+                'payment_method' => $validated['payment_method'],
+                'subtotal' => $validated['subtotal'],
+                'tax_amount' => $validated['tax_amount'],
+                'discount_amount' => $validated['discount_amount'],
+                'discount_percentage' => $validated['discount_percentage'],
+                'total_amount' => $validated['total_amount'],
+                'paid_at' => now(),
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Save Kitchen Items
+            |--------------------------------------------------------------------------
+            | Counter orders go directly to kitchen as pending.
+            */
+            foreach ($validated['items'] as $item) {
+                RestaurantOrderItem::create([
+                    'restaurant_order_id' => $order->id,
+                    'product_id' => $item['id'],
+                    'product_name' => $item['name'],
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['price'],
+                    'kitchen_status' => 'pending',
+                ]);
+            }
+            /*
+            |--------------------------------------------------------------------------
+            | Deduct Inventory Stock
+            |--------------------------------------------------------------------------
+            */
+
+            $this->deductStockForOrder($order);
+            DB::commit();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Return Full Order For Receipt
+            |--------------------------------------------------------------------------
+            */
+            $order->load(['table', 'items']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Counter order paid and sent to kitchen',
+                'order' => $order,
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+   /*
+|--------------------------------------------------------------------------
+| Deduct Stock For Paid Order
+|--------------------------------------------------------------------------
+| Inventory deduction logic:
+|
+| If product has recipe/BOM:
+|     deduct ingredient stock
+|
+| Else:
+|     deduct finished product stock
+|
+| This supports:
+| - restaurants
+| - fast food
+| - hybrid inventory models
+*/
+private function deductStockForOrder(RestaurantOrder $order): void
+{
+    $order->load('items');
+
+    foreach ($order->items as $item) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Skip Voided Items
+        |--------------------------------------------------------------------------
+        */
+
+        if ($item->is_voided) {
+            continue;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Find Product
+        |--------------------------------------------------------------------------
+        */
+
+        $product = \App\Models\Product::with('recipes.ingredient')
+            ->find($item->product_id);
+
+        if (!$product) {
+            continue;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Recipe / BOM Inventory Deduction
+        |--------------------------------------------------------------------------
+        */
+
+        if ($product->recipes->count() > 0) {
+
+            foreach ($product->recipes as $recipe) {
+
+                $ingredient = $recipe->ingredient;
+
+                if (!$ingredient) {
+                    continue;
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Calculate Ingredient Consumption
+                |--------------------------------------------------------------------------
+                */
+
+                $quantityToDeduct =
+                    $recipe->quantity_required * $item->quantity;
+
+                $beforeQuantity =
+                    $ingredient->stock_quantity;
+
+                $afterQuantity =
+                    $beforeQuantity - $quantityToDeduct;
+
+                /*
+                |--------------------------------------------------------------------------
+                | Update Ingredient Stock
+                |--------------------------------------------------------------------------
+                */
+
+                $ingredient->update([
+                    'stock_quantity' => $afterQuantity,
+                ]);
+
+                /*
+                |--------------------------------------------------------------------------
+                | Ingredient Stock Movement
+                |--------------------------------------------------------------------------
+                */
+
+                \App\Models\StockMovement::create([
+                    'product_id' => $product->id,
+                    'user_id' => null,
+                    'movement_type' => 'ingredient_consumption',
+                    'quantity' => $quantityToDeduct,
+                    'before_quantity' => $beforeQuantity,
+                    'after_quantity' => $afterQuantity,
+                    'remarks' =>
+                        'Ingredient deduction for product ' .
+                        $product->name .
+                        ' from order ' .
+                        $order->order_number,
+                ]);
+            }
+
+        } else {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Fallback Finished Product Deduction
+            |--------------------------------------------------------------------------
+            | Used when no BOM/recipe exists.
+            */
+
+            $beforeQuantity = $product->stock_quantity;
+
+            $afterQuantity =
+                $beforeQuantity - $item->quantity;
+
+            $product->update([
+                'stock_quantity' => $afterQuantity,
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Finished Product Stock Movement
+            |--------------------------------------------------------------------------
+            */
+
+            \App\Models\StockMovement::create([
+                'product_id' => $product->id,
+                'user_id' => null,
+                'movement_type' => 'sale',
+                'quantity' => $item->quantity,
+                'before_quantity' => $beforeQuantity,
+                'after_quantity' => $afterQuantity,
+                'remarks' =>
+                    'Stock deducted from restaurant order ' .
+                    $order->order_number,
+            ]);
+        }
+    }
+}    
 }

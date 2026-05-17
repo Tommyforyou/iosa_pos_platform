@@ -279,4 +279,137 @@ class ApiService {
 
     throw Exception('Failed to load daily sales report');
   }
+  /*
+  |--------------------------------------------------------------------------
+  | Save Draft Restaurant Order
+  |--------------------------------------------------------------------------
+  | Saves current cart as draft so items do not disappear if user leaves
+  | before sending to kitchen.
+  */
+  Future<Map<String, dynamic>> saveDraftRestaurantOrder({
+    int? restaurantTableId,
+    required String orderType,
+    required List<Map<String, dynamic>> items,
+    String? notes,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/restaurant-orders/draft'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'restaurant_table_id': restaurantTableId,
+        'order_type': orderType,
+        'items': items,
+        'notes': notes,
+      }),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to save draft order: ${response.body}');
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Send Draft Items To Kitchen
+  |--------------------------------------------------------------------------
+  | Converts saved draft items into pending kitchen items.
+  */
+  Future<Map<String, dynamic>> sendDraftItemsToKitchen({
+    required int orderId,
+  }) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/restaurant-orders/$orderId/send-to-kitchen'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to send draft items to kitchen: ${response.body}');
+  }
+  /*
+  |--------------------------------------------------------------------------
+  | Process Counter Order Payment
+  |--------------------------------------------------------------------------
+  | Used by Counter POS / KFC-style workflow.
+  |
+  | Backend will:
+  | - create takeaway order
+  | - save items
+  | - mark order as paid
+  | - send items to kitchen
+  | - return order for receipt
+  */
+  Future<Map<String, dynamic>> processCounterOrderPayment({
+    required List<Map<String, dynamic>> items,
+    required String paymentMethod,
+    required double subtotal,
+    required double taxAmount,
+    required double discountAmount,
+    required double discountPercentage,
+    required double totalAmount,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/counter-orders'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'items': items,
+        'payment_method': paymentMethod,
+        'subtotal': subtotal,
+        'tax_amount': taxAmount,
+        'discount_amount': discountAmount,
+        'discount_percentage': discountPercentage,
+        'total_amount': totalAmount,
+      }),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to process counter order: ${response.body}');
+  }
+  /*
+  |--------------------------------------------------------------------------
+  | Void Restaurant Order Item
+  |--------------------------------------------------------------------------
+  | Used by cashier/manager to void a disputed item before payment.
+  |
+  | This does not delete the item from database.
+  | It marks the item as voided for audit purposes.
+  */
+  Future<Map<String, dynamic>> voidRestaurantOrderItem({
+    required int itemId,
+    required String voidReason,
+  }) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/restaurant-order-items/$itemId/void'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'void_reason': voidReason,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to void item: ${response.body}');
+  }
+
 }

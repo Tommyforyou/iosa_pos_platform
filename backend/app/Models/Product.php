@@ -24,6 +24,7 @@ class Product extends Model
         'unit',
         'is_active',
         'description',
+        'image_path',
     ];
 
     protected $casts = [
@@ -60,4 +61,17 @@ class Product extends Model
     {
         return $this->hasMany(RestaurantOrderItem::class);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Product Recipes
+    |--------------------------------------------------------------------------
+    | Defines which raw ingredients are consumed when this product is sold.
+    */
+
+    public function recipes()
+    {
+        return $this->hasMany(ProductRecipe::class);
+    }
+
 }
