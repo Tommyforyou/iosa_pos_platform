@@ -17,6 +17,12 @@ class ProductCategory extends Model
         'description',
         'is_active',
         'sort_order',
+        'image_path',
+    ];
+
+
+    protected $appends = [
+        'image_url',
     ];
 
     public function business(): BelongsTo
@@ -53,5 +59,22 @@ class ProductCategory extends Model
             'message' => 'Category image uploaded successfully',
             'image_url' => asset('storage/' . $path),
         ]);
-    }    
+    } 
+  
+    /*
+    |--------------------------------------------------------------------------
+    | Category Image URL
+    |--------------------------------------------------------------------------
+    */
+
+    public function getImageUrlAttribute()
+    {
+        if (!$this->image_path) {
+            return null;
+        }
+
+        return asset('storage/' . $this->image_path);
+    }   
+   
+
 }

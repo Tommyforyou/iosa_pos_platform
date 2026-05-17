@@ -6,6 +6,8 @@ import 'billing_screen.dart';
 import 'dashboard_screen.dart';
 import 'daily_sales_report_screen.dart';
 import 'counter_pos_screen.dart';
+import 'category_management_screen.dart';
+import 'product_management_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -174,7 +176,12 @@ class HomeScreen extends StatelessWidget {
                 const DailySalesReportScreen(),
               ),
             ),
-
+            /*
+            |--------------------------------------------------------------------------
+            | Counter Pos
+            |--------------------------------------------------------------------------
+            | Sales Express
+            */
             _HomeCard(
               title: 'Counter POS',
               subtitle: 'Fast order and payment',
@@ -184,6 +191,37 @@ class HomeScreen extends StatelessWidget {
                 const CounterPosScreen(),
               ),
             ),
+            /*
+            |--------------------------------------------------------------------------
+            | Manage Categories
+            |--------------------------------------------------------------------------
+            | edit/delete/update/deactivate categories
+            */
+            _HomeCard(
+              title: 'Categories',
+              subtitle: 'Manage product categories',
+              icon: Icons.category,
+              onTap: () => openScreen(
+                context,
+                const CategoryManagementScreen(),
+              ),
+            ),
+            /*
+            |--------------------------------------------------------------------------
+            | CRUD Products
+            |--------------------------------------------------------------------------
+            | Manage Product and Prices
+            */            
+            _HomeCard(
+              title: 'Products',
+              subtitle: 'Manage products and prices',
+              icon: Icons.inventory_2,
+              onTap: () => openScreen(
+                context,
+                const ProductManagementScreen(),
+              ),
+            ),
+
           ],
         ),
       ),

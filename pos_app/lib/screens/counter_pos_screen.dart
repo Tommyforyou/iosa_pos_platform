@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
-
 import '../utils/money.dart';
 import '../utils/discount.dart';
 
@@ -15,11 +14,13 @@ import 'receipt_screen.dart';
 |
 | Workflow:
 | Select Items
-| → Immediate Payment
-| → Kitchen Receives Order
-| → Receipt Preview
+| → Apply Discount
+| → Select Payment Method
+| → Pay Immediately
+| → Send To Kitchen
+| → Show Receipt
 |
-| No table numbers required.
+| This screen does not use table numbers.
 */
 
 class CounterPosScreen extends StatefulWidget {
@@ -30,8 +31,7 @@ class CounterPosScreen extends StatefulWidget {
       _CounterPosScreenState();
 }
 
-class _CounterPosScreenState
-    extends State<CounterPosScreen> {
+class _CounterPosScreenState extends State<CounterPosScreen> {
   /*
   |--------------------------------------------------------------------------
   | API Service
@@ -46,8 +46,8 @@ class _CounterPosScreenState
   |--------------------------------------------------------------------------
   */
 
-  List categories = [];
-  List products = [];
+  List<dynamic> categories = [];
+  List<dynamic> products = [];
 
   /*
   |--------------------------------------------------------------------------
@@ -72,7 +72,6 @@ class _CounterPosScreenState
   */
 
   String paymentMethod = 'cash';
-
   double discountPercentage = 0;
 
   /*
@@ -85,7 +84,7 @@ class _CounterPosScreenState
 
   /*
   |--------------------------------------------------------------------------
-  | Available Discounts
+  | Discount Options
   |--------------------------------------------------------------------------
   */
 
@@ -116,6 +115,12 @@ class _CounterPosScreenState
   void initState() {
     super.initState();
 
+    /*
+    |--------------------------------------------------------------------------
+    | Initial Data Load
+    |--------------------------------------------------------------------------
+    */
+
     loadData();
   }
 
@@ -123,20 +128,17 @@ class _CounterPosScreenState
   |--------------------------------------------------------------------------
   | Load Categories And Products
   |--------------------------------------------------------------------------
+  | Loads POS categories and products from Laravel API.
   */
 
   Future<void> loadData() async {
     try {
-      final loadedCategories =
-          await apiService.getCategories();
-
-      final loadedProducts =
-          await apiService.getProducts();
+      final loadedCategories = await apiService.getActiveCategories();
+      final loadedProducts = await apiService.getProducts();
 
       setState(() {
         categories = loadedCategories;
         products = loadedProducts;
-
         isLoading = false;
       });
     } catch (e) {
@@ -150,18 +152,32 @@ class _CounterPosScreenState
 
   /*
   |--------------------------------------------------------------------------
-  | Filtered Products
+  | Product Price Helper
   |--------------------------------------------------------------------------
+  | Products from Laravel usually use selling_price.
+  | This fallback protects the screen if price is used later.
   */
 
-  List get filteredProducts {
+  double productPrice(dynamic product) {
+    return toMoneyDouble(
+      product['selling_price'] ?? product['price'],
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Filtered Products
+  |--------------------------------------------------------------------------
+  | If no category is selected, show all products.
+  */
+
+  List<dynamic> get filteredProducts {
     if (selectedCategoryId == null) {
       return products;
     }
 
     return products.where((product) {
-      return product['product_category_id'] ==
-          selectedCategoryId;
+      return product['product_category_id'] == selectedCategoryId;
     }).toList();
   }
 
@@ -169,6 +185,7 @@ class _CounterPosScreenState
   |--------------------------------------------------------------------------
   | Add Product To Cart
   |--------------------------------------------------------------------------
+  | Adds one quantity of selected product.
   */
 
   void addToCart(dynamic product) {
@@ -183,7 +200,7 @@ class _CounterPosScreenState
         cart.add({
           'id': product['id'],
           'name': product['name'],
-          'price': toMoneyDouble(product['selling_price'] ?? product['price'],),
+          'price': productPrice(product),
           'quantity': 1,
         });
       }
@@ -194,6 +211,7 @@ class _CounterPosScreenState
   |--------------------------------------------------------------------------
   | Remove Product From Cart
   |--------------------------------------------------------------------------
+  | Reduces quantity by one. If quantity becomes zero, removes item.
   */
 
   void removeFromCart(int productId) {
@@ -222,8 +240,8 @@ class _CounterPosScreenState
     double total = 0;
 
     for (final item in cart) {
-      total +=
-          item['quantity'] * toMoneyDouble(item['price']);
+      total += toMoneyDouble(item['quantity']) *
+          toMoneyDouble(item['price']);
     }
 
     return total;
@@ -233,6 +251,14 @@ class _CounterPosScreenState
   |--------------------------------------------------------------------------
   | Process Counter Payment
   |--------------------------------------------------------------------------
+  | Sends counter order to Laravel.
+  |
+  | Backend will:
+  | - create takeaway order
+  | - save order items
+  | - mark order as paid
+  | - send items to kitchen
+  | - return order for receipt
   */
 
   Future<void> processCounterPayment({
@@ -242,8 +268,7 @@ class _CounterPosScreenState
     required double finalTotal,
   }) async {
     try {
-      final result =
-          await apiService.processCounterOrderPayment(
+      final result = await apiService.processCounterOrderPayment(
         items: cart,
         paymentMethod: paymentMethod,
         subtotal: subtotalAmount,
@@ -271,8 +296,8 @@ class _CounterPosScreenState
         ),
       );
     } catch (e) {
-     
       debugPrint(e.toString());
+
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -286,26 +311,43 @@ class _CounterPosScreenState
 
   @override
   Widget build(BuildContext context) {
+    /*
+    |--------------------------------------------------------------------------
+    | Financial Calculations
+    |--------------------------------------------------------------------------
+    */
+
     final subtotalAmount = subtotal();
 
-    final discountAmount =
-        calculateDiscountAmount(
+    final discountAmount = calculateDiscountAmount(
       subtotal: subtotalAmount,
       discountPercentage: discountPercentage,
     );
 
-    final finalTotal =
-        calculateFinalTotal(
+    final finalTotal = calculateFinalTotal(
       subtotal: subtotalAmount,
       discountPercentage: discountPercentage,
     );
 
-    final vatIncluded =
-        calculateVatIncluded(finalTotal);
+    final vatIncluded = calculateVatIncluded(finalTotal);
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+
       appBar: AppBar(
         title: const Text('Counter POS'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              setState(() {
+                isLoading = true;
+              });
+
+              loadData();
+            },
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
       ),
 
       body: isLoading
@@ -316,67 +358,171 @@ class _CounterPosScreenState
               children: [
                 /*
                 |--------------------------------------------------------------------------
-                | LEFT SIDE
-                | Categories + Product Grid
+                | LEFT SIDE: CATEGORIES + PRODUCT GRID
                 |--------------------------------------------------------------------------
                 */
 
                 Expanded(
                   flex: 2,
-
                   child: Column(
                     children: [
                       /*
                       |--------------------------------------------------------------------------
-                      | Categories
+                      | Visual Category Bar
                       |--------------------------------------------------------------------------
                       */
 
                       SizedBox(
-                        height: 70,
-
+                        height: 120,
                         child: ListView(
                           scrollDirection: Axis.horizontal,
-
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 8,
+                          ),
                           children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.all(8),
+                            /*
+                            |--------------------------------------------------------------------------
+                            | All Categories Card
+                            |--------------------------------------------------------------------------
+                            */
 
-                              child: ChoiceChip(
-                                label:
-                                    const Text('All'),
-                                selected:
-                                    selectedCategoryId ==
-                                        null,
-                                onSelected: (_) {
-                                  setState(() {
-                                    selectedCategoryId =
-                                        null;
-                                  });
-                                },
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  selectedCategoryId = null;
+                                });
+                              },
+                              child: Container(
+                                width: 115,
+                                margin: const EdgeInsets.only(right: 10),
+                                decoration: BoxDecoration(
+                                  color: selectedCategoryId == null
+                                      ? Colors.orange.shade100
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: selectedCategoryId == null
+                                        ? Colors.orange
+                                        : Colors.grey.shade300,
+                                    width: 1.5,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.15),
+                                      blurRadius: 5,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.restaurant_menu,
+                                      size: 42,
+                                      color: Colors.orange,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'All',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
 
-                            ...categories.map((category) {
-                              return Padding(
-                                padding:
-                                    const EdgeInsets.all(
-                                        8),
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Category Image Cards
+                            |--------------------------------------------------------------------------
+                            */
 
-                                child: ChoiceChip(
-                                  label: Text(
-                                    category['name'],
+                            ...categories.map((category) {
+                              final selected =
+                                  selectedCategoryId == category['id'];
+
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    selectedCategoryId = category['id'];
+                                  });
+                                },
+                                child: Container(
+                                  width: 125,
+                                  margin: const EdgeInsets.only(right: 10),
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: selected
+                                        ? Colors.orange.shade100
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: selected
+                                          ? Colors.orange
+                                          : Colors.grey.shade300,
+                                      width: 1.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.15),
+                                        blurRadius: 5,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                  selected:
-                                      selectedCategoryId ==
-                                          category['id'],
-                                  onSelected: (_) {
-                                    setState(() {
-                                      selectedCategoryId =
-                                          category['id'];
-                                    });
-                                  },
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      /*
+                                      |--------------------------------------------------------------------------
+                                      | Category Image
+                                      |--------------------------------------------------------------------------
+                                      */
+
+                                      if (category['image_url'] != null && category['image_url'].toString().isNotEmpty)
+                                       
+                                        ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          child: Image.network(
+                                                  category['image_url'],
+                                                  height: 55,
+                                                  width: 80,
+                                                  fit: BoxFit.contain,
+                                                  errorBuilder: (context, error, stackTrace) {
+                                                    return const Icon(
+                                                      Icons.broken_image,
+                                                      size: 42,
+                                                      color: Colors.red,
+                                                    );
+                                                  },
+                                                )
+                                         )
+                                      else
+                                        const Icon(
+                                          Icons.fastfood,
+                                          size: 42,
+                                          color: Colors.orange,
+                                        ),
+
+                                      const SizedBox(height: 8),
+
+                                      Text(
+                                        category['name'],
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               );
                             }),
@@ -392,69 +538,76 @@ class _CounterPosScreenState
 
                       Expanded(
                         child: GridView.builder(
-                          padding:
-                              const EdgeInsets.all(16),
-
+                          padding: const EdgeInsets.all(16),
+                          itemCount: filteredProducts.length,
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 4,
-                            childAspectRatio: 1.1,
+                            childAspectRatio: 0.95,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
                           ),
-
-                          itemCount:
-                              filteredProducts.length,
-
                           itemBuilder: (context, index) {
-                            final product =
-                                filteredProducts[index];
+                            final product = filteredProducts[index];
 
                             return InkWell(
                               onTap: () {
                                 addToCart(product);
                               },
-
                               child: Card(
                                 elevation: 4,
-
                                 child: Padding(
-                                  padding:
-                                      const EdgeInsets.all(
-                                          12),
-
+                                  padding: const EdgeInsets.all(12),
                                   child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment
-                                            .center,
-
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
+                                      /*
+                                      |--------------------------------------------------------------------------
+                                      | Product Image
+                                      |--------------------------------------------------------------------------
+                                      */
+
+                                      if (product['image_url'] != null)
+                                        SizedBox(
+                                          height: 90,
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            child: Image.network(
+                                              product['image_url'],
+                                              width: double.infinity,
+                                              fit: BoxFit.contain,
+                                            ),
+                                          ),
+                                        )
+                                      else
+                                        const Icon(
+                                          Icons.fastfood,
+                                          size: 48,
+                                          color: Colors.blueGrey,
+                                        ),
+
+                                      const SizedBox(height: 10),
+
                                       Text(
                                         product['name'],
-                                        textAlign:
-                                            TextAlign.center,
-                                        style:
-                                            const TextStyle(
-                                          fontWeight:
-                                              FontWeight
-                                                  .bold,
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
 
-                                      const SizedBox(
-                                          height: 10),
+                                      const SizedBox(height: 8),
 
                                       Text(
                                         formatMoney(
-                                        product['selling_price'] ?? product['price'],
+                                          productPrice(product),
                                         ),
-                                        style:
-                                            const TextStyle(
-                                          color:
-                                              Colors.green,
-                                          fontWeight:
-                                              FontWeight
-                                                  .bold,
+                                        style: const TextStyle(
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                     ],
@@ -471,30 +624,29 @@ class _CounterPosScreenState
 
                 /*
                 |--------------------------------------------------------------------------
-                | RIGHT SIDE
-                | Cart + Payment
+                | RIGHT SIDE: CART + DISCOUNT + PAYMENT
                 |--------------------------------------------------------------------------
                 */
 
                 Container(
-                  width: 420,
+                  width: 430,
                   color: Colors.white,
-
                   child: Padding(
-                    padding:
-                        const EdgeInsets.all(20),
-
+                    padding: const EdgeInsets.all(20),
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
-
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        /*
+                        |--------------------------------------------------------------------------
+                        | Cart Header
+                        |--------------------------------------------------------------------------
+                        */
+
                         const Text(
                           'Cart',
                           style: TextStyle(
                             fontSize: 24,
-                            fontWeight:
-                                FontWeight.bold,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
 
@@ -507,168 +659,164 @@ class _CounterPosScreenState
                         */
 
                         Expanded(
-                          child: ListView.builder(
-                            itemCount: cart.length,
-
-                            itemBuilder:
-                                (context, index) {
-                              final item =
-                                  cart[index];
-
-                              final lineTotal =
-                                  item['quantity'] *
-                                      item['price'];
-
-                              return Card(
-                                child: ListTile(
-                                  title: Text(
-                                      item['name']),
-
-                                  subtitle: Text(
-                                    '${item['quantity']} × ${formatMoney(item['price'])}',
+                          child: cart.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    'No items selected',
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                    ),
                                   ),
+                                )
+                              : ListView.builder(
+                                  itemCount: cart.length,
+                                  itemBuilder: (context, index) {
+                                    final item = cart[index];
 
-                                  trailing: Row(
-                                    mainAxisSize:
-                                        MainAxisSize.min,
+                                    final lineTotal =
+                                        toMoneyDouble(item['quantity']) *
+                                            toMoneyDouble(item['price']);
 
-                                    children: [
-                                      Text(
-                                        formatMoney(
-                                            lineTotal),
-                                      ),
-
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons
-                                              .remove_circle,
-                                          color:
-                                              Colors.red,
+                                    return Card(
+                                      child: ListTile(
+                                        title: Text(
+                                          item['name'],
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                        onPressed: () {
-                                          removeFromCart(
-                                            item['id'],
-                                          );
-                                        },
+                                        subtitle: Text(
+                                          '${item['quantity']} × ${formatMoney(item['price'])}',
+                                        ),
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              formatMoney(lineTotal),
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.remove_circle,
+                                                color: Colors.red,
+                                              ),
+                                              onPressed: () {
+                                                removeFromCart(item['id']);
+                                              },
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ],
-                                  ),
+                                    );
+                                  },
                                 ),
-                              );
-                            },
-                          ),
                         ),
 
                         /*
                         |--------------------------------------------------------------------------
-                        | Discount Buttons
+                        | Discount Selector
                         |--------------------------------------------------------------------------
                         */
+
+                        const Text(
+                          'Discount',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
 
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
+                          children: discountOptions.map((discount) {
+                            return ChoiceChip(
+                              label: Text(
+                                '${discount.toStringAsFixed(0)}%',
+                              ),
+                              selected: discountPercentage == discount,
+                              onSelected: (_) {
+                                setState(() {
+                                  discountPercentage = discount;
 
-                          children:
-                              discountOptions.map(
-                            (discount) {
-                              return ChoiceChip(
-                                label: Text(
-                                  '${discount.toStringAsFixed(0)}%',
-                                ),
-                                selected:
-                                    discountPercentage ==
-                                        discount,
-                                onSelected: (_) {
-                                  setState(() {
-                                    discountPercentage =
-                                        discount;
-
-                                    if (discount ==
-                                        100) {
-                                      paymentMethod =
-                                          'complimentary';
-                                    }
-                                  });
-                                },
-                              );
-                            },
-                          ).toList(),
+                                  if (discount == 100) {
+                                    paymentMethod = 'complimentary';
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
                         ),
 
                         const SizedBox(height: 16),
 
                         /*
                         |--------------------------------------------------------------------------
-                        | Payment Methods
+                        | Payment Method Selector
                         |--------------------------------------------------------------------------
                         */
+
+                        const Text(
+                          'Payment Method',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
 
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
+                          children: paymentMethods.map((method) {
+                            return ChoiceChip(
+                              label: Text(method.toUpperCase()),
+                              selected: paymentMethod == method,
+                              onSelected: (_) {
+                                setState(() {
+                                  paymentMethod = method;
 
-                          children:
-                              paymentMethods.map(
-                            (method) {
-                              return ChoiceChip(
-                                label: Text(
-                                  method
-                                      .toUpperCase(),
-                                ),
-                                selected:
-                                    paymentMethod ==
-                                        method,
-                                onSelected: (_) {
-                                  setState(() {
-                                    paymentMethod =
-                                        method;
-
-                                    if (method ==
-                                        'complimentary') {
-                                      discountPercentage =
-                                          100;
-                                    }
-                                  });
-                                },
-                              );
-                            },
-                          ).toList(),
+                                  if (method == 'complimentary') {
+                                    discountPercentage = 100;
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
                         ),
 
                         const Divider(height: 32),
 
                         /*
                         |--------------------------------------------------------------------------
-                        | Totals
+                        | Financial Totals
                         |--------------------------------------------------------------------------
                         */
 
                         _SummaryRow(
                           label: 'Subtotal',
-                          value: formatMoney(
-                              subtotalAmount),
+                          value: formatMoney(subtotalAmount),
                         ),
 
                         _SummaryRow(
                           label:
                               'Discount (${discountPercentage.toStringAsFixed(0)}%)',
-                          value:
-                              '- ${formatMoney(discountAmount)}',
+                          value: '- ${formatMoney(discountAmount)}',
                         ),
 
                         _SummaryRow(
                           label: 'VAT Included',
-                          value:
-                              formatMoney(vatIncluded),
+                          value: formatMoney(vatIncluded),
                         ),
 
                         const Divider(),
 
                         _SummaryRow(
                           label: 'TOTAL',
-                          value:
-                              formatMoney(finalTotal),
+                          value: formatMoney(finalTotal),
                           isBold: true,
                         ),
 
@@ -676,37 +824,27 @@ class _CounterPosScreenState
 
                         /*
                         |--------------------------------------------------------------------------
-                        | Pay Button
+                        | Pay And Send Button
                         |--------------------------------------------------------------------------
                         */
 
                         SizedBox(
                           width: double.infinity,
                           height: 56,
-
                           child: ElevatedButton.icon(
                             onPressed: cart.isEmpty
                                 ? null
                                 : () {
                                     processCounterPayment(
-                                      subtotalAmount:
-                                          subtotalAmount,
-                                      discountAmount:
-                                          discountAmount,
-                                      vatIncluded:
-                                          vatIncluded,
-                                      finalTotal:
-                                          finalTotal,
+                                      subtotalAmount: subtotalAmount,
+                                      discountAmount: discountAmount,
+                                      vatIncluded: vatIncluded,
+                                      finalTotal: finalTotal,
                                     );
                                   },
-
-                            icon: const Icon(
-                              Icons.payments,
-                            ),
-
+                            icon: const Icon(Icons.payments),
                             label: Text(
-                              paymentMethod ==
-                                      'complimentary'
+                              paymentMethod == 'complimentary'
                                   ? 'SETTLE COMPLIMENTARY'
                                   : 'PAY & SEND',
                             ),
@@ -743,17 +881,13 @@ class _SummaryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = TextStyle(
       fontSize: isBold ? 22 : 16,
-      fontWeight:
-          isBold ? FontWeight.bold : FontWeight.normal,
+      fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
     );
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-
       child: Row(
-        mainAxisAlignment:
-            MainAxisAlignment.spaceBetween,
-
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: style),
           Text(value, style: style),

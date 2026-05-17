@@ -77,13 +77,7 @@ Route::apiResource(
 | GET /api/products/{id}
 */
 
-Route::apiResource(
-    'products',
-    ProductController::class
-)->only([
-    'index',
-    'show',
-]);
+Route::apiResource('products', ProductController::class);
 
 /*
 |--------------------------------------------------------------------------
@@ -288,6 +282,32 @@ Route::post(
     'categories/{category}/image',
     [ProductCategoryController::class, 'uploadImage']
 );
+
+/*
+|--------------------------------------------------------------------------
+| Categories
+|--------------------------------------------------------------------------
+*/
+Route::apiResource('categories',ProductCategoryController::class);
+
+/*
+|--------------------------------------------------------------------------
+| Active Categories For POS
+|--------------------------------------------------------------------------
+| Used by ordering screens only.
+*/
+
+Route::get(
+    'active-categories',
+    [ProductCategoryController::class, 'activeCategories']
+);
+
+
+
+
+
+
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();

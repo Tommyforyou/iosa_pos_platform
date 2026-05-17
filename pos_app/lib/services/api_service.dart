@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:io';
+import 'package:http_parser/http_parser.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -410,6 +412,334 @@ class ApiService {
     }
 
     throw Exception('Failed to void item: ${response.body}');
+  }
+
+    /*
+  |--------------------------------------------------------------------------
+  | Create Category
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> createCategory({
+    required String name,
+    required int sortOrder,
+    required bool isActive,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/categories'),
+
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+
+      body: jsonEncode({
+        'name': name,
+        'sort_order': sortOrder,
+        'is_active': isActive,
+      }),
+    );
+
+    if (response.statusCode != 200 &&
+        response.statusCode != 201) {
+      throw Exception(
+        'Failed to create category',
+      );
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Update Category
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> updateCategory({
+    required int categoryId,
+    required String name,
+    required int sortOrder,
+    required bool isActive,
+  }) async {
+    final response = await http.put(
+      Uri.parse(
+        '$baseUrl/categories/$categoryId',
+      ),
+
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+
+      body: jsonEncode({
+        'name': name,
+        'sort_order': sortOrder,
+        'is_active': isActive,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to update category',
+      );
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Delete Category
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> deleteCategory(
+    int categoryId,
+  ) async {
+    final response = await http.delete(
+      Uri.parse(
+        '$baseUrl/categories/$categoryId',
+      ),
+
+      headers: {
+        'Accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to delete category',
+      );
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Load Active Categories
+  |--------------------------------------------------------------------------
+  | Used by POS ordering screens.
+  | Back Office uses getCategories() to show all categories.
+  */
+  Future<List<dynamic>> getActiveCategories() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/active-categories'),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to load active categories');
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Create Product
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> createProduct({
+    required int categoryId,
+    required String name,
+    required double sellingPrice,
+    required double costPrice,
+    required double stockQuantity,
+    required double reorderLevel,
+    required String unit,
+    required bool vatApplicable,
+    required double vatRate,
+    required bool isActive,
+    String? description,
+    String productType = 'general',
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/products'),
+
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+
+      body: jsonEncode({
+        'product_category_id': categoryId,
+        'name': name,
+        'product_type': productType,
+        'cost_price': costPrice,
+        'selling_price': sellingPrice,
+        'stock_quantity': stockQuantity,
+        'reorder_level': reorderLevel,
+        'unit': unit,
+        'vat_applicable': vatApplicable,
+        'vat_rate': vatRate,
+        'description': description,
+        'is_active': isActive,
+      }),
+    );
+
+    if (response.statusCode != 200 &&
+        response.statusCode != 201) {
+      throw Exception(
+        'Failed to create product',
+      );
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Update Product
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> updateProduct({
+    required int productId,
+    required int categoryId,
+    required String name,
+    required double sellingPrice,
+    required double costPrice,
+    required double stockQuantity,
+    required double reorderLevel,
+    required String unit,
+    required bool vatApplicable,
+    required double vatRate,
+    required bool isActive,
+    String? description,
+    String productType = 'general',
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/products/$productId'),
+
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+
+      body: jsonEncode({
+        'product_category_id': categoryId,
+        'name': name,
+        'product_type': productType,
+        'cost_price': costPrice,
+        'selling_price': sellingPrice,
+        'stock_quantity': stockQuantity,
+        'reorder_level': reorderLevel,
+        'unit': unit,
+        'vat_applicable': vatApplicable,
+        'vat_rate': vatRate,
+        'description': description,
+        'is_active': isActive,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to update product',
+      );
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Delete Product
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> deleteProduct(
+    int productId,
+  ) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/products/$productId'),
+
+      headers: {
+        'Accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to delete product',
+      );
+    }
+  }
+  /*
+  |--------------------------------------------------------------------------
+  | Upload Product Image
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> uploadProductImage({
+    required int productId,
+    required String filePath,
+  }) async {
+    final request =
+        http.MultipartRequest(
+      'POST',
+      Uri.parse(
+        '$baseUrl/products/$productId/image',
+      ),
+    );
+
+    request.headers['Accept'] =
+        'application/json';
+
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'image',
+        filePath,
+
+        contentType: MediaType(
+          'image',
+          'jpeg',
+        ),
+      ),
+    );
+
+    final response =
+        await request.send();
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to upload product image',
+      );
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Upload Category Image
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> uploadCategoryImage({
+    required int categoryId,
+    required String filePath,
+  }) async {
+    final request =
+        http.MultipartRequest(
+      'POST',
+      Uri.parse(
+        '$baseUrl/categories/$categoryId/image',
+      ),
+    );
+
+    request.headers['Accept'] =
+        'application/json';
+
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'image',
+        filePath,
+
+        contentType: MediaType(
+          'image',
+          'jpeg',
+        ),
+      ),
+    );
+
+    final response =
+        await request.send();
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to upload category image',
+      );
+    }
   }
 
 }

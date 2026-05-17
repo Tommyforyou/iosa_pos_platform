@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../services/api_service.dart';
 import '../utils/money.dart';
 
@@ -6,37 +7,35 @@ import '../utils/money.dart';
 |--------------------------------------------------------------------------
 | Order Screen
 |--------------------------------------------------------------------------
-| This screen is used for taking restaurant orders.
-|
-| Current use:
-| - Dine-in table orders
+| Used for table-service, takeaway, and delivery ordering.
 |
 | Main responsibilities:
-| - Load products from Laravel
-| - Reload existing active table order
-| - Add products to cart
-| - Track newly added items separately
-| - Send only new items to kitchen
+| - load active categories
+| - load products
+| - show visual category cards
+| - show product image cards
+| - save draft orders
+| - reopen existing draft/active table orders
+| - send draft items to kitchen
 */
 
 class OrderScreen extends StatefulWidget {
+  /*
+  |--------------------------------------------------------------------------
+  | Order Context
+  |--------------------------------------------------------------------------
+  | table is required only for dine-in orders.
+  | takeaway and delivery orders do not use restaurant tables.
+  */
 
-/*
-|--------------------------------------------------------------------------
-| Order Context
-|--------------------------------------------------------------------------
-| table is required only for dine-in orders.
-| takeaway and delivery orders do not use restaurant tables.
-*/
+  final Map<String, dynamic>? table;
+  final String orderType;
 
-final Map<String, dynamic>? table;
-final String orderType;
-
-const OrderScreen({
-  super.key,
-  this.table,
-  required this.orderType,
-});
+  const OrderScreen({
+    super.key,
+    this.table,
+    required this.orderType,
+  });
 
   @override
   State<OrderScreen> createState() => _OrderScreenState();
@@ -47,70 +46,102 @@ class _OrderScreenState extends State<OrderScreen> {
   |--------------------------------------------------------------------------
   | API Service
   |--------------------------------------------------------------------------
-  | Handles all communication with Laravel backend.
   */
+
   final ApiService apiService = ApiService();
 
   /*
   |--------------------------------------------------------------------------
-  | Screen State
+  | Data Collections
   |--------------------------------------------------------------------------
-  | products: menu items loaded from backend
-  | cart: all visible order items, including existing saved items
-  | newItems: only newly added items to send to kitchen
   */
+
+  List<dynamic> categories = [];
   List<dynamic> products = [];
-  List<Map<String, dynamic>> cart = [];
-  List<Map<String, dynamic>> newItems = [];
-
-  bool isLoading = true;
-
 
   /*
   |--------------------------------------------------------------------------
-  | Active Order ID
+  | Cart State
   |--------------------------------------------------------------------------
-  | Stores the database order id after draft/order is created.
-  | Needed when converting draft items to kitchen items.
+  | cart = all visible items
+  | newItems = items added during this screen session
+  */
+
+  List<Map<String, dynamic>> cart = [];
+  List<Map<String, dynamic>> newItems = [];
+
+  /*
+  |--------------------------------------------------------------------------
+  | Active Order
+  |--------------------------------------------------------------------------
+  | Stores database order ID for draft-to-kitchen transition.
   */
 
   int? activeOrderId;
 
+  /*
+  |--------------------------------------------------------------------------
+  | UI State
+  |--------------------------------------------------------------------------
+  */
+
+  bool isLoading = true;
+  int? selectedCategoryId;
 
   @override
   void initState() {
     super.initState();
-
-    /*
-    |--------------------------------------------------------------------------
-    | Initial Data Load
-    |--------------------------------------------------------------------------
-    | When screen opens, load products and any active order for this table.
-    */
     loadInitialData();
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Screen Title
+  |--------------------------------------------------------------------------
+  */
+
+  String screenTitle() {
+    if (widget.orderType == 'dine_in') {
+      return 'Order - ${widget.table!['table_name']}';
+    }
+
+    if (widget.orderType == 'takeaway') {
+      return 'Takeaway Order';
+    }
+
+    return 'Delivery Order';
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Filtered Products
+  |--------------------------------------------------------------------------
+  */
+
+  List<dynamic> get filteredProducts {
+    if (selectedCategoryId == null) {
+      return products;
+    }
+
+    return products.where((product) {
+      return product['product_category_id'] == selectedCategoryId;
+    }).toList();
   }
 
   /*
   |--------------------------------------------------------------------------
   | Load Initial Data
   |--------------------------------------------------------------------------
-  | Loads two important things:
-  | 1. Product/menu list
-  | 2. Existing active order for occupied table
-  |
-  | This allows a waiter to reopen a table and continue adding items.
+  | Loads:
+  | - active categories
+  | - products
+  | - existing active order for dine-in table
   */
+
   Future<void> loadInitialData() async {
     try {
+      final categoryData = await apiService.getActiveCategories();
       final productData = await apiService.getProducts();
-
-      /*
-      |--------------------------------------------------------------------------
-      | Load Existing Active Table Order
-      |--------------------------------------------------------------------------
-      | Only dine-in table orders can have existing active table bills.
-      | Takeaway and delivery always start as new orders.
-      */
 
       Map<String, dynamic> activeOrderData = {
         'success': false,
@@ -119,7 +150,7 @@ class _OrderScreenState extends State<OrderScreen> {
 
       if (widget.orderType == 'dine_in' && widget.table != null) {
         activeOrderData = await apiService.getActiveOrderByTable(
-          widget.table?['id'],
+          widget.table!['id'],
         );
       }
 
@@ -127,30 +158,34 @@ class _OrderScreenState extends State<OrderScreen> {
 
       /*
       |--------------------------------------------------------------------------
-      | Convert Existing Backend Items Into Cart Format
+      | Load Existing Active Order Items
       |--------------------------------------------------------------------------
-      | These items are already saved in PostgreSQL.
-      | They are shown in the cart but NOT added to newItems.
       */
+
       if (activeOrderData['success'] == true &&
           activeOrderData['order'] != null &&
           activeOrderData['order']['items'] != null) {
-        
         activeOrderId = activeOrderData['order']['id'];
 
         for (final item in activeOrderData['order']['items']) {
+          if (item['is_voided'] == true) {
+            continue;
+          }
+
           existingCart.add({
             'id': item['product_id'],
             'name': item['product_name'],
-            'price': double.parse(item['unit_price'].toString()),
+            'price': toMoneyDouble(item['unit_price']),
             'quantity': int.parse(
               item['quantity'].toString().split('.').first,
             ),
+            'kitchen_status': item['kitchen_status'],
           });
         }
       }
 
       setState(() {
+        categories = categoryData;
         products = productData;
         cart = existingCart;
         isLoading = false;
@@ -168,26 +203,27 @@ class _OrderScreenState extends State<OrderScreen> {
   |--------------------------------------------------------------------------
   | Add Product To Cart
   |--------------------------------------------------------------------------
-  | Adds selected product to:
-  | - cart: visible order summary
-  | - newItems: only items that must be sent to kitchen now
-  |
-  | This prevents duplicate kitchen orders when reopening occupied tables.
   */
+
   void addToCart(dynamic product) {
-    final existingIndex = cart.indexWhere(
-      (item) => item['id'] == product['id'],
+    final price = toMoneyDouble(
+      product['selling_price'] ?? product['price'],
     );
 
     setState(() {
+      final existingIndex = cart.indexWhere(
+        (item) => item['id'] == product['id'],
+      );
+
       if (existingIndex >= 0) {
         cart[existingIndex]['quantity'] += 1;
       } else {
         cart.add({
           'id': product['id'],
           'name': product['name'],
-          'price': double.parse(product['selling_price'].toString()),
+          'price': price,
           'quantity': 1,
+          'kitchen_status': 'draft',
         });
       }
 
@@ -201,11 +237,49 @@ class _OrderScreenState extends State<OrderScreen> {
         newItems.add({
           'id': product['id'],
           'name': product['name'],
-          'price': double.parse(product['selling_price'].toString()),
+          'price': price,
           'quantity': 1,
         });
       }
     });
+
+    saveDraft();
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Remove Item From Cart
+  |--------------------------------------------------------------------------
+  | Only unsent items should be removed freely.
+  */
+
+  void removeFromCart(int productId) {
+    setState(() {
+      final cartIndex = cart.indexWhere(
+        (item) => item['id'] == productId,
+      );
+
+      if (cartIndex >= 0) {
+        if (cart[cartIndex]['quantity'] > 1) {
+          cart[cartIndex]['quantity'] -= 1;
+        } else {
+          cart.removeAt(cartIndex);
+        }
+      }
+
+      final newItemIndex = newItems.indexWhere(
+        (item) => item['id'] == productId,
+      );
+
+      if (newItemIndex >= 0) {
+        if (newItems[newItemIndex]['quantity'] > 1) {
+          newItems[newItemIndex]['quantity'] -= 1;
+        } else {
+          newItems.removeAt(newItemIndex);
+        }
+      }
+    });
+
     saveDraft();
   }
 
@@ -213,13 +287,13 @@ class _OrderScreenState extends State<OrderScreen> {
   |--------------------------------------------------------------------------
   | Calculate Total Amount
   |--------------------------------------------------------------------------
-  | Calculates the visible total for all cart items.
   */
+
   double get totalAmount {
     double total = 0;
 
     for (final item in cart) {
-      total += item['price'] * item['quantity'];
+      total += toMoneyDouble(item['price']) * toMoneyDouble(item['quantity']);
     }
 
     return total;
@@ -227,35 +301,42 @@ class _OrderScreenState extends State<OrderScreen> {
 
   /*
   |--------------------------------------------------------------------------
+  | Save Draft Order
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> saveDraft() async {
+    if (cart.isEmpty) {
+      return;
+    }
+
+    try {
+      final result = await apiService.saveDraftRestaurantOrder(
+        restaurantTableId: widget.table?['id'],
+        orderType: widget.orderType,
+        items: cart,
+        notes: null,
+      );
+
+      activeOrderId = result['order_id'];
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
   | Send Order To Kitchen
   |--------------------------------------------------------------------------
-  | Converts saved draft items into pending kitchen items.
-  |
-  | Important:
-  | - items are first saved as draft
-  | - this method changes draft → pending
-  | - kitchen display only sees pending/preparing/ready/served items
   */
 
   Future<void> sendOrderToKitchen() async {
     try {
-      /*
-      |--------------------------------------------------------------------------
-      | Ensure Latest Cart Is Saved As Draft
-      |--------------------------------------------------------------------------
-      */
-
       await saveDraft();
 
       if (activeOrderId == null) {
         throw Exception('No active order found to send to kitchen.');
       }
-
-      /*
-      |--------------------------------------------------------------------------
-      | Send Draft Items To Kitchen
-      |--------------------------------------------------------------------------
-      */
 
       final result = await apiService.sendDraftItemsToKitchen(
         orderId: activeOrderId!,
@@ -286,95 +367,268 @@ class _OrderScreenState extends State<OrderScreen> {
     }
   }
 
+  /*
+  |--------------------------------------------------------------------------
+  | Category Card
+  |--------------------------------------------------------------------------
+  */
+
+  Widget categoryCard(dynamic category) {
+    final selected = selectedCategoryId == category['id'];
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedCategoryId = category['id'];
+        });
+      },
+      child: Container(
+        height: 120,
+        width: 125,
+        margin: const EdgeInsets.only(right: 10),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: selected ? Colors.orange.shade100 : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? Colors.orange : Colors.grey.shade300,
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              height: 45,
+              width: 70,
+              color: Colors.grey.shade200,
+              child: category['image_url'] != null &&
+                      category['image_url'].toString().isNotEmpty
+                  ? Image.network(
+                      category['image_url'],
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.broken_image,
+                          color: Colors.red,
+                          size: 36,
+                        );
+                      },
+                    )
+                  : const Icon(
+                      Icons.fastfood,
+                      size: 36,
+                      color: Colors.orange,
+                    ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              category['name'],
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Product Card
+  |--------------------------------------------------------------------------
+  */
+
+  Widget productCard(dynamic product) {
+    final price = product['selling_price'] ?? product['price'];
+
+    return Card(
+      elevation: 3,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => addToCart(product),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (product['image_url'] != null &&
+                  product['image_url'].toString().isNotEmpty)
+                SizedBox(
+                  height: 90,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(
+                      product['image_url'],
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.broken_image,
+                          size: 42,
+                          color: Colors.red,
+                        );
+                      },
+                    ),
+                  ),
+                )
+              else
+                const Icon(
+                  Icons.fastfood,
+                  size: 42,
+                  color: Colors.blueGrey,
+                ),
+              const SizedBox(height: 12),
+              Text(
+                product['name'],
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                formatMoney(price),
+                style: const TextStyle(
+                  fontSize: 18,
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Build
+  |--------------------------------------------------------------------------
+  */
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      /*
-      |--------------------------------------------------------------------------
-      | Screen Header
-      |--------------------------------------------------------------------------
-      */
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-              title: Text(
-                widget.orderType == 'dine_in'
-                    ? 'Order - ${widget.table?['table_name']}'
-                    : widget.orderType == 'takeaway'
-                        ? 'Takeaway Order'
-                        : 'Delivery Order',
-              ),
+        title: Text(screenTitle()),
       ),
-
-      /*
-      |--------------------------------------------------------------------------
-      | Main Layout
-      |--------------------------------------------------------------------------
-      | Left side: product grid
-      | Right side: current order/cart
-      */
       body: Row(
         children: [
           /*
           |--------------------------------------------------------------------------
-          | Product Grid
+          | Product Area
           |--------------------------------------------------------------------------
           */
+
           Expanded(
             flex: 2,
             child: isLoading
                 ? const Center(
                     child: CircularProgressIndicator(),
                   )
-                : GridView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: products.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1.2,
-                    ),
-                    itemBuilder: (context, index) {
-                      final product = products[index];
+                : Column(
+                    children: [
+                      /*
+                      |--------------------------------------------------------------------------
+                      | Category Bar
+                      |--------------------------------------------------------------------------
+                      */
 
-                      return Card(
-                        elevation: 3,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () => addToCart(product),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.fastfood,
-                                  size: 42,
-                                  color: Colors.blueGrey,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  product['name'],
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
+                      SizedBox(
+                        height: 135,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.all(8),
+                          children: [
+                            /*
+                            |--------------------------------------------------------------------------
+                            | All Categories
+                            |--------------------------------------------------------------------------
+                            */
+
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  selectedCategoryId = null;
+                                });
+                              },
+                              child: Container(
+                                height: 120,
+                                width: 115,
+                                margin: const EdgeInsets.only(right: 10),
+                                decoration: BoxDecoration(
+                                  color: selectedCategoryId == null
+                                      ? Colors.orange.shade100
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: selectedCategoryId == null
+                                        ? Colors.orange
+                                        : Colors.grey.shade300,
+                                    width: 1.5,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Rs ${product['selling_price']}',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                child: const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.restaurant_menu,
+                                      size: 38,
+                                      color: Colors.orange,
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'All',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
+
+                            ...categories.map(categoryCard),
+                          ],
                         ),
-                      );
-                    },
+                      ),
+
+                      /*
+                      |--------------------------------------------------------------------------
+                      | Product Grid
+                      |--------------------------------------------------------------------------
+                      */
+
+                      Expanded(
+                        child: GridView.builder(
+                          padding: const EdgeInsets.all(12),
+                          itemCount: filteredProducts.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 1.2,
+                          ),
+                          itemBuilder: (context, index) {
+                            final product = filteredProducts[index];
+
+                            return productCard(product);
+                          },
+                        ),
+                      ),
+                    ],
                   ),
           ),
 
@@ -383,16 +637,12 @@ class _OrderScreenState extends State<OrderScreen> {
           | Cart Panel
           |--------------------------------------------------------------------------
           */
+
           Container(
-            width: 320,
+            width: 330,
             color: Colors.grey.shade100,
             child: Column(
               children: [
-                /*
-                |--------------------------------------------------------------------------
-                | Cart Header
-                |--------------------------------------------------------------------------
-                */
                 Container(
                   padding: const EdgeInsets.all(16),
                   width: double.infinity,
@@ -408,9 +658,10 @@ class _OrderScreenState extends State<OrderScreen> {
 
                 /*
                 |--------------------------------------------------------------------------
-                | Cart Item List
+                | Cart Items
                 |--------------------------------------------------------------------------
                 */
+
                 Expanded(
                   child: cart.isEmpty
                       ? const Center(
@@ -420,67 +671,57 @@ class _OrderScreenState extends State<OrderScreen> {
                           itemCount: cart.length,
                           itemBuilder: (context, index) {
                             final item = cart[index];
-                            /*
-                            |--------------------------------------------------------------------------
-                            | Check If Item Is Newly Added
-                            |--------------------------------------------------------------------------
-                            | Existing saved kitchen items must be locked.
-                            | Only newly added unsent items can be removed freely.
-                            */
 
                             final isNewItem = newItems.any(
                               (newItem) => newItem['id'] == item['id'],
                             );
-                            
+
+                            final lineTotal = toMoneyDouble(item['quantity']) *
+                                toMoneyDouble(item['price']);
+
                             return ListTile(
-                                    title: Text(item['name']),
-                                    subtitle: Text(
-                                      '${item['quantity']} × ${formatMoney(item['price'])}',
+                              title: Text(item['name']),
+                              subtitle: Text(
+                                '${item['quantity']} × ${formatMoney(item['price'])}',
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    formatMoney(lineTotal),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          formatMoney(item['quantity'] * item['price']),
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-
-                                        const SizedBox(width: 8),
-
-                                        /*
-                                        |--------------------------------------------------------------------------
-                                        | Remove Item Button
-                                        |--------------------------------------------------------------------------
-                                        | Allows waiter to correct mistakes before sending to kitchen.
-                                        */
-                                        if (isNewItem)
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.remove_circle,
-                                              color: Colors.red,
-                                            ),
-                                            onPressed: () {
-                                              removeFromCart(item['id']);
-                                            },
-                                          )
-                                        else
-                                          const Icon(
-                                            Icons.lock,
-                                            color: Colors.grey,
-                                          ),
-                                      ],
+                                  ),
+                                  const SizedBox(width: 6),
+                                  if (isNewItem)
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.remove_circle,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed: () {
+                                        removeFromCart(item['id']);
+                                      },
+                                    )
+                                  else
+                                    const Icon(
+                                      Icons.lock,
+                                      color: Colors.grey,
                                     ),
-                                  );
+                                ],
+                              ),
+                            );
                           },
                         ),
                 ),
+
                 /*
                 |--------------------------------------------------------------------------
                 | Total And Send Button
                 |--------------------------------------------------------------------------
                 */
+
                 Container(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -496,7 +737,7 @@ class _OrderScreenState extends State<OrderScreen> {
                             ),
                           ),
                           Text(
-                            'Rs ${totalAmount.toStringAsFixed(2)}',
+                            formatMoney(totalAmount),
                             style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -506,20 +747,11 @@ class _OrderScreenState extends State<OrderScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
-
-                      /*
-                      |--------------------------------------------------------------------------
-                      | Send To Kitchen Button
-                      |--------------------------------------------------------------------------
-                      | Disabled unless there are newly added items.
-                      */
                       SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton.icon(
-                          onPressed: cart.isEmpty
-                              ? null
-                              : sendOrderToKitchen,
+                          onPressed: cart.isEmpty ? null : sendOrderToKitchen,
                           icon: const Icon(Icons.send),
                           label: const Text('Send to Kitchen'),
                         ),
@@ -534,89 +766,4 @@ class _OrderScreenState extends State<OrderScreen> {
       ),
     );
   }
-  /*
-  |--------------------------------------------------------------------------
-  | Remove Item From Cart
-  |--------------------------------------------------------------------------
-  | Removes one quantity from the selected cart item.
-  |
-  | Important:
-  | - cart controls what the waiter sees
-  | - newItems controls what will be sent to kitchen
-  |
-  | This method removes from both lists where applicable.
-  */
-
-  void removeFromCart(int productId) {
-    setState(() {
-      /*
-      |--------------------------------------------------------------------------
-      | Remove From Visible Cart
-      |--------------------------------------------------------------------------
-      */
-
-      final cartIndex = cart.indexWhere(
-        (item) => item['id'] == productId,
-      );
-
-      if (cartIndex >= 0) {
-        if (cart[cartIndex]['quantity'] > 1) {
-          cart[cartIndex]['quantity'] -= 1;
-        } else {
-          cart.removeAt(cartIndex);
-        }
-      }
-
-      /*
-      |--------------------------------------------------------------------------
-      | Remove From New Items Queue
-      |--------------------------------------------------------------------------
-      | Only newly added unsent items should be removed from this list.
-      */
-
-      final newItemIndex = newItems.indexWhere(
-        (item) => item['id'] == productId,
-      );
-
-      if (newItemIndex >= 0) {
-        if (newItems[newItemIndex]['quantity'] > 1) {
-          newItems[newItemIndex]['quantity'] -= 1;
-        } else {
-          newItems.removeAt(newItemIndex);
-        }
-      }
-    });
-    saveDraft();
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Save Draft Order
-  |--------------------------------------------------------------------------
-  | Saves the current cart to database as draft.
-  |
-  | This prevents order items from disappearing if the waiter/cashier
-  | leaves the screen before pressing Send to Kitchen.
-  */
-
-  Future<void> saveDraft() async {
-    if (cart.isEmpty) {
-      return;
-    }
-
-    try {
-      final result = await apiService.saveDraftRestaurantOrder(
-        restaurantTableId: widget.table?['id'],
-        orderType: widget.orderType,
-        items: cart,
-        notes: null,
-      );
-
-      activeOrderId = result['order_id'];
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-  }
-
-
 }

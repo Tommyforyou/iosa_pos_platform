@@ -27,6 +27,10 @@ class Product extends Model
         'image_path',
     ];
 
+    protected $appends = [
+        'image_url',
+    ];
+
     protected $casts = [
         'cost_price' => 'decimal:2',
         'selling_price' => 'decimal:2',
@@ -72,6 +76,21 @@ class Product extends Model
     public function recipes()
     {
         return $this->hasMany(ProductRecipe::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Product Image URL
+    |--------------------------------------------------------------------------
+    */
+
+    public function getImageUrlAttribute()
+    {
+        if (!$this->image_path) {
+            return null;
+        }
+
+        return asset('storage/' . $this->image_path);
     }
 
 }
