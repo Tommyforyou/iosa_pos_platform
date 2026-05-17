@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'bill_detail_screen.dart';
+import '../utils/currency_formatter.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -172,7 +173,7 @@ class _BillingScreenState extends State<BillingScreen> {
                           '${order['order_number']} • ${order['order_type']}',
                         ),
                         trailing: Text(
-                          'Rs ${total.toStringAsFixed(2)}',
+                          'Rs ${currencyFormatter.format(total)}',
                           style: const TextStyle(
                             fontSize: 20,
                             color: Colors.green,

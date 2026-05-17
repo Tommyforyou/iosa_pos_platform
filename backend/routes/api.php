@@ -223,6 +223,19 @@ Route::get(
 | - admin permissions
 */
 
+
+/*
+|--------------------------------------------------------------------------
+| Void Restaurant Order Item
+|--------------------------------------------------------------------------
+*/
+
+Route::patch(
+    'restaurant-order-items/{itemId}/void',
+    [RestaurantOrderController::class, 'voidOrderItem']
+);
+
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');

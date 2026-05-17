@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../utils/money.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -391,20 +392,62 @@ class _OrderScreenState extends State<OrderScreen> {
                           itemCount: cart.length,
                           itemBuilder: (context, index) {
                             final item = cart[index];
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Check If Item Is Newly Added
+                            |--------------------------------------------------------------------------
+                            | Existing saved kitchen items must be locked.
+                            | Only newly added unsent items can be removed freely.
+                            */
 
-                            return ListTile(
-                              title: Text(item['name']),
-                              subtitle: Text(
-                                '${item['quantity']} × Rs ${item['price']}',
-                              ),
-                              trailing: Text(
-                                'Rs ${(item['quantity'] * item['price']).toStringAsFixed(2)}',
-                              ),
+                            final isNewItem = newItems.any(
+                              (newItem) => newItem['id'] == item['id'],
                             );
+                            
+                            return ListTile(
+                                    title: Text(item['name']),
+                                    subtitle: Text(
+                                      '${item['quantity']} × ${formatMoney(item['price'])}',
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          formatMoney(item['quantity'] * item['price']),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+
+                                        const SizedBox(width: 8),
+
+                                        /*
+                                        |--------------------------------------------------------------------------
+                                        | Remove Item Button
+                                        |--------------------------------------------------------------------------
+                                        | Allows waiter to correct mistakes before sending to kitchen.
+                                        */
+                                        if (isNewItem)
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.remove_circle,
+                                              color: Colors.red,
+                                            ),
+                                            onPressed: () {
+                                              removeFromCart(item['id']);
+                                            },
+                                          )
+                                        else
+                                          const Icon(
+                                            Icons.lock,
+                                            color: Colors.grey,
+                                          ),
+                                      ],
+                                    ),
+                                  );
                           },
                         ),
                 ),
-
                 /*
                 |--------------------------------------------------------------------------
                 | Total And Send Button
@@ -463,4 +506,61 @@ class _OrderScreenState extends State<OrderScreen> {
       ),
     );
   }
+  /*
+  |--------------------------------------------------------------------------
+  | Remove Item From Cart
+  |--------------------------------------------------------------------------
+  | Removes one quantity from the selected cart item.
+  |
+  | Important:
+  | - cart controls what the waiter sees
+  | - newItems controls what will be sent to kitchen
+  |
+  | This method removes from both lists where applicable.
+  */
+
+  void removeFromCart(int productId) {
+    setState(() {
+      /*
+      |--------------------------------------------------------------------------
+      | Remove From Visible Cart
+      |--------------------------------------------------------------------------
+      */
+
+      final cartIndex = cart.indexWhere(
+        (item) => item['id'] == productId,
+      );
+
+      if (cartIndex >= 0) {
+        if (cart[cartIndex]['quantity'] > 1) {
+          cart[cartIndex]['quantity'] -= 1;
+        } else {
+          cart.removeAt(cartIndex);
+        }
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | Remove From New Items Queue
+      |--------------------------------------------------------------------------
+      | Only newly added unsent items should be removed from this list.
+      */
+
+      final newItemIndex = newItems.indexWhere(
+        (item) => item['id'] == productId,
+      );
+
+      if (newItemIndex >= 0) {
+        if (newItems[newItemIndex]['quantity'] > 1) {
+          newItems[newItemIndex]['quantity'] -= 1;
+        } else {
+          newItems.removeAt(newItemIndex);
+        }
+      }
+    });
+  }
+
+
+
+
 }

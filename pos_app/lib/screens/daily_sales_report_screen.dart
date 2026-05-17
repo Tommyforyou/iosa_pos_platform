@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../utils/currency_formatter.dart';
+import '../utils/money.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -150,8 +152,7 @@ class _DailySalesReportScreenState extends State<DailySalesReportScreen> {
                         children: [
                           _ReportCard(
                             title: 'Total Sales',
-                            value:
-                                'Rs ${summary['total_sales'] ?? 0}',
+                            value: formatMoney(summary['total_sales']),
                             icon: Icons.attach_money,
                           ),
                           _ReportCard(
@@ -162,14 +163,12 @@ class _DailySalesReportScreenState extends State<DailySalesReportScreen> {
                           ),
                           _ReportCard(
                             title: 'Cash Sales',
-                            value:
-                                'Rs ${summary['cash_sales'] ?? 0}',
+                            value: formatMoney(summary['cash_sales']),
                             icon: Icons.payments,
                           ),
                           _ReportCard(
                             title: 'Card Sales',
-                            value:
-                                'Rs ${summary['card_sales'] ?? 0}',
+                            value: formatMoney(summary['card_sales']),
                             icon: Icons.credit_card,
                           ),
                           _ReportCard(
@@ -257,7 +256,7 @@ class _DailySalesReportScreenState extends State<DailySalesReportScreen> {
                                       '${order['order_number']} • ${order['payment_method']}',
                                     ),
                                     trailing: Text(
-                                      'Rs ${order['total_amount']}',
+                                      formatMoney(order['total_amount']),
                                       style: const TextStyle(
                                         color: Colors.green,
                                         fontWeight: FontWeight.bold,

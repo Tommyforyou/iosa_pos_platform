@@ -15,6 +15,9 @@ class RestaurantOrderItem extends Model
         'unit_price',
         'kitchen_status',
         'notes',
+        'is_voided',
+        'void_reason',
+        'voided_at',        
     ];
 
     protected $casts = [

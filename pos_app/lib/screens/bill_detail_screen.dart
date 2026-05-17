@@ -1,52 +1,103 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../utils/money.dart';
+import '../utils/discount.dart';
 import 'receipt_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
 | Bill Detail Screen
 |--------------------------------------------------------------------------
-| This screen displays the detailed bill for one restaurant order.
+| This screen is used by the cashier to review and settle one bill.
 |
 | Responsibilities:
-| - Show order identity
-| - Show dine-in/takeaway/delivery label
-| - Show ordered items
+| - Display bill items
 | - Calculate subtotal
-| - Prepare for payment processing
+| - Apply percentage discount
+| - Show VAT included amount
+| - Select payment method
+| - Process payment
+| - Open receipt preview
 */
 
-class BillDetailScreen extends StatelessWidget {
- final Map<String, dynamic> order;
- /*
- |--------------------------------------------------------------------------
- | API Service
- |--------------------------------------------------------------------------
- */
- final ApiService apiService = ApiService();
+class BillDetailScreen extends StatefulWidget {
+  final Map<String, dynamic> order;
 
-    BillDetailScreen({
+  BillDetailScreen({
     super.key,
     required this.order,
   });
+
+  @override
+  State<BillDetailScreen> createState() =>
+      _BillDetailScreenState();
+}
+
+class _BillDetailScreenState extends State<BillDetailScreen> {
+  /*
+  |--------------------------------------------------------------------------
+  | API Service
+  |--------------------------------------------------------------------------
+  */
+
+  final ApiService apiService = ApiService();
+
+  /*
+  |--------------------------------------------------------------------------
+  | Payment Configuration
+  |--------------------------------------------------------------------------
+  */
+
+  String paymentMethod = 'cash';
+  double discountPercentage = 0;
+
+  /*
+  |--------------------------------------------------------------------------
+  | Available Payment Methods
+  |--------------------------------------------------------------------------
+  */
+
+  final List<String> paymentMethods = [
+    'cash',
+    'card',
+    'juice',
+    'cheque',
+    'complimentary',
+  ];
+
+  /*
+  |--------------------------------------------------------------------------
+  | Available Discount Percentages
+  |--------------------------------------------------------------------------
+  */
+
+  final List<double> discountOptions = [
+    0,
+    5,
+    10,
+    15,
+    50,
+    100,
+  ];
 
   /*
   |--------------------------------------------------------------------------
   | Order Label
   |--------------------------------------------------------------------------
+  | Converts order type/table information into a cashier-friendly label.
   */
 
   String orderLabel() {
-    if (order['order_type'] == 'takeaway') {
+    if (widget.order['order_type'] == 'takeaway') {
       return 'Takeaway';
     }
 
-    if (order['order_type'] == 'delivery') {
+    if (widget.order['order_type'] == 'delivery') {
       return 'Delivery';
     }
 
-    if (order['table'] != null) {
-      return order['table']['table_name'];
+    if (widget.order['table'] != null) {
+      return widget.order['table']['table_name'];
     }
 
     return 'Order';
@@ -56,30 +107,154 @@ class BillDetailScreen extends StatelessWidget {
   |--------------------------------------------------------------------------
   | Calculate Subtotal
   |--------------------------------------------------------------------------
+  | Calculates total before discount.
   */
 
-  double subtotal() {
-    double total = 0;
+double subtotal() {
+  double total = 0;
 
-    for (final item in order['items']) {
-      final quantity = double.parse(item['quantity'].toString());
-      final price = double.parse(item['unit_price'].toString());
+  final activeItems = (widget.order['items'] as List<dynamic>)
+      .where(
+        (item) => item['is_voided'] != true,
+      )
+      .toList();
 
-      total += quantity * price;
+  for (final item in activeItems) {
+    final quantity = toMoneyDouble(item['quantity']);
+    final price = toMoneyDouble(item['unit_price']);
+
+    total += quantity * price;
+  }
+
+  return total;
+}
+
+  /*
+  |--------------------------------------------------------------------------
+  | Process Payment
+  |--------------------------------------------------------------------------
+  | Sends payment data to Laravel backend.
+  |
+  | Backend will:
+  | - mark order as paid
+  | - close order
+  | - release table if dine-in
+  */
+
+  Future<void> processPayment({
+    required double subtotalAmount,
+    required double discountAmount,
+    required double vatIncluded,
+    required double finalTotal,
+  }) async {
+    try {
+      final result = await apiService.processRestaurantPayment(
+        orderId: widget.order['id'],
+        paymentMethod: paymentMethod,
+        subtotal: subtotalAmount,
+        taxAmount: vatIncluded,
+        discountAmount: discountAmount,
+        totalAmount: finalTotal,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result['message'] ??
+                'Payment processed successfully',
+          ),
+        ),
+      );
+
+      /*
+      |--------------------------------------------------------------------------
+      | Open Receipt After Payment
+      |--------------------------------------------------------------------------
+      */
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ReceiptScreen(
+            order: widget.order,
+            paymentMethod: paymentMethod,
+            subtotal: subtotalAmount,
+            taxAmount: vatIncluded,
+            discountAmount: discountAmount,
+            totalAmount: finalTotal,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
-
-    return total;
   }
 
   @override
   Widget build(BuildContext context) {
-    final total = subtotal();
+    /*
+    |--------------------------------------------------------------------------
+    | Bill Calculations
+    |--------------------------------------------------------------------------
+    */
+
+    final subtotalAmount = subtotal();
+
+    final discountAmount = calculateDiscountAmount(
+      subtotal: subtotalAmount,
+      discountPercentage: discountPercentage,
+    );
+
+    final finalTotal = calculateFinalTotal(
+      subtotal: subtotalAmount,
+      discountPercentage: discountPercentage,
+    );
+
+    final vatIncluded = calculateVatIncluded(finalTotal);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Active Bill Items
+    |--------------------------------------------------------------------------
+    | Voided items must not affect billing totals.
+    */    
+
+    final items = (widget.order['items'] as List<dynamic>)
+        .where(
+          (item) => item['is_voided'] != true,
+        )
+        .toList();    
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
+
+      /*
+      |--------------------------------------------------------------------------
+      | App Bar
+      |--------------------------------------------------------------------------
+      */
+
       appBar: AppBar(
         title: Text('Bill - ${orderLabel()}'),
       ),
+
+      /*
+      |--------------------------------------------------------------------------
+      | Main Layout
+      |--------------------------------------------------------------------------
+      | Left: item listing
+      | Right: totals, discount, payment method, payment button
+      */
+
       body: Row(
         children: [
           /*
@@ -91,12 +266,12 @@ class BillDetailScreen extends StatelessWidget {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: order['items'].length,
+              itemCount: items.length,
               itemBuilder: (context, index) {
-                final item = order['items'][index];
+                final item = items[index];
 
-                final quantity = double.parse(item['quantity'].toString());
-                final price = double.parse(item['unit_price'].toString());
+                final quantity = toMoneyDouble(item['quantity']);
+                final price = toMoneyDouble(item['unit_price']);
                 final lineTotal = quantity * price;
 
                 return Card(
@@ -108,10 +283,10 @@ class BillDetailScreen extends StatelessWidget {
                       ),
                     ),
                     subtitle: Text(
-                      '${quantity.toStringAsFixed(0)} × Rs ${price.toStringAsFixed(2)}',
+                      '${quantity.toStringAsFixed(0)} × ${formatMoney(price)}',
                     ),
                     trailing: Text(
-                      'Rs ${lineTotal.toStringAsFixed(2)}',
+                      formatMoney(lineTotal),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
@@ -129,12 +304,20 @@ class BillDetailScreen extends StatelessWidget {
           */
 
           Container(
-            width: 360,
+            width: 390,
             padding: const EdgeInsets.all(20),
             color: Colors.white,
+
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+
               children: [
+                /*
+                |--------------------------------------------------------------------------
+                | Bill Header
+                |--------------------------------------------------------------------------
+                */
+
                 Text(
                   orderLabel(),
                   style: const TextStyle(
@@ -146,7 +329,7 @@ class BillDetailScreen extends StatelessWidget {
                 const SizedBox(height: 8),
 
                 Text(
-                  order['order_number'],
+                  widget.order['order_number'],
                   style: const TextStyle(
                     color: Colors.grey,
                   ),
@@ -154,142 +337,197 @@ class BillDetailScreen extends StatelessWidget {
 
                 const Divider(height: 32),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Subtotal'),
-                    Text('Rs ${total.toStringAsFixed(2)}'),
-                  ],
+                /*
+                |--------------------------------------------------------------------------
+                | Discount Selector
+                |--------------------------------------------------------------------------
+                */
+
+                const Text(
+                  'Discount',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text('VAT'),
-                    Text('Included'),
-                  ],
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: discountOptions.map((discount) {
+                    final isSelected =
+                        discountPercentage == discount;
+
+                    return ChoiceChip(
+                      label: Text(
+                        '${discount.toStringAsFixed(0)}%',
+                      ),
+                      selected: isSelected,
+                      onSelected: (_) {
+                        setState(() {
+                          discountPercentage = discount;
+
+                          /*
+                          |--------------------------------------------------------------------------
+                          | Complimentary Shortcut
+                          |--------------------------------------------------------------------------
+                          | 100% discount is treated as complimentary.
+                          */
+                          if (discount == 100) {
+                            paymentMethod = 'complimentary';
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
                 ),
 
                 const Divider(height: 32),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Total',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      'Rs ${total.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                /*
+                |--------------------------------------------------------------------------
+                | Payment Method Selector
+                |--------------------------------------------------------------------------
+                */
+
+                const Text(
+                  'Payment Method',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: paymentMethods.map((method) {
+                    final isSelected =
+                        paymentMethod == method;
+
+                    return ChoiceChip(
+                      label: Text(method.toUpperCase()),
+                      selected: isSelected,
+                      onSelected: (_) {
+                        setState(() {
+                          paymentMethod = method;
+
+                          /*
+                          |--------------------------------------------------------------------------
+                          | Complimentary Payment Shortcut
+                          |--------------------------------------------------------------------------
+                          | Complimentary payment should always make the bill zero.
+                          */
+                          if (method == 'complimentary') {
+                            discountPercentage = 100;
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+
+                const Divider(height: 32),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Totals
+                |--------------------------------------------------------------------------
+                */
+
+                _SummaryRow(
+                  label: 'Subtotal',
+                  value: formatMoney(subtotalAmount),
+                ),
+
+                _SummaryRow(
+                  label:
+                      'Discount (${discountPercentage.toStringAsFixed(0)}%)',
+                  value: '- ${formatMoney(discountAmount)}',
+                ),
+
+                _SummaryRow(
+                  label: 'VAT Included',
+                  value: formatMoney(vatIncluded),
+                ),
+
+                const Divider(height: 28),
+
+                _SummaryRow(
+                  label: 'TOTAL',
+                  value: formatMoney(finalTotal),
+                  isBold: true,
                 ),
 
                 const Spacer(),
 
+                /*
+                |--------------------------------------------------------------------------
+                | Payment Button
+                |--------------------------------------------------------------------------
+                */
+
                 SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
-                    onPressed: () async {
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Process Cash Payment
-                    |--------------------------------------------------------------------------
-                    */
-
-                    try {
-
-                        final result =
-                            await apiService.processRestaurantPayment(
-
-                        orderId: order['id'],
-
-                        paymentMethod: 'cash',
-
-                        subtotal: total,
-                        taxAmount: 0,
-                        discountAmount: 0,
-                        totalAmount: total,
-                        );
-
-                        if (!context.mounted) return;
-
-                        /*
-                        |--------------------------------------------------------------------------
-                        | Show Success Message
-                        |--------------------------------------------------------------------------
-                        */
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(
-                            result['message'] ??
-                                'Payment processed successfully',
-                            ),
-                        ),
-                        );
-
-                        /*
-                        |--------------------------------------------------------------------------
-                        | Close Bill Screen
-                        |--------------------------------------------------------------------------
-                        */
-
-                        /*
-                        |--------------------------------------------------------------------------
-                        | Open Receipt Screen
-                        |--------------------------------------------------------------------------
-                        */
-
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ReceiptScreen(
-                              order: order,
-                              paymentMethod: 'cash',
-                              subtotal: total,
-                              taxAmount: 0,
-                              discountAmount: 0,
-                              totalAmount: total,
-                            ),
-                          ),
-                        );
-
-                    } catch (e) {
-
-                        if (!context.mounted) return;
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(e.toString()),
-                            backgroundColor: Colors.red,
-                        ),
-                        );
-                    }
-                    },
-
-                    icon: const Icon(Icons.payments),
-
-                    label: const Text(
-                    'Pay Cash',
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton.icon(
+                    onPressed: () => processPayment(
+                      subtotalAmount: subtotalAmount,
+                      discountAmount: discountAmount,
+                      vatIncluded: vatIncluded,
+                      finalTotal: finalTotal,
                     ),
-                ),
+                    icon: const Icon(Icons.payments),
+                    label: Text(
+                      paymentMethod == 'complimentary'
+                          ? 'Settle Complimentary'
+                          : 'Pay ${paymentMethod.toUpperCase()}',
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Summary Row Widget
+|--------------------------------------------------------------------------
+| Reusable row for bill totals.
+*/
+
+class _SummaryRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isBold;
+
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    this.isBold = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextStyle(
+      fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+      fontSize: isBold ? 22 : 15,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: style),
+          Text(value, style: style),
         ],
       ),
     );

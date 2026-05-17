@@ -59,7 +59,11 @@ class ReceiptScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = order['items'] as List<dynamic>;
+    final items = (order['items'] as List<dynamic>)
+    .where(
+      (item) => item['is_voided'] != true,
+    )
+    .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),

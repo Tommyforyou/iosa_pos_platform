@@ -22,6 +22,7 @@ class RestaurantOrder extends Model
         'order_type',
         'status',
         'notes',
+        'discount_percentage',
 
         /*
         |--------------------------------------------------------------------------

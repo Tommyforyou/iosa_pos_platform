@@ -289,14 +289,27 @@ class RestaurantOrderController extends Controller
         */
 
         $validated = $request->validate([
+            /*
+            |--------------------------------------------------------------------------
+            | Supported Payment Methods
+            |--------------------------------------------------------------------------
+            | cash
+            | card
+            | juice
+            | cheque
+            | complimentary
+            | mixed
+            */
+
             'payment_method' => [
                 'required',
-                'in:cash,card,mixed',
+                'in:cash,card,juice,cheque,complimentary,mixed',
             ],
 
             'subtotal' => ['required', 'numeric'],
             'tax_amount' => ['required', 'numeric'],
             'discount_amount' => ['required', 'numeric'],
+            'discount_percentage' => ['nullable', 'numeric'],
             'total_amount' => ['required', 'numeric'],
         ]);
 
@@ -580,6 +593,52 @@ class RestaurantOrderController extends Controller
             */
 
             'orders' => $orders,
+        ]);
+    }
+    /*
+    |--------------------------------------------------------------------------
+    | Void Restaurant Order Item
+    |--------------------------------------------------------------------------
+    | Used by cashier/manager to void a disputed item before payment.
+    |
+    | This does NOT delete the row from database.
+    | It marks the item as voided for audit purposes.
+    */
+    public function voidOrderItem(Request $request, $itemId)
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Validate Void Reason
+        |--------------------------------------------------------------------------
+        */
+
+        $validated = $request->validate([
+            'void_reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Find Order Item
+        |--------------------------------------------------------------------------
+        */
+
+        $item = RestaurantOrderItem::findOrFail($itemId);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Mark Item As Voided
+        |--------------------------------------------------------------------------
+        */
+
+        $item->update([
+            'is_voided' => true,
+            'void_reason' => $validated['void_reason'],
+            'voided_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Item voided successfully',
         ]);
     }
 
