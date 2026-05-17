@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProductCategoryController;
 use App\Http\Controllers\Api\RestaurantTableController;
 use App\Http\Controllers\Api\RestaurantOrderController;
+use App\Http\Controllers\Api\CustomerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -302,9 +303,42 @@ Route::get(
     [ProductCategoryController::class, 'activeCategories']
 );
 
+/*
+|--------------------------------------------------------------------------
+| Kitchen Display System
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    'kitchen/orders',
+    [RestaurantOrderController::class, 'kitchenOrders']
+);
+
+Route::post(
+    'kitchen/orders/{restaurantOrder}/status',
+    [RestaurantOrderController::class, 'updateKitchenStatus']
+);
 
 
+/*
+|--------------------------------------------------------------------------
+| Customers
+|--------------------------------------------------------------------------
+*/
 
+Route::get(
+    'customers/search-by-phone',
+    [CustomerController::class, 'searchByPhone']
+);
+
+Route::apiResource(
+    'customers',
+    CustomerController::class
+)->only([
+    'index',
+    'store',
+    'update',
+]);
 
 
 

@@ -84,7 +84,7 @@ class RestaurantOrderController extends Controller
                     'business_id' => 1,
                     'restaurant_table_id' => $validated['restaurant_table_id'] ?? null,
                     'user_id' => null,
-                    'order_number' => 'ORD-' . time(),
+                    'order_number' => 'ORD-' . now()->format('YmdHis') . '-' . random_int(1000, 9999),
                     'order_type' => $validated['order_type'],
                     'status' => 'sent_to_kitchen',
                     'notes' => $validated['notes'] ?? null,
@@ -396,6 +396,36 @@ class RestaurantOrderController extends Controller
             ], 500);
         }
     }
+    
+   
+    /*
+    |--------------------------------------------------------------------------
+    | Update Kitchen Status
+    |--------------------------------------------------------------------------
+    | Updates kitchen workflow state.
+    */
+
+    public function updateKitchenStatus(
+        Request $request,
+        RestaurantOrder $restaurantOrder
+    ) {
+        $validated = $request->validate([
+            'status' => [
+                'required',
+                'in:sent_to_kitchen,preparing,ready,served',
+            ],
+        ]);
+
+        $restaurantOrder->update([
+            'status' => $validated['status'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kitchen status updated',
+        ]);
+    }    
+    
     /*
     |--------------------------------------------------------------------------
     | Sales Dashboard
@@ -680,6 +710,7 @@ class RestaurantOrderController extends Controller
             'items.*.quantity' => ['required', 'numeric', 'min:1'],
             'items.*.price' => ['required', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string'],
+            'customer_id' => ['nullable', 'exists:customers,id'],
         ]);
 
         DB::beginTransaction();
@@ -715,10 +746,11 @@ class RestaurantOrderController extends Controller
                     'business_id' => 1,
                     'restaurant_table_id' => $validated['restaurant_table_id'] ?? null,
                     'user_id' => null,
-                    'order_number' => 'ORD-' . time(),
+                    'order_number' => 'ORD-' . now()->format('YmdHis') . '-' . random_int(1000, 9999),
                     'order_type' => $validated['order_type'],
                     'status' => 'open',
                     'notes' => $validated['notes'] ?? null,
+                    'customer_id' => $validated['customer_id'] ?? null,
                 ]);
             }
 
@@ -890,7 +922,7 @@ class RestaurantOrderController extends Controller
                 'business_id' => 1,
                 'restaurant_table_id' => null,
                 'user_id' => null,
-                'order_number' => 'ORD-' . time(),
+                'order_number' => 'ORD-' . now()->format('YmdHis') . '-' . random_int(1000, 9999),
                 'order_type' => 'takeaway',
                 'status' => 'sent_to_kitchen',
                 'notes' => $validated['notes'] ?? null,

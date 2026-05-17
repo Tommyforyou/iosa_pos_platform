@@ -155,6 +155,133 @@ class ApiService {
     throw Exception('Failed to load active order');
   }
 
+
+/*
+|--------------------------------------------------------------------------
+| Kitchen Display Orders
+|--------------------------------------------------------------------------
+| Returns active kitchen workflow orders.
+*/
+
+Future<List<dynamic>> getKitchenDisplayOrders() async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/kitchen/orders'),
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+
+    return data['orders'] ?? [];
+  }
+
+  throw Exception(
+    'Failed to load kitchen orders',
+  );
+}
+  /*
+  |--------------------------------------------------------------------------
+  | Search Customer By Phone
+  |--------------------------------------------------------------------------
+  */
+
+  Future<Map<String, dynamic>?> searchCustomerByPhone(
+    String phone,
+  ) async {
+    final response = await http.get(
+      Uri.parse(
+        '$baseUrl/customers/search-by-phone?phone=$phone',
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      return data['customer'];
+    }
+
+    throw Exception(
+      'Failed to search customer',
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Create Customer
+  |--------------------------------------------------------------------------
+  */
+
+  Future<Map<String, dynamic>> createCustomer({
+    required String name,
+    required String phone,
+    String? address,
+    String? email,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/customers'),
+
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+
+      body: jsonEncode({
+        'name': name,
+        'phone': phone,
+        'address': address,
+        'email': email,
+      }),
+    );
+
+    if (response.statusCode == 200 ||
+        response.statusCode == 201) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception(
+      'Failed to create customer',
+    );
+  }
+  
+  /*
+  |--------------------------------------------------------------------------
+  | Update Kitchen Order Status
+  |--------------------------------------------------------------------------
+  | Kitchen workflow progression.
+  |
+  | sent_to_kitchen
+  | -> preparing
+  | -> ready
+  | -> served
+  */
+
+  Future<void> updateKitchenOrderStatus({
+    required int orderId,
+    required String status,
+  }) async {
+    final response = await http.post(
+      Uri.parse(
+        '$baseUrl/kitchen/orders/$orderId/status',
+      ),
+
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+
+      body: jsonEncode({
+        'status': status,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to update kitchen order status',
+      );
+    }
+  }
+
+
+
   /*
   |--------------------------------------------------------------------------
   | Update Kitchen Item Status
@@ -289,6 +416,7 @@ class ApiService {
   | before sending to kitchen.
   */
   Future<Map<String, dynamic>> saveDraftRestaurantOrder({
+    int? customerId,
     int? restaurantTableId,
     required String orderType,
     required List<Map<String, dynamic>> items,
@@ -302,9 +430,11 @@ class ApiService {
       },
       body: jsonEncode({
         'restaurant_table_id': restaurantTableId,
+        'customer_id': customerId,        
         'order_type': orderType,
         'items': items,
         'notes': notes,
+
       }),
     );
 

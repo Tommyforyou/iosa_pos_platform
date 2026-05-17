@@ -58,4 +58,9 @@ class RestaurantOrder extends Model
     {
         return $this->hasMany(RestaurantOrderItem::class);
     }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }

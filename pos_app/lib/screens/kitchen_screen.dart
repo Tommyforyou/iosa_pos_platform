@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
@@ -52,6 +53,13 @@ class _KitchenScreenState extends State<KitchenScreen> {
   */
   List<dynamic> orders = [];
   bool isLoading = true;
+  /*
+  |--------------------------------------------------------------------------
+  | Auto Refresh Timer
+  |--------------------------------------------------------------------------
+  */
+
+  Timer? refreshTimer;
 
   @override
   void initState() {
@@ -64,6 +72,17 @@ class _KitchenScreenState extends State<KitchenScreen> {
     | Load active orders immediately when kitchen screen opens.
     */
     loadOrders();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Auto Refresh Every 5 Seconds
+    |--------------------------------------------------------------------------
+    */
+
+    refreshTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => loadOrders(),
+    );
   }
 
   /*
@@ -118,6 +137,68 @@ class _KitchenScreenState extends State<KitchenScreen> {
     return order['table']['table_name'] ?? 'Table';
   }
 
+  @override
+  void dispose() {
+    refreshTimer?.cancel();
+    super.dispose();
+  }
+ 
+  /*
+  |--------------------------------------------------------------------------
+  | Kitchen Status Color
+  |--------------------------------------------------------------------------
+  */
+
+  Color kitchenStatusColor(String status) {
+    switch (status) {
+      case 'pending':
+        return Colors.orange;
+
+      case 'preparing':
+        return Colors.blue;
+
+      case 'ready':
+        return Colors.green;
+
+      case 'served':
+        return Colors.grey;
+
+      default:
+        return Colors.blueGrey;
+    }
+  }
+  /*
+  |--------------------------------------------------------------------------
+  | Order Age
+  |--------------------------------------------------------------------------
+  */
+
+  String orderAge(dynamic order) {
+    final createdAt = DateTime.tryParse(
+      order['created_at'].toString(),
+    );
+
+    if (createdAt == null) {
+      return '-';
+    }
+
+    final diff = DateTime.now().difference(createdAt);
+
+    if (diff.inMinutes < 1) {
+      return 'Just now';
+    }
+
+    if (diff.inMinutes < 60) {
+      return '${diff.inMinutes} min';
+    }
+
+    return '${diff.inHours}h ${diff.inMinutes % 60}m';
+  }
+   /*
+  |--------------------------------------------------------------------------
+  | Build
+  |--------------------------------------------------------------------------
+  */
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -227,20 +308,46 @@ class _KitchenScreenState extends State<KitchenScreen> {
                             | Order Header
                             |--------------------------------------------------------------------------
                             */
-                            Text(
-                              tableName(order),
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+
+                              decoration: BoxDecoration(
+                               color: kitchenStatusColor(
+                                  items.isNotEmpty
+                                      ? items.first['kitchen_status']
+                                      : 'pending',
+                                ),
+
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                            ),
 
-                            const SizedBox(height: 4),
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
 
-                            Text(
-                              order['order_number'],
-                              style: const TextStyle(
-                                color: Colors.grey,
+                                children: [
+                                  Text(
+                                    tableName(order),
+
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 4),
+
+                                  Text(
+                                    '${order['order_number']} • ${orderAge(order)}',
+
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
 

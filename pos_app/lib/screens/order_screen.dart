@@ -7,16 +7,21 @@ import '../utils/money.dart';
 |--------------------------------------------------------------------------
 | Order Screen
 |--------------------------------------------------------------------------
-| Used for table-service, takeaway, and delivery ordering.
+| Used for:
+| - dine-in table orders
+| - takeaway orders
+| - delivery orders
 |
-| Main responsibilities:
+| Responsibilities:
 | - load active categories
 | - load products
 | - show visual category cards
 | - show product image cards
+| - manage order cart
 | - save draft orders
-| - reopen existing draft/active table orders
+| - reopen existing table draft/order
 | - send draft items to kitchen
+| - capture customer details for takeaway/delivery
 */
 
 class OrderScreen extends StatefulWidget {
@@ -24,8 +29,7 @@ class OrderScreen extends StatefulWidget {
   |--------------------------------------------------------------------------
   | Order Context
   |--------------------------------------------------------------------------
-  | table is required only for dine-in orders.
-  | takeaway and delivery orders do not use restaurant tables.
+  | table is used only for dine-in orders.
   */
 
   final Map<String, dynamic>? table;
@@ -63,8 +67,6 @@ class _OrderScreenState extends State<OrderScreen> {
   |--------------------------------------------------------------------------
   | Cart State
   |--------------------------------------------------------------------------
-  | cart = all visible items
-  | newItems = items added during this screen session
   */
 
   List<Map<String, dynamic>> cart = [];
@@ -74,7 +76,6 @@ class _OrderScreenState extends State<OrderScreen> {
   |--------------------------------------------------------------------------
   | Active Order
   |--------------------------------------------------------------------------
-  | Stores database order ID for draft-to-kitchen transition.
   */
 
   int? activeOrderId;
@@ -88,10 +89,34 @@ class _OrderScreenState extends State<OrderScreen> {
   bool isLoading = true;
   int? selectedCategoryId;
 
+  /*
+  |--------------------------------------------------------------------------
+  | Customer Information
+  |--------------------------------------------------------------------------
+  | Used for takeaway and delivery orders.
+  */
+
+  Map<String, dynamic>? selectedCustomer;
+
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController customerNameController =
+      TextEditingController();
+  final TextEditingController addressController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
+
     loadInitialData();
+  }
+
+  @override
+  void dispose() {
+    phoneController.dispose();
+    customerNameController.dispose();
+    addressController.dispose();
+
+    super.dispose();
   }
 
   /*
@@ -132,10 +157,6 @@ class _OrderScreenState extends State<OrderScreen> {
   |--------------------------------------------------------------------------
   | Load Initial Data
   |--------------------------------------------------------------------------
-  | Loads:
-  | - active categories
-  | - products
-  | - existing active order for dine-in table
   */
 
   Future<void> loadInitialData() async {
@@ -148,6 +169,12 @@ class _OrderScreenState extends State<OrderScreen> {
         'order': null,
       };
 
+      /*
+      |--------------------------------------------------------------------------
+      | Load Existing Dine-In Order
+      |--------------------------------------------------------------------------
+      */
+
       if (widget.orderType == 'dine_in' && widget.table != null) {
         activeOrderData = await apiService.getActiveOrderByTable(
           widget.table!['id'],
@@ -156,16 +183,30 @@ class _OrderScreenState extends State<OrderScreen> {
 
       final List<Map<String, dynamic>> existingCart = [];
 
-      /*
-      |--------------------------------------------------------------------------
-      | Load Existing Active Order Items
-      |--------------------------------------------------------------------------
-      */
-
       if (activeOrderData['success'] == true &&
           activeOrderData['order'] != null &&
           activeOrderData['order']['items'] != null) {
         activeOrderId = activeOrderData['order']['id'];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Existing Customer
+        |--------------------------------------------------------------------------
+        */
+
+        if (activeOrderData['order']['customer'] != null) {
+          selectedCustomer = activeOrderData['order']['customer'];
+
+          phoneController.text = selectedCustomer?['phone'] ?? '';
+          customerNameController.text = selectedCustomer?['name'] ?? '';
+          addressController.text = selectedCustomer?['address'] ?? '';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Existing Order Items
+        |--------------------------------------------------------------------------
+        */
 
         for (final item in activeOrderData['order']['items']) {
           if (item['is_voided'] == true) {
@@ -197,6 +238,92 @@ class _OrderScreenState extends State<OrderScreen> {
         isLoading = false;
       });
     }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Search Customer By Phone
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> searchCustomer() async {
+    if (phoneController.text.trim().isEmpty) {
+      return;
+    }
+
+    try {
+      final customer = await apiService.searchCustomerByPhone(
+        phoneController.text.trim(),
+      );
+
+      if (customer != null) {
+        setState(() {
+          selectedCustomer = customer;
+
+          customerNameController.text = customer['name'] ?? '';
+          addressController.text = customer['address'] ?? '';
+        });
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Existing customer found'),
+          ),
+        );
+      } else {
+        setState(() {
+          selectedCustomer = null;
+          customerNameController.clear();
+          addressController.clear();
+        });
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No customer found. Enter details to create new.'),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Create Customer If Needed
+  |--------------------------------------------------------------------------
+  */
+
+  Future<int?> ensureCustomerExists() async {
+    if (widget.orderType == 'dine_in') {
+      return null;
+    }
+
+    if (selectedCustomer != null) {
+      return selectedCustomer!['id'];
+    }
+
+    if (phoneController.text.trim().isEmpty ||
+        customerNameController.text.trim().isEmpty) {
+      return null;
+    }
+
+    final result = await apiService.createCustomer(
+      name: customerNameController.text.trim(),
+      phone: phoneController.text.trim(),
+      address: addressController.text.trim(),
+    );
+
+    final customer = result['customer'];
+
+    setState(() {
+      selectedCustomer = customer;
+    });
+
+    return customer['id'];
   }
 
   /*
@@ -250,7 +377,6 @@ class _OrderScreenState extends State<OrderScreen> {
   |--------------------------------------------------------------------------
   | Remove Item From Cart
   |--------------------------------------------------------------------------
-  | Only unsent items should be removed freely.
   */
 
   void removeFromCart(int productId) {
@@ -285,7 +411,7 @@ class _OrderScreenState extends State<OrderScreen> {
 
   /*
   |--------------------------------------------------------------------------
-  | Calculate Total Amount
+  | Total Amount
   |--------------------------------------------------------------------------
   */
 
@@ -311,17 +437,29 @@ class _OrderScreenState extends State<OrderScreen> {
     }
 
     try {
+      final customerId = await ensureCustomerExists();
+
       final result = await apiService.saveDraftRestaurantOrder(
         restaurantTableId: widget.table?['id'],
+        customerId: customerId,
         orderType: widget.orderType,
         items: cart,
         notes: null,
       );
 
       activeOrderId = result['order_id'];
-    } catch (e) {
-      debugPrint(e.toString());
-    }
+      } catch (e) {
+        debugPrint(e.toString());
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
   }
 
   /*
@@ -511,6 +649,72 @@ class _OrderScreenState extends State<OrderScreen> {
 
   /*
   |--------------------------------------------------------------------------
+  | Customer Panel
+  |--------------------------------------------------------------------------
+  */
+
+  Widget customerPanel() {
+    if (widget.orderType == 'dine_in') {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade300,
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: phoneController,
+                  decoration: const InputDecoration(
+                    labelText: 'Customer Phone',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton.icon(
+                onPressed: searchCustomer,
+                icon: const Icon(Icons.search),
+                label: const Text('Search'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: customerNameController,
+            decoration: const InputDecoration(
+              labelText: 'Customer Name',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          if (widget.orderType == 'delivery') ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: addressController,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Delivery Address',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
   | Build
   |--------------------------------------------------------------------------
   */
@@ -538,6 +742,8 @@ class _OrderScreenState extends State<OrderScreen> {
                   )
                 : Column(
                     children: [
+                      customerPanel(),
+
                       /*
                       |--------------------------------------------------------------------------
                       | Category Bar
