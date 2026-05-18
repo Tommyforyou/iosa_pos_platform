@@ -25,6 +25,7 @@ class Product extends Model
         'is_active',
         'description',
         'image_path',
+        'vat_type',
     ];
 
     protected $appends = [

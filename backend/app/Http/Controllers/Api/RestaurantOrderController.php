@@ -170,8 +170,23 @@ class RestaurantOrderController extends Controller
     */
     public function kitchenOrders()
     {
-        return RestaurantOrder::with(['table', 'items'])
-            ->whereIn('status', ['open', 'sent_to_kitchen', 'preparing'])
+        return RestaurantOrder::with(['table', 'customer', 'items.product'])
+            ->whereHas('items', function ($query) {
+                $query->whereIn('kitchen_status', [
+                    'pending',
+                    'preparing',
+                    'ready',
+                ]);
+            })
+            ->with([
+                'items' => function ($query) {
+                    $query->whereIn('kitchen_status', [
+                        'pending',
+                        'preparing',
+                        'ready',
+                    ]);
+                },
+            ])
             ->latest()
             ->get();
     }
@@ -894,7 +909,7 @@ class RestaurantOrderController extends Controller
             'items.*.name' => ['required', 'string'],
             'items.*.quantity' => ['required', 'numeric', 'min:1'],
             'items.*.price' => ['required', 'numeric', 'min:0'],
-
+            'buzzer_number' => ['nullable', 'string', 'max:50'],
             'payment_method' => [
                 'required',
                 'in:cash,card,juice,cheque,complimentary,mixed',
@@ -907,6 +922,7 @@ class RestaurantOrderController extends Controller
             'total_amount' => ['required', 'numeric'],
 
             'notes' => ['nullable', 'string'],
+            'buzzer_number' => ['nullable','string','max:50', ],
         ]);
 
         DB::beginTransaction();
@@ -926,6 +942,7 @@ class RestaurantOrderController extends Controller
                 'order_type' => 'takeaway',
                 'status' => 'sent_to_kitchen',
                 'notes' => $validated['notes'] ?? null,
+                'buzzer_number' => $validated['buzzer_number'] ?? null,
 
                 /*
                 |--------------------------------------------------------------------------

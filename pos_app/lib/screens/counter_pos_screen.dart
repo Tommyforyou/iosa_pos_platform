@@ -84,6 +84,16 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
 
   /*
   |--------------------------------------------------------------------------
+  | Food Court Buzzer
+  |--------------------------------------------------------------------------
+  */
+
+  final TextEditingController buzzerController =
+      TextEditingController();
+
+
+  /*
+  |--------------------------------------------------------------------------
   | Discount Options
   |--------------------------------------------------------------------------
   */
@@ -276,6 +286,7 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
         discountAmount: discountAmount,
         discountPercentage: discountPercentage,
         totalAmount: finalTotal,
+        buzzerNumber: buzzerController.text.trim(),
       );
 
       if (!mounted) return;
@@ -308,6 +319,24 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
       );
     }
   }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Dispose Controllers
+  |--------------------------------------------------------------------------
+  */
+
+  @override
+  void dispose() {
+    buzzerController.dispose();
+    super.dispose();
+  }
+  
+  /*
+    |--------------------------------------------------------------------------
+    | Build
+    |--------------------------------------------------------------------------
+    */
 
   @override
   Widget build(BuildContext context) {
@@ -651,6 +680,31 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
                         ),
 
                         const SizedBox(height: 16),
+                        /*
+                        |--------------------------------------------------------------------------
+                        | Buzzer Number
+                        |--------------------------------------------------------------------------
+                        */
+
+                        TextField(
+                          controller: buzzerController,
+
+                          decoration: InputDecoration(
+                            labelText: 'Buzzer Number',
+                            hintText: 'Optional',
+
+                            prefixIcon: const Icon(
+                              Icons.notifications_active,
+                            ),
+
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
 
                         /*
                         |--------------------------------------------------------------------------

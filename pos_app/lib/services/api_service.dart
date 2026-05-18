@@ -365,6 +365,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
         'tax_amount': taxAmount,
         'discount_amount': discountAmount,
         'total_amount': totalAmount,
+        
       }),
     );
 
@@ -489,13 +490,24 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
     required double discountAmount,
     required double discountPercentage,
     required double totalAmount,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Food Court Buzzer
+    |--------------------------------------------------------------------------
+    */
+
+    String? buzzerNumber,
   }) async {
+
     final response = await http.post(
       Uri.parse('$baseUrl/counter-orders'),
+
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
+
       body: jsonEncode({
         'items': items,
         'payment_method': paymentMethod,
@@ -504,14 +516,26 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
         'discount_amount': discountAmount,
         'discount_percentage': discountPercentage,
         'total_amount': totalAmount,
+
+        /*
+        |--------------------------------------------------------------------------
+        | Buzzer Number
+        |--------------------------------------------------------------------------
+        */
+
+        'buzzer_number': buzzerNumber,
       }),
     );
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
+    if (response.statusCode == 200 ||
+        response.statusCode == 201) {
+
       return jsonDecode(response.body);
     }
 
-    throw Exception('Failed to process counter order: ${response.body}');
+    throw Exception(
+      'Failed to process counter order: ${response.body}',
+    );
   }
   /*
   |--------------------------------------------------------------------------
