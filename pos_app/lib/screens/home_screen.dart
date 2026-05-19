@@ -8,6 +8,7 @@ import 'daily_sales_report_screen.dart';
 import 'counter_pos_screen.dart';
 import 'category_management_screen.dart';
 import 'product_management_screen.dart';
+import 'sales_history_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -191,6 +192,21 @@ class HomeScreen extends StatelessWidget {
                 const CounterPosScreen(),
               ),
             ),
+            /*
+            |--------------------------------------------------------------------------
+            | Show Sales History
+            |--------------------------------------------------------------------------
+            | Allow to view / reprint Sales receipt
+            */
+            _HomeCard(
+              title: 'Sales History',
+              subtitle: 'View sales and reprint receipts',
+              icon: Icons.receipt_long,
+              onTap: () => openScreen(
+                context,
+                const SalesHistoryScreen(),
+              ),
+            ),            
             /*
             |--------------------------------------------------------------------------
             | Manage Categories

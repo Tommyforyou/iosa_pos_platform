@@ -164,6 +164,47 @@ class RestaurantOrderController extends Controller
 
     /*
     |--------------------------------------------------------------------------
+    | Sales History
+    |--------------------------------------------------------------------------
+    | Returns paid/completed orders with optional date filtering.
+    */
+
+    public function salesHistory(Request $request)
+    {
+        $query = RestaurantOrder::with([
+                'table',
+                'customer',
+                'items',
+            ])
+            ->whereIn('payment_status', [
+                'paid',
+            ]);
+            
+            if ($request->filled('from')) {
+                $from = \Carbon\Carbon::parse($request->from, 'Indian/Mauritius')
+                    ->startOfDay()
+                    ->timezone('UTC');
+
+                $query->where('paid_at', '>=', $from);
+            }
+
+            if ($request->filled('to')) {
+                $to = \Carbon\Carbon::parse($request->to, 'Indian/Mauritius')
+                    ->endOfDay()
+                    ->timezone('UTC');
+
+                $query->where('paid_at', '<=', $to);
+            }
+
+        return $query
+            ->latest('paid_at')
+            ->limit(500)
+            ->get();
+    }
+    
+    
+    /*
+    |--------------------------------------------------------------------------
     | Kitchen Orders
     |--------------------------------------------------------------------------
     | Returns all active orders that should appear on the kitchen display.
@@ -994,7 +1035,7 @@ class RestaurantOrderController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Counter order paid and sent to kitchen',
-                'order' => $order,
+                'order' => $order->fresh(['table', 'customer', 'items']),
             ]);
 
         } catch (\Exception $e) {

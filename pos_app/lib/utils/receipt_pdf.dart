@@ -7,25 +7,19 @@ import 'money.dart';
 
 /*
 |--------------------------------------------------------------------------
-| Generate Receipt PDF
+| Generate Thermal Receipt PDF
 |--------------------------------------------------------------------------
-| Creates printable POS receipt PDF.
+| 80mm thermal receipt format.
 |
-| Current Features:
-| - business title
-| - order number
-| - item listing
-| - VAT included
+| Supports:
+| - compact POS receipt layout
+| - buzzer number
+| - customer details
+| - VAT-exclusive subtotal
+| - VAT amount
 | - discount
+| - total
 | - payment method
-| - totals
-|
-| Future Features:
-| - logo
-| - QR code
-| - fiscal number
-| - barcode
-| - thermal printer formatting
 */
 
 Future<Uint8List> generateReceiptPdf({
@@ -36,13 +30,20 @@ Future<Uint8List> generateReceiptPdf({
   required double discountAmount,
   required double totalAmount,
 }) async {
+  final pdf = pw.Document();
+
   /*
   |--------------------------------------------------------------------------
-  | PDF Document
+  | 80mm Thermal Page Format
   |--------------------------------------------------------------------------
   */
 
-  final pdf = pw.Document();
+  final pageFormat = PdfPageFormat.roll80.copyWith(
+    marginLeft: 8,
+    marginRight: 8,
+    marginTop: 8,
+    marginBottom: 8,
+  );
 
   /*
   |--------------------------------------------------------------------------
@@ -51,189 +52,147 @@ Future<Uint8List> generateReceiptPdf({
   */
 
   final items = (order['items'] as List<dynamic>)
-      .where(
-        (item) => item['is_voided'] != true,
-      )
+      .where((item) => item['is_voided'] != true)
       .toList();
 
   /*
   |--------------------------------------------------------------------------
-  | Build PDF Page
+  | VAT Exclusive Calculation
+  |--------------------------------------------------------------------------
+  | Current totals are VAT-inclusive.
+  */
+
+  final vatExclusiveTotal = totalAmount - taxAmount;
+
+  final taxableSales = vatExclusiveTotal;
+
+  /*
+  |--------------------------------------------------------------------------
+  | Customer Details
   |--------------------------------------------------------------------------
   */
 
+  final customer = order['customer'];
+  print('RECEIPT ORDER BUZZER: ${order['buzzer_number']}');
+  
   pdf.addPage(
     pw.Page(
-      pageFormat: PdfPageFormat.a4,
-
+      pageFormat: pageFormat,
       build: (context) {
         return pw.Column(
-          crossAxisAlignment:
-              pw.CrossAxisAlignment.start,
-
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             /*
             |--------------------------------------------------------------------------
-            | Business Header
+            | Header
             |--------------------------------------------------------------------------
             */
 
             pw.Center(
               child: pw.Text(
-                'IOSA POS RESTAURANT',
+                'IOSA RESTAURANT',
                 style: pw.TextStyle(
-                  fontSize: 24,
+                  fontSize: 14,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
             ),
 
-            pw.SizedBox(height: 6),
-
             pw.Center(
               child: pw.Text(
-                'Restaurant Receipt',
-                style: const pw.TextStyle(
-                  fontSize: 14,
-                ),
+                'Thermal Receipt',
+                style: const pw.TextStyle(fontSize: 9),
               ),
             ),
 
-            pw.Divider(),
+            _line(),
 
-            /*
-            |--------------------------------------------------------------------------
-            | Order Information
-            |--------------------------------------------------------------------------
-            */
+            _row('Receipt', order['order_number']?.toString() ?? '-'),
+            _row('Date', _formatDate(DateTime.now())),
+            _row('Payment', paymentMethod.toUpperCase()),
 
-            pw.Text(
-              'Order Number: ${order['order_number']}',
-            ),
+            if (order['buzzer_number'] != null &&
+                order['buzzer_number'].toString().isNotEmpty)
+              _row('Buzzer', order['buzzer_number'].toString(), isBold: true),
 
-            pw.Text(
-              'Payment Method: ${paymentMethod.toUpperCase()}',
-            ),
-
-            pw.Text(
-              'Date: ${DateTime.now()}',
-            ),
-
-            pw.SizedBox(height: 16),
-
-            /*
-            |--------------------------------------------------------------------------
-            | Item Listing
-            |--------------------------------------------------------------------------
-            */
-
-            pw.Table(
-              border: pw.TableBorder.all(),
-
-              columnWidths: {
-                0: const pw.FlexColumnWidth(4),
-                1: const pw.FlexColumnWidth(1.5),
-                2: const pw.FlexColumnWidth(2),
-              },
-
-              children: [
-                /*
-                |--------------------------------------------------------------------------
-                | Table Header
-                |--------------------------------------------------------------------------
-                */
-
-                pw.TableRow(
-                  decoration: const pw.BoxDecoration(
-                    color: PdfColors.grey300,
-                  ),
-
-                  children: [
-                    _cell(
-                      'Item',
-                      isBold: true,
-                    ),
-
-                    _cell(
-                      'Qty',
-                      isBold: true,
-                    ),
-
-                    _cell(
-                      'Total',
-                      isBold: true,
-                    ),
-                  ],
+            if (customer != null) ...[
+              _line(),
+              _row('Customer', customer['name']?.toString() ?? ''),
+              _row('Phone', customer['phone']?.toString() ?? ''),
+              if (customer['address'] != null &&
+                  customer['address'].toString().isNotEmpty)
+                pw.Text(
+                  'Address: ${customer['address']}',
+                  style: const pw.TextStyle(fontSize: 8),
                 ),
+            ],
 
-                /*
-                |--------------------------------------------------------------------------
-                | Item Rows
-                |--------------------------------------------------------------------------
-                */
-
-                ...items.map((item) {
-                  final quantity =
-                      toMoneyDouble(item['quantity']);
-
-                  final price =
-                      toMoneyDouble(item['unit_price']);
-
-                  final lineTotal =
-                      quantity * price;
-
-                  return pw.TableRow(
-                    children: [
-                      _cell(
-                        item['product_name'],
-                      ),
-
-                      _cell(
-                        quantity
-                            .toStringAsFixed(0),
-                      ),
-
-                      _cell(
-                        formatMoney(lineTotal),
-                      ),
-                    ],
-                  );
-                }),
-              ],
-            ),
-
-            pw.SizedBox(height: 20),
+            _line(),
 
             /*
             |--------------------------------------------------------------------------
-            | Financial Totals
+            | Items
             |--------------------------------------------------------------------------
             */
 
-            _summaryRow(
-              'Subtotal',
-              formatMoney(subtotal),
+            ...items.map((item) {
+              final qty = toMoneyDouble(item['quantity']);
+              final price = toMoneyDouble(item['unit_price']);
+              final lineTotal = qty * price;
+
+              return pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    item['product_name']?.toString() ?? '',
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  _row(
+                    '${qty.toStringAsFixed(0)} x ${formatMoney(price)}',
+                    formatMoney(lineTotal),
+                  ),
+                  pw.SizedBox(height: 3),
+                ],
+              );
+            }),
+
+            _line(),
+
+            /*
+            |--------------------------------------------------------------------------
+            | VAT Summary
+            |--------------------------------------------------------------------------
+            */
+
+            _row(
+              'Taxable Sales',
+              formatMoney(taxableSales),
             ),
 
-            _summaryRow(
-              'Discount',
-              '- ${formatMoney(discountAmount)}',
-            ),
-
-            _summaryRow(
-              'VAT Included',
+            _row(
+              'VAT',
               formatMoney(taxAmount),
             ),
 
-            pw.Divider(),
+            if (discountAmount > 0)
+              _row(
+                'Discount',
+                '- ${formatMoney(discountAmount)}',
+              ),
 
-            _summaryRow(
+            _line(),
+
+            _row(
               'TOTAL',
               formatMoney(totalAmount),
               isBold: true,
+              fontSize: 12,
             ),
 
-            pw.SizedBox(height: 30),
+            _line(),
 
             /*
             |--------------------------------------------------------------------------
@@ -243,10 +202,20 @@ Future<Uint8List> generateReceiptPdf({
 
             pw.Center(
               child: pw.Text(
-                'Thank you for your visit',
+                'Thank you',
                 style: pw.TextStyle(
+                  fontSize: 10,
                   fontWeight: pw.FontWeight.bold,
                 ),
+              ),
+            ),
+
+            pw.SizedBox(height: 8),
+
+            pw.Center(
+              child: pw.Text(
+                'Powered by IOSA POS',
+                style: const pw.TextStyle(fontSize: 7),
               ),
             ),
           ],
@@ -260,62 +229,68 @@ Future<Uint8List> generateReceiptPdf({
 
 /*
 |--------------------------------------------------------------------------
-| Table Cell Helper
+| Row Helper
 |--------------------------------------------------------------------------
 */
 
-pw.Widget _cell(
-  String text, {
+pw.Widget _row(
+  String left,
+  String right, {
   bool isBold = false,
+  double fontSize = 8,
 }) {
+  final style = pw.TextStyle(
+    fontSize: fontSize,
+    fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
+  );
+
   return pw.Padding(
-    padding: const pw.EdgeInsets.all(8),
-
-    child: pw.Text(
-      text,
-
-      style: pw.TextStyle(
-        fontWeight:
-            isBold
-                ? pw.FontWeight.bold
-                : pw.FontWeight.normal,
-      ),
+    padding: const pw.EdgeInsets.symmetric(vertical: 1.5),
+    child: pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Expanded(
+          flex: 3,
+          child: pw.Text(left, style: style),
+        ),
+        pw.SizedBox(width: 4),
+        pw.Expanded(
+          flex: 2,
+          child: pw.Text(
+            right,
+            textAlign: pw.TextAlign.right,
+            style: style,
+          ),
+        ),
+      ],
     ),
   );
 }
 
 /*
 |--------------------------------------------------------------------------
-| Summary Row Helper
+| Separator Line
 |--------------------------------------------------------------------------
 */
 
-pw.Widget _summaryRow(
-  String label,
-  String value, {
-  bool isBold = false,
-}) {
-  final style = pw.TextStyle(
-    fontSize: isBold ? 16 : 12,
-    fontWeight:
-        isBold
-            ? pw.FontWeight.bold
-            : pw.FontWeight.normal,
-  );
-
+pw.Widget _line() {
   return pw.Padding(
-    padding: const pw.EdgeInsets.symmetric(
-      vertical: 4,
-    ),
-
-    child: pw.Row(
-      mainAxisAlignment:
-          pw.MainAxisAlignment.spaceBetween,
-
-      children: [
-        pw.Text(label, style: style),
-        pw.Text(value, style: style),
-      ],
-    ),
+    padding: const pw.EdgeInsets.symmetric(vertical: 5),
+    child: pw.Divider(thickness: 0.6),
   );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Date Formatter
+|--------------------------------------------------------------------------
+*/
+
+String _formatDate(DateTime date) {
+  return '${date.day.toString().padLeft(2, '0')}/'
+      '${date.month.toString().padLeft(2, '0')}/'
+      '${date.year} '
+      '${date.hour.toString().padLeft(2, '0')}:'
+      '${date.minute.toString().padLeft(2, '0')}';
 }

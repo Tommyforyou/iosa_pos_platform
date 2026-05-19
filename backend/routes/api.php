@@ -340,7 +340,16 @@ Route::apiResource(
     'update',
 ]);
 
+/*
+|--------------------------------------------------------------------------
+| Sales History and Reprint Invoice
+|--------------------------------------------------------------------------
+*/
 
+Route::get(
+    'sales-history',
+    [RestaurantOrderController::class, 'salesHistory']
+);
 
 
 Route::get('/user', function (Request $request) {

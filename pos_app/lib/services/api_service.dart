@@ -392,6 +392,35 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
 
     throw Exception('Failed to load dashboard statistics');
   }
+  
+  /*
+  |--------------------------------------------------------------------------
+  | Sales History
+  |--------------------------------------------------------------------------
+  */
+
+  Future<List<dynamic>> getSalesHistory({
+    String? from,
+    String? to,
+  }) async {
+    final uri = Uri.parse('$baseUrl/sales-history').replace(
+      queryParameters: {
+        if (from != null) 'from': from,
+        if (to != null) 'to': to,
+      },
+    );
+
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception(
+      'Failed to load sales history',
+    );
+  }
+  
   /*
   |--------------------------------------------------------------------------
   | Load Daily Sales Report
