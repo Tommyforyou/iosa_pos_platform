@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
+import 'supplier_form_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -13,12 +14,10 @@ class SupplierScreen extends StatefulWidget {
   const SupplierScreen({super.key});
 
   @override
-  State<SupplierScreen> createState() =>
-      _SupplierScreenState();
+  State<SupplierScreen> createState() => _SupplierScreenState();
 }
 
-class _SupplierScreenState
-    extends State<SupplierScreen> {
+class _SupplierScreenState extends State<SupplierScreen> {
   /*
   |--------------------------------------------------------------------------
   | API Service
@@ -37,9 +36,7 @@ class _SupplierScreenState
 
   bool isLoading = true;
 
-  final TextEditingController
-      searchController =
-      TextEditingController();
+  final TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
@@ -67,10 +64,8 @@ class _SupplierScreenState
         isLoading = true;
       });
 
-      final data =
-          await apiService.getSuppliers(
-        search:
-            searchController.text.trim(),
+      final data = await apiService.getSuppliers(
+        search: searchController.text.trim(),
       );
 
       if (!mounted) return;
@@ -98,8 +93,7 @@ class _SupplierScreenState
 
   int activeSuppliers() {
     return suppliers.where((supplier) {
-      return supplier['is_active'] ==
-          true;
+      return supplier['is_active'] == true;
     }).length;
   }
 
@@ -117,90 +111,62 @@ class _SupplierScreenState
   }) {
     return Expanded(
       child: Container(
-        padding:
-            const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(18),
 
         decoration: BoxDecoration(
           color: Colors.white,
 
-          borderRadius:
-              BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(22),
 
-          border: Border.all(
-            color: Colors.grey.shade200,
-          ),
+          border: Border.all(color: Colors.grey.shade200),
 
           boxShadow: [
             BoxShadow(
-              color: Colors.black
-                  .withOpacity(0.04),
+              color: Colors.black.withOpacity(0.04),
 
               blurRadius: 12,
 
-              offset:
-                  const Offset(0, 4),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
 
         child: Row(
           children: [
-
             Container(
               width: 48,
               height: 48,
 
               decoration: BoxDecoration(
-                color:
-                    color.withOpacity(0.12),
+                color: color.withOpacity(0.12),
 
-                borderRadius:
-                    BorderRadius.circular(
-                        16),
+                borderRadius: BorderRadius.circular(16),
               ),
 
-              child: Icon(
-                icon,
-                color: color,
-              ),
+              child: Icon(icon, color: color),
             ),
 
             const SizedBox(width: 14),
 
             Expanded(
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment
-                        .start,
+                crossAxisAlignment: CrossAxisAlignment.start,
 
                 children: [
-
                   Text(
                     value,
 
-                    overflow:
-                        TextOverflow
-                            .ellipsis,
+                    overflow: TextOverflow.ellipsis,
 
-                    style:
-                        const TextStyle(
+                    style: const TextStyle(
                       fontSize: 22,
-                      fontWeight:
-                          FontWeight.bold,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
 
-                  const SizedBox(
-                      height: 3),
+                  const SizedBox(height: 3),
 
-                  Text(
-                    title,
-
-                    style: TextStyle(
-                      color: Colors
-                          .grey.shade700,
-                    ),
-                  ),
+                  Text(title, style: TextStyle(color: Colors.grey.shade700)),
                 ],
               ),
             ),
@@ -222,41 +188,23 @@ class _SupplierScreenState
     required IconData icon,
   }) {
     return Row(
-      mainAxisSize:
-          MainAxisSize.min,
+      mainAxisSize: MainAxisSize.min,
 
       children: [
-
-        Icon(
-          icon,
-          size: 16,
-          color:
-              Colors.grey.shade600,
-        ),
+        Icon(icon, size: 16, color: Colors.grey.shade600),
 
         const SizedBox(width: 5),
 
         Text(
           '$label: ',
 
-          style: TextStyle(
-            color:
-                Colors.grey.shade600,
-
-            fontSize: 13,
-          ),
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
         ),
 
         Text(
           value,
 
-          style:
-              const TextStyle(
-            fontWeight:
-                FontWeight.w600,
-
-            fontSize: 13,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
         ),
       ],
     );
@@ -268,96 +216,58 @@ class _SupplierScreenState
   |--------------------------------------------------------------------------
   */
 
-  Widget supplierCard(
-    dynamic supplier,
-  ) {
-    final name =
-        supplier['name'] ??
-            'Unknown Supplier';
+  Widget supplierCard(dynamic supplier) {
+    final name = supplier['name'] ?? 'Unknown Supplier';
 
-    final brn =
-        supplier['brn'] ?? '-';
+    final brn = supplier['brn'] ?? '-';
 
-    final vat =
-        supplier['vat_number'] ??
-            '-';
+    final vat = supplier['vat_number'] ?? '-';
 
-    final purchases =
-        supplier[
-                'purchases_count']
-            ?.toString() ??
-        '0';
+    final purchases = supplier['purchases_count']?.toString() ?? '0';
 
-    final active =
-        supplier['is_active'] ==
-            true;
+    final active = supplier['is_active'] == true;
 
     return Container(
-      margin:
-          const EdgeInsets.only(
-        bottom: 10,
-      ),
+      margin: const EdgeInsets.only(bottom: 10),
 
-      padding:
-          const EdgeInsets.all(
-        16,
-      ),
+      padding: const EdgeInsets.all(16),
 
       decoration: BoxDecoration(
         color: Colors.white,
 
-        borderRadius:
-            BorderRadius.circular(
-                22),
+        borderRadius: BorderRadius.circular(22),
 
-        border: Border.all(
-          color:
-              Colors.grey.shade200,
-        ),
+        border: Border.all(color: Colors.grey.shade200),
 
         boxShadow: [
           BoxShadow(
-            color: Colors.black
-                .withOpacity(0.03),
+            color: Colors.black.withOpacity(0.03),
 
             blurRadius: 10,
 
-            offset:
-                const Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
 
       child: Row(
         children: [
-
           /*
           |--------------------------------------------------------------------------
           | Icon
           |--------------------------------------------------------------------------
           */
-
           Container(
             width: 54,
             height: 54,
 
-            decoration:
-                BoxDecoration(
-              color: Colors.blue
-                  .withOpacity(0.12),
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.12),
 
-              borderRadius:
-                  BorderRadius
-                      .circular(18),
+              borderRadius: BorderRadius.circular(18),
             ),
 
-            child: const Icon(
-              Icons.business,
-
-              color: Colors.blue,
-
-              size: 28,
-            ),
+            child: const Icon(Icons.business, color: Colors.blue, size: 28),
           ),
 
           const SizedBox(width: 14),
@@ -367,82 +277,49 @@ class _SupplierScreenState
           | Supplier Details
           |--------------------------------------------------------------------------
           */
-
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment
-                      .start,
+              crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
-
                 Row(
                   children: [
-
                     Expanded(
                       child: Text(
                         name,
 
-                        overflow:
-                            TextOverflow
-                                .ellipsis,
+                        overflow: TextOverflow.ellipsis,
 
-                        style:
-                            const TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
 
-                          fontWeight:
-                              FontWeight
-                                  .bold,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
 
                     Container(
-                      padding:
-                          const EdgeInsets
-                              .symmetric(
-                        horizontal:
-                            10,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
 
                         vertical: 5,
                       ),
 
-                      decoration:
-                          BoxDecoration(
+                      decoration: BoxDecoration(
                         color: active
+                            ? Colors.green.withOpacity(0.12)
+                            : Colors.red.withOpacity(0.12),
 
-                            ? Colors.green
-                                .withOpacity(
-                                    0.12)
-
-                            : Colors.red
-                                .withOpacity(
-                                    0.12),
-
-                        borderRadius:
-                            BorderRadius
-                                .circular(
-                                    20),
+                        borderRadius: BorderRadius.circular(20),
                       ),
 
                       child: Text(
-                        active
-                            ? 'ACTIVE'
-                            : 'INACTIVE',
+                        active ? 'ACTIVE' : 'INACTIVE',
 
-                        style:
-                            TextStyle(
-                          color: active
-                              ? Colors
-                                  .green
+                        style: TextStyle(
+                          color: active ? Colors.green : Colors.red,
 
-                              : Colors
-                                  .red,
-
-                          fontWeight:
-                              FontWeight
-                                  .bold,
+                          fontWeight: FontWeight.bold,
 
                           fontSize: 12,
                         ),
@@ -451,35 +328,25 @@ class _SupplierScreenState
                   ],
                 ),
 
-                const SizedBox(
-                    height: 8),
+                const SizedBox(height: 8),
 
                 Wrap(
                   spacing: 16,
                   runSpacing: 6,
 
                   children: [
-
-                    infoText(
-                      label: 'BRN',
-                      value: brn,
-                      icon:
-                          Icons.badge,
-                    ),
+                    infoText(label: 'BRN', value: brn, icon: Icons.badge),
 
                     infoText(
                       label: 'VAT',
                       value: vat,
-                      icon: Icons
-                          .confirmation_number,
+                      icon: Icons.confirmation_number,
                     ),
 
                     infoText(
-                      label:
-                          'Purchases',
+                      label: 'Purchases',
                       value: purchases,
-                      icon: Icons
-                          .shopping_cart_checkout,
+                      icon: Icons.shopping_cart_checkout,
                     ),
                   ],
                 ),
@@ -492,24 +359,23 @@ class _SupplierScreenState
           | Actions
           |--------------------------------------------------------------------------
           */
-
           ElevatedButton.icon(
-            onPressed: () {
+            onPressed: () async {
+              final updated = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => SupplierFormScreen(supplier: supplier),
+                ),
+              );
 
-              /*
-              |--------------------------------------------------------------------------
-              | Supplier Detail
-              |--------------------------------------------------------------------------
-              */
-
+              if (updated == true) {
+                loadSuppliers();
+              }
             },
 
-            icon: const Icon(
-              Icons.visibility,
-            ),
+            icon: const Icon(Icons.visibility),
 
-            label:
-                const Text('View'),
+            label: const Text('View'),
           ),
         ],
       ),
@@ -523,130 +389,102 @@ class _SupplierScreenState
   */
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          const Color(
-        0xFFF4F6FA,
-      ),
+      backgroundColor: const Color(0xFFF4F6FA),
 
       body: SafeArea(
         child: Column(
           children: [
-
             /*
             |--------------------------------------------------------------------------
             | Header
             |--------------------------------------------------------------------------
             */
-
             Container(
-              padding:
-                  const EdgeInsets
-                      .fromLTRB(
-                24,
-                18,
-                24,
-                18,
-              ),
+              padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
 
-              decoration:
-                  BoxDecoration(
+              decoration: BoxDecoration(
                 color: Colors.white,
 
-                border: Border(
-                  bottom:
-                      BorderSide(
-                    color: Colors
-                        .grey
-                        .shade200,
-                  ),
-                ),
+                border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
               ),
 
               child: Row(
                 children: [
-
                   IconButton(
                     onPressed: () {
-                      Navigator.pop(
-                          context);
+                      Navigator.pop(context);
                     },
 
-                    icon: const Icon(
-                      Icons
-                          .arrow_back,
-                    ),
+                    icon: const Icon(Icons.arrow_back),
                   ),
 
-                  const SizedBox(
-                      width: 8),
+                  const SizedBox(width: 8),
 
-                  const Icon(
-                    Icons.business,
+                  const Icon(Icons.business, color: Colors.blue, size: 32),
 
-                    color:
-                        Colors.blue,
-
-                    size: 32,
-                  ),
-
-                  const SizedBox(
-                      width: 14),
+                  const SizedBox(width: 14),
 
                   const Expanded(
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment
-                              .start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
 
                       children: [
-
                         Text(
                           'Suppliers',
 
-                          style:
-                              TextStyle(
-                            fontSize:
-                                26,
+                          style: TextStyle(
+                            fontSize: 26,
 
-                            fontWeight:
-                                FontWeight
-                                    .bold,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
 
-                        SizedBox(
-                            height: 3),
+                        SizedBox(height: 3),
 
                         Text(
                           'Manage suppliers and purchasing relationships.',
 
-                          style:
-                              TextStyle(
-                            color: Colors
-                                .grey,
-                          ),
+                          style: TextStyle(color: Colors.grey),
                         ),
                       ],
                     ),
                   ),
 
-                  OutlinedButton
-                      .icon(
-                    onPressed:
-                        loadSuppliers,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
 
-                    icon: const Icon(
-                      Icons.refresh,
-                    ),
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: loadSuppliers,
 
-                    label:
-                        const Text(
-                      'Refresh',
-                    ),
+                        icon: const Icon(Icons.refresh),
+
+                        label: const Text('Refresh'),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          final created = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SupplierFormScreen(),
+                            ),
+                          );
+
+                          if (created == true) {
+                            loadSuppliers();
+                          }
+                        },
+
+                        icon: const Icon(Icons.add),
+
+                        label: const Text('New Supplier'),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -657,210 +495,125 @@ class _SupplierScreenState
             | Content
             |--------------------------------------------------------------------------
             */
-
             Expanded(
               child: Padding(
-                padding:
-                    const EdgeInsets
-                        .all(22),
+                padding: const EdgeInsets.all(22),
 
                 child: Column(
                   children: [
-
                     /*
                     |--------------------------------------------------------------------------
                     | KPI
                     |--------------------------------------------------------------------------
                     */
-
                     Row(
                       children: [
-
                         kpiCard(
-                          title:
-                              'Total Suppliers',
+                          title: 'Total Suppliers',
 
-                          value: suppliers
-                              .length
-                              .toString(),
+                          value: suppliers.length.toString(),
 
-                          icon: Icons
-                              .business,
+                          icon: Icons.business,
 
-                          color:
-                              Colors.blue,
+                          color: Colors.blue,
                         ),
 
-                        const SizedBox(
-                            width: 14),
+                        const SizedBox(width: 14),
 
                         kpiCard(
-                          title:
-                              'Active Suppliers',
+                          title: 'Active Suppliers',
 
-                          value:
-                              activeSuppliers()
-                                  .toString(),
+                          value: activeSuppliers().toString(),
 
-                          icon: Icons
-                              .verified,
+                          icon: Icons.verified,
 
-                          color: Colors
-                              .green,
+                          color: Colors.green,
                         ),
                       ],
                     ),
 
-                    const SizedBox(
-                        height: 18),
+                    const SizedBox(height: 18),
 
                     /*
                     |--------------------------------------------------------------------------
                     | Search
                     |--------------------------------------------------------------------------
                     */
-
                     Container(
-                      padding:
-                          const EdgeInsets
-                              .all(18),
+                      padding: const EdgeInsets.all(18),
 
-                      decoration:
-                          BoxDecoration(
-                        color:
-                            Colors.white,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
 
-                        borderRadius:
-                            BorderRadius
-                                .circular(
-                                    22),
+                        borderRadius: BorderRadius.circular(22),
 
-                        border:
-                            Border.all(
-                          color: Colors
-                              .grey
-                              .shade200,
-                        ),
+                        border: Border.all(color: Colors.grey.shade200),
 
                         boxShadow: [
                           BoxShadow(
-                            color: Colors
-                                .black
-                                .withOpacity(
-                                    0.03),
+                            color: Colors.black.withOpacity(0.03),
 
-                            blurRadius:
-                                10,
+                            blurRadius: 10,
 
-                            offset:
-                                const Offset(
-                                    0,
-                                    4),
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
 
                       child: Row(
                         children: [
-
                           Expanded(
-                            child:
-                                TextField(
-                              controller:
-                                  searchController,
+                            child: TextField(
+                              controller: searchController,
 
-                              onSubmitted:
-                                  (_) {
+                              onSubmitted: (_) {
                                 loadSuppliers();
                               },
 
-                              decoration:
-                                  InputDecoration(
-                                labelText:
-                                    'Search supplier, BRN or VAT',
+                              decoration: InputDecoration(
+                                labelText: 'Search supplier, BRN or VAT',
 
-                                prefixIcon:
-                                    const Icon(
-                                  Icons
-                                      .search,
-                                ),
+                                prefixIcon: const Icon(Icons.search),
 
-                                border:
-                                    OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(
-                                          14),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
                             ),
                           ),
 
-                          const SizedBox(
-                              width: 12),
+                          const SizedBox(width: 12),
 
-                          ElevatedButton
-                              .icon(
-                            onPressed:
-                                loadSuppliers,
+                          ElevatedButton.icon(
+                            onPressed: loadSuppliers,
 
-                            icon:
-                                const Icon(
-                              Icons.search,
-                            ),
+                            icon: const Icon(Icons.search),
 
-                            label:
-                                const Text(
-                              'Search',
-                            ),
+                            label: const Text('Search'),
                           ),
                         ],
                       ),
                     ),
 
-                    const SizedBox(
-                        height: 18),
+                    const SizedBox(height: 18),
 
                     /*
                     |--------------------------------------------------------------------------
                     | Supplier List
                     |--------------------------------------------------------------------------
                     */
-
                     Expanded(
                       child: isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : suppliers.isEmpty
+                          ? const Center(child: Text('No suppliers found'))
+                          : ListView.builder(
+                              itemCount: suppliers.length,
 
-                          ? const Center(
-                              child:
-                                  CircularProgressIndicator(),
-                            )
-
-                          : suppliers
-                                  .isEmpty
-
-                              ? const Center(
-                                  child:
-                                      Text(
-                                    'No suppliers found',
-                                  ),
-                                )
-
-                              : ListView
-                                  .builder(
-                                  itemCount:
-                                      suppliers
-                                          .length,
-
-                                  itemBuilder:
-                                      (
-                                    context,
-                                    index,
-                                  ) {
-                                    return supplierCard(
-                                      suppliers[
-                                          index],
-                                    );
-                                  },
-                                ),
+                              itemBuilder: (context, index) {
+                                return supplierCard(suppliers[index]);
+                              },
+                            ),
                     ),
                   ],
                 ),

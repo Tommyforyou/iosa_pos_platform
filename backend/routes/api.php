@@ -420,6 +420,7 @@ use App\Http\Controllers\Api\PurchaseController;
             );
 
             /*
+            /*
             |--------------------------------------------------------------------------
             | Suppliers
             |--------------------------------------------------------------------------
@@ -427,17 +428,22 @@ use App\Http\Controllers\Api\PurchaseController;
 
             Route::get(
                 'suppliers',
-                [SupplierController::class, 'index']
+                [ SupplierController::class, 'index' ]
+            );
+
+            Route::post(
+                'suppliers',
+                [ SupplierController::class, 'store' ]
             );
 
             Route::get(
                 'suppliers/{supplier}',
-                [SupplierController::class, 'show']
+                [ SupplierController::class, 'show' ]
             );
 
             Route::put(
                 'suppliers/{supplier}',
-                [SupplierController::class, 'update']
+                [ SupplierController::class, 'update' ]
             );
 
             Route::get( '/user', function ( Request $request ) {

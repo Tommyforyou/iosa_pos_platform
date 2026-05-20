@@ -142,6 +142,85 @@ class ApiService {
 
   /*
 |--------------------------------------------------------------------------
+| Create Supplier
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> createSupplier({
+    required String name,
+    String? brn,
+    String? vatNumber,
+    String? phone,
+    String? email,
+    String? address,
+    bool isActive = true,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/suppliers'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'name': name,
+        'brn': brn,
+        'vat_number': vatNumber,
+        'phone': phone,
+        'email': email,
+        'address': address,
+        'is_active': isActive,
+      }),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to create supplier: ${response.body}');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Update Supplier
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> updateSupplier({
+    required int supplierId,
+    required String name,
+    String? brn,
+    String? vatNumber,
+    String? phone,
+    String? email,
+    String? address,
+    bool isActive = true,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/suppliers/$supplierId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'name': name,
+        'brn': brn,
+        'vat_number': vatNumber,
+        'phone': phone,
+        'email': email,
+        'address': address,
+        'is_active': isActive,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to update supplier: ${response.body}');
+  }
+
+  /*
+|--------------------------------------------------------------------------
 | Get Supplier Detail
 |--------------------------------------------------------------------------
 */

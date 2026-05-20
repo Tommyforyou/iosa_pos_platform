@@ -44,7 +44,41 @@ class SupplierController extends Controller
             'purchases.items',
         ]);
     }
+    /*
+    |--------------------------------------------------------------------------
+    | Create Supplier
+    |--------------------------------------------------------------------------
+    */
 
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'brn' => ['nullable', 'string', 'max:255'],
+            'vat_number' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'address' => ['nullable', 'string'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $supplier = Supplier::create([
+            'business_id' => 1,
+            'name' => $validated['name'],
+            'brn' => $validated['brn'] ?? null,
+            'vat_number' => $validated['vat_number'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'email' => $validated['email'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'is_active' => $validated['is_active'] ?? true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Supplier created successfully',
+            'supplier' => $supplier,
+        ], 201);
+    }
     /*
     |--------------------------------------------------------------------------
     | Update Supplier
