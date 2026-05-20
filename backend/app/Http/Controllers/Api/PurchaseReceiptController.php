@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\PurchaseReceipt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Supplier;
+use App\Models\Purchase;
+use Illuminate\Support\Facades\DB;
 
 class PurchaseReceiptController extends Controller {
     /*
@@ -70,6 +73,79 @@ class PurchaseReceiptController extends Controller {
         ] );
     }
 
+   
+   /*
+|--------------------------------------------------------------------------
+| Convert Reviewed Receipt To Purchase
+|--------------------------------------------------------------------------
+*/
+
+public function convertToPurchase(PurchaseReceipt $purchaseReceipt)
+{
+    if ($purchaseReceipt->status !== 'reviewed') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Only reviewed receipts can be converted to purchases.',
+        ], 422);
+    }
+
+    $existingPurchase = Purchase::where(
+        'purchase_receipt_id',
+        $purchaseReceipt->id
+    )->first();
+
+    if ($existingPurchase) {
+        return response()->json([
+            'success' => false,
+            'message' => 'This receipt has already been converted to a purchase.',
+            'purchase' => $existingPurchase->load(['supplier', 'items']),
+        ], 422);
+    }
+
+    return DB::transaction(function () use ($purchaseReceipt) {
+        $supplier = Supplier::firstOrCreate(
+            [
+                'brn' => $purchaseReceipt->supplier_brn,
+            ],
+            [
+                'business_id' => $purchaseReceipt->business_id ?? 1,
+                'name' => $purchaseReceipt->supplier_name ?? 'Unknown Supplier',
+                'vat_number' => $purchaseReceipt->supplier_vat_number,
+                'is_active' => true,
+            ]
+        );
+
+        $purchase = Purchase::create([
+            'business_id' => $purchaseReceipt->business_id ?? 1,
+            'supplier_id' => $supplier->id,
+            'purchase_receipt_id' => $purchaseReceipt->id,
+            'invoice_number' => $purchaseReceipt->invoice_number,
+            'invoice_date' => $purchaseReceipt->invoice_date,
+            'subtotal_excl_vat' => $purchaseReceipt->subtotal_excl_vat,
+            'vat_amount' => $purchaseReceipt->vat_amount,
+            'total_incl_vat' => $purchaseReceipt->total_incl_vat,
+            'status' => 'posted',
+        ]);
+
+        $purchase->items()->create([
+            'description' => 'Purchase captured from OCR receipt',
+            'quantity' => 1,
+            'unit_price' => $purchaseReceipt->subtotal_excl_vat,
+            'line_total' => $purchaseReceipt->subtotal_excl_vat,
+        ]);
+
+        $purchaseReceipt->update([
+            'status' => 'converted',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Receipt converted to purchase successfully.',
+            'purchase' => $purchase->fresh(['supplier', 'items']),
+        ]);
+    });
+}
+   
     /*
     |--------------------------------------------------------------------------
     | Run OCR

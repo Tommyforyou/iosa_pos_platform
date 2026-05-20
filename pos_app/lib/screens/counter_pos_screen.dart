@@ -113,9 +113,7 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
   */
 
   double productPrice(dynamic product) {
-    return toMoneyDouble(
-      product['selling_price'] ?? product['price'],
-    );
+    return toMoneyDouble(product['selling_price'] ?? product['price']);
   }
 
   /*
@@ -167,9 +165,7 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
 
   void increaseQuantity(int productId) {
     setState(() {
-      final index = cart.indexWhere(
-        (item) => item['id'] == productId,
-      );
+      final index = cart.indexWhere((item) => item['id'] == productId);
 
       if (index >= 0) {
         cart[index]['quantity'] += 1;
@@ -185,9 +181,7 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
 
   void decreaseQuantity(int productId) {
     setState(() {
-      final index = cart.indexWhere(
-        (item) => item['id'] == productId,
-      );
+      final index = cart.indexWhere((item) => item['id'] == productId);
 
       if (index >= 0) {
         if (cart[index]['quantity'] > 1) {
@@ -277,10 +271,7 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     }
   }
@@ -298,9 +289,7 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
       context: context,
       barrierDismissible: false,
       builder: (_) {
-        return CounterPaymentDialog(
-          subtotalAmount: subtotalAmount,
-        );
+        return CounterPaymentDialog(subtotalAmount: subtotalAmount);
       },
     );
 
@@ -308,9 +297,7 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
       return;
     }
 
-    await processCounterPayment(
-      paymentData: paymentData,
-    );
+    await processCounterPayment(paymentData: paymentData);
   }
 
   /*
@@ -369,11 +356,7 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
                 ),
               )
             else
-              const Icon(
-                Icons.fastfood,
-                size: 46,
-                color: Colors.orange,
-              ),
+              const Icon(Icons.fastfood, size: 46, color: Colors.orange),
 
             const SizedBox(height: 4),
 
@@ -382,10 +365,7 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ],
         ),
@@ -443,11 +423,7 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
                   ),
                 )
               else
-                const Icon(
-                  Icons.fastfood,
-                  size: 56,
-                  color: Colors.blueGrey,
-                ),
+                const Icon(Icons.fastfood, size: 56, color: Colors.blueGrey),
 
               const SizedBox(height: 12),
 
@@ -465,9 +441,7 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
               const SizedBox(height: 8),
 
               Text(
-                formatMoney(
-                  productPrice(product),
-                ),
+                formatMoney(productPrice(product)),
                 style: const TextStyle(
                   color: Colors.green,
                   fontWeight: FontWeight.bold,
@@ -497,9 +471,7 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.grey.shade200,
-        ),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
         children: [
@@ -508,7 +480,6 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
           | Item Name And Price
           |--------------------------------------------------------------------------
           */
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -525,10 +496,7 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
                 const SizedBox(height: 4),
                 Text(
                   '${formatMoney(item['price'])} each',
-                  style: TextStyle(
-                    color: Colors.grey.shade700,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
                 ),
               ],
             ),
@@ -539,7 +507,6 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
           | Quantity Controls
           |--------------------------------------------------------------------------
           */
-
           Row(
             children: [
               IconButton(
@@ -583,16 +550,12 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
           | Line Total
           |--------------------------------------------------------------------------
           */
-
           SizedBox(
             width: 78,
             child: Text(
               formatMoney(lineTotal),
               textAlign: TextAlign.right,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
           ),
         ],
@@ -611,56 +574,22 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
     final subtotalAmount = subtotal();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6FA),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
 
-      /*
-      |--------------------------------------------------------------------------
-      | Premium App Bar
-      |--------------------------------------------------------------------------
-      */
-
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(70),
-        child: AppBar(
-          automaticallyImplyLeading: false,
-          elevation: 0,
-          title: const Text(
-            'IOSA POS',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          actions: [
-            Center(
-              child: Text(
-                TimeOfDay.now().format(context),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            IconButton(
-              onPressed: () {
-                setState(() {
-                  isLoading = true;
-                });
-
-                loadData();
-              },
-              icon: const Icon(Icons.refresh),
-            ),
-            const SizedBox(width: 12),
-          ],
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
+
+        title: const Text('Counter POS'),
+
+        elevation: 0,
       ),
 
       body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : Row(
               children: [
                 /*
@@ -668,7 +597,6 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
                 | LEFT SIDE: CATEGORIES + PRODUCTS
                 |--------------------------------------------------------------------------
                 */
-
                 Expanded(
                   flex: 3,
                   child: Column(
@@ -678,7 +606,6 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
                       | Visual Category Bar
                       |--------------------------------------------------------------------------
                       */
-
                       SizedBox(
                         height: 145,
                         child: ListView(
@@ -746,7 +673,6 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
                       | Product Grid
                       |--------------------------------------------------------------------------
                       */
-
                       Expanded(
                         child: LayoutBuilder(
                           builder: (context, constraints) {
@@ -767,11 +693,11 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
                               itemCount: filteredProducts.length,
                               gridDelegate:
                                   SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: crossAxisCount,
-                                childAspectRatio: 0.82,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 16,
-                              ),
+                                    crossAxisCount: crossAxisCount,
+                                    childAspectRatio: 0.82,
+                                    crossAxisSpacing: 16,
+                                    mainAxisSpacing: 16,
+                                  ),
                               itemBuilder: (context, index) {
                                 final product = filteredProducts[index];
 
@@ -790,7 +716,6 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
                 | RIGHT SIDE: CART + TOTAL + PAY
                 |--------------------------------------------------------------------------
                 */
-
                 Container(
                   width: 440,
                   decoration: BoxDecoration(
@@ -816,7 +741,6 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
                         | Cart Header
                         |--------------------------------------------------------------------------
                         */
-
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -842,7 +766,6 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
                         | Scrollable Cart Listing
                         |--------------------------------------------------------------------------
                         */
-
                         Expanded(
                           child: cart.isEmpty
                               ? const Center(
@@ -871,7 +794,6 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
                         | Total Summary
                         |--------------------------------------------------------------------------
                         */
-
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -900,7 +822,6 @@ class _CounterPosScreenState extends State<CounterPosScreen> {
                         | Pay Button
                         |--------------------------------------------------------------------------
                         */
-
                         SizedBox(
                           width: double.infinity,
                           height: 78,

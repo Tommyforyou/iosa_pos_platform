@@ -96,12 +96,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
       final result = await FilePicker.platform.pickFiles(
         allowMultiple: true,
         type: FileType.custom,
-        allowedExtensions: [
-          'jpg',
-          'jpeg',
-          'png',
-          'pdf',
-        ],
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
       );
 
       if (result == null || result.files.isEmpty) {
@@ -119,9 +114,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
           continue;
         }
 
-        await apiService.uploadPurchaseReceipt(
-          filePath: file.path!,
-        );
+        await apiService.uploadPurchaseReceipt(filePath: file.path!);
 
         uploadedCount++;
       }
@@ -132,9 +125,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            '$uploadedCount receipt(s) uploaded successfully',
-          ),
+          content: Text('$uploadedCount receipt(s) uploaded successfully'),
         ),
       );
     } catch (e) {
@@ -143,10 +134,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     } finally {
       if (!mounted) return;
@@ -165,31 +153,22 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
 
   Future<void> runOcr(dynamic receipt) async {
     try {
-      await apiService.runPurchaseReceiptOcr(
-        receiptId: receipt['id'],
-      );
+      await apiService.runPurchaseReceiptOcr(receiptId: receipt['id']);
 
       await loadReceipts();
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'OCR processing completed',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('OCR processing completed')));
     } catch (e) {
       debugPrint(e.toString());
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     }
   }
@@ -237,31 +216,22 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
     }
 
     try {
-      await apiService.deletePurchaseReceipt(
-        receiptId: receipt['id'],
-      );
+      await apiService.deletePurchaseReceipt(receiptId: receipt['id']);
 
       await loadReceipts();
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Purchase receipt deleted',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Purchase receipt deleted')));
     } catch (e) {
       debugPrint(e.toString());
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     }
   }
@@ -276,9 +246,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
     final updated = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PurchaseReceiptReviewScreen(
-          receipt: receipt,
-        ),
+        builder: (_) => PurchaseReceiptReviewScreen(receipt: receipt),
       ),
     );
 
@@ -361,9 +329,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: Colors.grey.shade200,
-          ),
+          border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
@@ -381,10 +347,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                 color: color.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(
-                icon,
-                color: color,
-              ),
+              child: Icon(icon, color: color),
             ),
             const SizedBox(width: 14),
             Column(
@@ -397,12 +360,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: Colors.grey.shade700,
-                  ),
-                ),
+                Text(title, style: TextStyle(color: Colors.grey.shade700)),
               ],
             ),
           ],
@@ -426,26 +384,16 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (icon != null) ...[
-          Icon(
-            icon,
-            size: 16,
-            color: Colors.grey.shade600,
-          ),
+          Icon(icon, size: 16, color: Colors.grey.shade600),
           const SizedBox(width: 5),
         ],
         Text(
           '$label: ',
-          style: TextStyle(
-            color: Colors.grey.shade600,
-            fontSize: 13,
-          ),
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
         ),
         Text(
           value,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
         ),
       ],
     );
@@ -470,30 +418,19 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
 
     final vatNumber = receipt['supplier_vat_number'] ?? '-';
 
-    final subtotal = toMoneyDouble(
-      receipt['subtotal_excl_vat'],
-    );
+    final subtotal = toMoneyDouble(receipt['subtotal_excl_vat']);
 
-    final vatAmount = toMoneyDouble(
-      receipt['vat_amount'],
-    );
+    final vatAmount = toMoneyDouble(receipt['vat_amount']);
 
-    final total = toMoneyDouble(
-      receipt['total_incl_vat'],
-    );
+    final total = toMoneyDouble(receipt['total_incl_vat']);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 12,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: Colors.grey.shade200,
-        ),
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.035),
@@ -509,7 +446,6 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
           | Document Icon
           |--------------------------------------------------------------------------
           */
-
           Container(
             width: 54,
             height: 54,
@@ -531,7 +467,6 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
           | Main Receipt Information
           |--------------------------------------------------------------------------
           */
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -541,7 +476,6 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                 | Supplier And Status
                 |--------------------------------------------------------------------------
                 */
-
                 Row(
                   children: [
                     Expanded(
@@ -582,7 +516,6 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                 | Meta Information
                 |--------------------------------------------------------------------------
                 */
-
                 Wrap(
                   spacing: 14,
                   runSpacing: 6,
@@ -597,11 +530,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                       value: invoiceDate,
                       icon: Icons.calendar_month,
                     ),
-                    infoItem(
-                      label: 'BRN',
-                      value: brn,
-                      icon: Icons.badge,
-                    ),
+                    infoItem(label: 'BRN', value: brn, icon: Icons.badge),
                     infoItem(
                       label: 'VAT No',
                       value: vatNumber,
@@ -617,7 +546,6 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                 | Financial Summary
                 |--------------------------------------------------------------------------
                 */
-
                 Row(
                   children: [
                     _AmountChip(
@@ -625,10 +553,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                       value: formatMoney(subtotal),
                     ),
                     const SizedBox(width: 8),
-                    _AmountChip(
-                      label: 'VAT',
-                      value: formatMoney(vatAmount),
-                    ),
+                    _AmountChip(label: 'VAT', value: formatMoney(vatAmount)),
                     const SizedBox(width: 8),
                     _AmountChip(
                       label: 'Total',
@@ -648,7 +573,6 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
           | Actions
           |--------------------------------------------------------------------------
           */
-
           Column(
             children: [
               if (status == 'pending_ocr')
@@ -661,19 +585,65 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                 ),
 
               if (status == 'pending_review' || status == 'reviewed')
-                ElevatedButton.icon(
-                  onPressed: () {
-                    openReview(receipt);
-                  },
-                  icon: Icon(
-                    status == 'reviewed'
-                        ? Icons.edit
-                        : Icons.fact_check,
+                /*
+|--------------------------------------------------------------------------
+| Convert To Purchase
+|--------------------------------------------------------------------------
+*/
+                if (status == 'reviewed' &&
+                    receipt['converted_purchase_id'] == null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+
+                      onPressed: () async {
+                        try {
+                          await apiService.convertPurchaseReceiptToPurchase(
+                            receiptId: receipt['id'],
+                          );
+
+                          await loadReceipts();
+
+                          if (!mounted) return;
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Purchase created successfully'),
+                            ),
+                          );
+                        } catch (e) {
+                          debugPrint(e.toString());
+
+                          if (!mounted) return;
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(e.toString()),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+
+                      icon: const Icon(Icons.shopping_cart_checkout),
+
+                      label: const Text('Convert'),
+                    ),
                   ),
-                  label: Text(
-                    status == 'reviewed' ? 'Edit' : 'Review',
-                  ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  openReview(receipt);
+                },
+                icon: Icon(
+                  status == 'reviewed' ? Icons.edit : Icons.fact_check,
                 ),
+                label: Text(status == 'reviewed' ? 'Edit' : 'Review'),
+              ),
 
               const SizedBox(height: 6),
 
@@ -681,15 +651,10 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                 onPressed: () {
                   deleteReceipt(receipt);
                 },
-                icon: const Icon(
-                  Icons.delete_outline,
-                  color: Colors.red,
-                ),
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
                 label: const Text(
                   'Delete',
-                  style: TextStyle(
-                    color: Colors.red,
-                  ),
+                  style: TextStyle(color: Colors.red),
                 ),
               ),
             ],
@@ -722,16 +687,11 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
             | Top Header
             |--------------------------------------------------------------------------
             */
-
             Container(
               padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border(
-                  bottom: BorderSide(
-                    color: Colors.grey.shade200,
-                  ),
-                ),
+                border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
               ),
               child: Row(
                 children: [
@@ -762,9 +722,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                         SizedBox(height: 3),
                         Text(
                           'Upload, OCR, review and manage supplier purchase receipts.',
-                          style: TextStyle(
-                            color: Colors.grey,
-                          ),
+                          style: TextStyle(color: Colors.grey),
                         ),
                       ],
                     ),
@@ -800,12 +758,9 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
             | Content
             |--------------------------------------------------------------------------
             */
-
             Expanded(
               child: isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(),
-                    )
+                  ? const Center(child: CircularProgressIndicator())
                   : Padding(
                       padding: const EdgeInsets.all(22),
                       child: Column(
@@ -815,7 +770,6 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                           | Summary Cards
                           |--------------------------------------------------------------------------
                           */
-
                           Row(
                             children: [
                               statCard(
@@ -855,7 +809,6 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                           | Receipt List
                           |--------------------------------------------------------------------------
                           */
-
                           Expanded(
                             child: receipts.isEmpty
                                 ? Center(
@@ -863,8 +816,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                                       padding: const EdgeInsets.all(30),
                                       decoration: BoxDecoration(
                                         color: Colors.white,
-                                        borderRadius:
-                                            BorderRadius.circular(24),
+                                        borderRadius: BorderRadius.circular(24),
                                       ),
                                       child: const Column(
                                         mainAxisSize: MainAxisSize.min,
@@ -934,10 +886,7 @@ class _AmountChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 8,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: isStrong
               ? Colors.green.withOpacity(0.10)
@@ -954,10 +903,7 @@ class _AmountChip extends StatelessWidget {
           children: [
             Text(
               label,
-              style: TextStyle(
-                color: Colors.grey.shade700,
-                fontSize: 11,
-              ),
+              style: TextStyle(color: Colors.grey.shade700, fontSize: 11),
             ),
             const SizedBox(height: 3),
             Text(

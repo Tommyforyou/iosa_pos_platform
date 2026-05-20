@@ -4,51 +4,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class PurchaseReceipt extends Model {
+class Purchase extends Model
+{
     /*
     |--------------------------------------------------------------------------
-    | Fillable Fields
+    | Fillable
     |--------------------------------------------------------------------------
     */
 
     protected $fillable = [
         'business_id',
-        'supplier_name',
-        'supplier_brn',
-        'supplier_vat_number',
+        'supplier_id',
+        'purchase_receipt_id',
         'invoice_number',
         'invoice_date',
         'subtotal_excl_vat',
         'vat_amount',
         'total_incl_vat',
-        'document_path',
-        'ocr_raw_text',
-        'ocr_extracted_data',
         'status',
-        'ocr_confidence',
     ];
-
-    protected $appends = [
-        'document_url',
-        'converted_purchase_id',
-    ];
-
-    public function getConvertedPurchaseIdAttribute() {
-        $purchase = \App\Models\Purchase::where(
-            'purchase_receipt_id',
-            $this->id
-        )->first();
-
-        return $purchase?->id;
-    }
-
-    public function getDocumentUrlAttribute() {
-        if ( !$this->document_path ) {
-            return null;
-        }
-
-        return asset( 'storage/' . $this->document_path );
-    }
 
     /*
     |--------------------------------------------------------------------------
@@ -58,7 +32,6 @@ class PurchaseReceipt extends Model {
 
     protected $casts = [
         'invoice_date' => 'date',
-        'ocr_extracted_data' => 'array',
     ];
 
     /*
@@ -67,9 +40,25 @@ class PurchaseReceipt extends Model {
     |--------------------------------------------------------------------------
     */
 
-    public function lines() {
+    public function supplier()
+    {
+        return $this->belongsTo(
+            Supplier::class
+        );
+    }
+
+    public function receipt()
+    {
+        return $this->belongsTo(
+            PurchaseReceipt::class,
+            'purchase_receipt_id'
+        );
+    }
+
+    public function items()
+    {
         return $this->hasMany(
-            PurchaseReceiptLine::class
+            PurchaseItem::class
         );
     }
 }

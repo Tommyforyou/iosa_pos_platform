@@ -69,6 +69,119 @@ class ApiService {
 
   /*
 |--------------------------------------------------------------------------
+| Convert Purchase Receipt To Purchase
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> convertPurchaseReceiptToPurchase({
+    required int receiptId,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/purchase-receipts/$receiptId/convert-to-purchase'),
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to convert receipt: ${response.body}');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Get Purchases
+|--------------------------------------------------------------------------
+*/
+
+  Future<List<dynamic>> getPurchases({
+    String? from,
+    String? to,
+    String? supplier,
+  }) async {
+    final uri = Uri.parse('$baseUrl/purchases').replace(
+      queryParameters: {
+        if (from != null) 'from': from,
+
+        if (to != null) 'to': to,
+
+        if (supplier != null && supplier.isNotEmpty) 'supplier': supplier,
+      },
+    );
+
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to load purchases');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Get Suppliers
+|--------------------------------------------------------------------------
+*/
+
+  Future<List<dynamic>> getSuppliers({String? search}) async {
+    final uri = Uri.parse('$baseUrl/suppliers').replace(
+      queryParameters: {
+        if (search != null && search.isNotEmpty) 'search': search,
+      },
+    );
+
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to load suppliers');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Get Supplier Detail
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getSupplierDetail({
+    required int supplierId,
+  }) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/suppliers/$supplierId'),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to load supplier detail');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Get Purchase Detail
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getPurchaseDetail({
+    required int purchaseId,
+  }) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/purchases/$purchaseId'),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to load purchase detail');
+  }
+
+  /*
+|--------------------------------------------------------------------------
 | Delete Purchase Receipt
 |--------------------------------------------------------------------------
 */
