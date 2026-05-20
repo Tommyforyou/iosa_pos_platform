@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\ProductCategoryController;
 use App\Http\Controllers\Api\RestaurantTableController;
 use App\Http\Controllers\Api\RestaurantOrderController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\PurchaseReceiptController;
 
 /*
 |--------------------------------------------------------------------------
@@ -340,6 +341,29 @@ Route::apiResource(
     'update',
 ]);
 
+
+/*
+|--------------------------------------------------------------------------
+| Purchase Receipt OCR
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    'purchase-receipts',
+    [PurchaseReceiptController::class, 'index']
+);
+
+Route::post(
+    'purchase-receipts/upload',
+    [PurchaseReceiptController::class, 'upload']
+);
+
+Route::put(
+    'purchase-receipts/{purchaseReceipt}',
+    [PurchaseReceiptController::class, 'update']
+);
+
+
 /*
 |--------------------------------------------------------------------------
 | Sales History and Reprint Invoice
@@ -351,6 +375,27 @@ Route::get(
     [RestaurantOrderController::class, 'salesHistory']
 );
 
+/*
+|--------------------------------------------------------------------------
+| Purchase Receipts
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    'purchase-receipts/{purchaseReceipt}/run-ocr',
+    [PurchaseReceiptController::class, 'runOcr']
+);
+
+/*
+|--------------------------------------------------------------------------
+| Delete Receipts
+|--------------------------------------------------------------------------
+*/
+
+Route::delete(
+    'purchase-receipts/{purchaseReceipt}',
+    [PurchaseReceiptController::class, 'destroy']
+);
 
 Route::get('/user', function (Request $request) {
     return $request->user();

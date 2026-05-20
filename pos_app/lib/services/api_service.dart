@@ -68,6 +68,45 @@ class ApiService {
   }
 
   /*
+|--------------------------------------------------------------------------
+| Delete Purchase Receipt
+|--------------------------------------------------------------------------
+*/
+
+  Future<void> deletePurchaseReceipt({required int receiptId}) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/purchase-receipts/$receiptId'),
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete purchase receipt: ${response.body}');
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Run OCR
+  |--------------------------------------------------------------------------
+  */
+
+  Future<Map<String, dynamic>> runPurchaseReceiptOcr({
+    required int receiptId,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/purchase-receipts/$receiptId/run-ocr'),
+
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to run OCR');
+  }
+
+  /*
   |--------------------------------------------------------------------------
   | Load Restaurant Tables
   |--------------------------------------------------------------------------
@@ -81,6 +120,97 @@ class ApiService {
     }
 
     throw Exception('Failed to load restaurant tables');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Purchase Receipts List
+|--------------------------------------------------------------------------
+*/
+
+  Future<List<dynamic>> getPurchaseReceipts() async {
+    final response = await http.get(Uri.parse('$baseUrl/purchase-receipts'));
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to load purchase receipts');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Upload Purchase Receipt
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> uploadPurchaseReceipt({
+    required String filePath,
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/purchase-receipts/upload'),
+    );
+
+    request.headers['Accept'] = 'application/json';
+
+    request.files.add(await http.MultipartFile.fromPath('document', filePath));
+
+    final response = await request.send();
+
+    final body = await response.stream.bytesToString();
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(body);
+    }
+
+    throw Exception('Failed to upload purchase receipt: $body');
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Update Purchase Receipt
+  |--------------------------------------------------------------------------
+  */
+
+  Future<Map<String, dynamic>> updatePurchaseReceipt({
+    required int receiptId,
+    String? supplierName,
+    String? supplierBrn,
+    String? supplierVatNumber,
+    String? invoiceNumber,
+    String? invoiceDate,
+    double? subtotalExclVat,
+    double? vatAmount,
+    double? totalInclVat,
+    String? status,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/purchase-receipts/$receiptId'),
+
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+
+      body: jsonEncode({
+        'supplier_name': supplierName,
+        'supplier_brn': supplierBrn,
+        'supplier_vat_number': supplierVatNumber,
+        'invoice_number': invoiceNumber,
+        'invoice_date': invoiceDate,
+        'subtotal_excl_vat': subtotalExclVat,
+        'vat_amount': vatAmount,
+        'total_incl_vat': totalInclVat,
+        'status': status,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to update purchase receipt: ${response.body}');
   }
 
   /*
@@ -155,42 +285,33 @@ class ApiService {
     throw Exception('Failed to load active order');
   }
 
-
-/*
+  /*
 |--------------------------------------------------------------------------
 | Kitchen Display Orders
 |--------------------------------------------------------------------------
 | Returns active kitchen workflow orders.
 */
 
-Future<List<dynamic>> getKitchenDisplayOrders() async {
-  final response = await http.get(
-    Uri.parse('$baseUrl/kitchen/orders'),
-  );
+  Future<List<dynamic>> getKitchenDisplayOrders() async {
+    final response = await http.get(Uri.parse('$baseUrl/kitchen/orders'));
 
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
 
-    return data['orders'] ?? [];
+      return data['orders'] ?? [];
+    }
+
+    throw Exception('Failed to load kitchen orders');
   }
-
-  throw Exception(
-    'Failed to load kitchen orders',
-  );
-}
   /*
   |--------------------------------------------------------------------------
   | Search Customer By Phone
   |--------------------------------------------------------------------------
   */
 
-  Future<Map<String, dynamic>?> searchCustomerByPhone(
-    String phone,
-  ) async {
+  Future<Map<String, dynamic>?> searchCustomerByPhone(String phone) async {
     final response = await http.get(
-      Uri.parse(
-        '$baseUrl/customers/search-by-phone?phone=$phone',
-      ),
+      Uri.parse('$baseUrl/customers/search-by-phone?phone=$phone'),
     );
 
     if (response.statusCode == 200) {
@@ -199,9 +320,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
       return data['customer'];
     }
 
-    throw Exception(
-      'Failed to search customer',
-    );
+    throw Exception('Failed to search customer');
   }
 
   /*
@@ -232,16 +351,13 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
       }),
     );
 
-    if (response.statusCode == 200 ||
-        response.statusCode == 201) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body);
     }
 
-    throw Exception(
-      'Failed to create customer',
-    );
+    throw Exception('Failed to create customer');
   }
-  
+
   /*
   |--------------------------------------------------------------------------
   | Update Kitchen Order Status
@@ -259,28 +375,20 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
     required String status,
   }) async {
     final response = await http.post(
-      Uri.parse(
-        '$baseUrl/kitchen/orders/$orderId/status',
-      ),
+      Uri.parse('$baseUrl/kitchen/orders/$orderId/status'),
 
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
 
-      body: jsonEncode({
-        'status': status,
-      }),
+      body: jsonEncode({'status': status}),
     );
 
     if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to update kitchen order status',
-      );
+      throw Exception('Failed to update kitchen order status');
     }
   }
-
-
 
   /*
   |--------------------------------------------------------------------------
@@ -305,9 +413,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: jsonEncode({
-        'kitchen_status': kitchenStatus,
-      }),
+      body: jsonEncode({'kitchen_status': kitchenStatus}),
     );
 
     if (response.statusCode == 200) {
@@ -316,6 +422,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
 
     throw Exception('Failed to update kitchen status: ${response.body}');
   }
+
   /*
   |--------------------------------------------------------------------------
   | Load Billable Orders
@@ -323,9 +430,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
   | Returns active restaurant orders that are ready for cashier billing.
   */
   Future<List<dynamic>> getBillableOrders() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/billable-orders'),
-    );
+    final response = await http.get(Uri.parse('$baseUrl/billable-orders'));
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -365,7 +470,6 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
         'tax_amount': taxAmount,
         'discount_amount': discountAmount,
         'total_amount': totalAmount,
-        
       }),
     );
 
@@ -375,6 +479,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
 
     throw Exception('Failed to process payment: ${response.body}');
   }
+
   /*
   |--------------------------------------------------------------------------
   | Load Dashboard Statistics
@@ -382,9 +487,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
   | Returns operational POS dashboard metrics.
   */
   Future<Map<String, dynamic>> getDashboardStats() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/dashboard-stats'),
-    );
+    final response = await http.get(Uri.parse('$baseUrl/dashboard-stats'));
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -392,17 +495,14 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
 
     throw Exception('Failed to load dashboard statistics');
   }
-  
+
   /*
   |--------------------------------------------------------------------------
   | Sales History
   |--------------------------------------------------------------------------
   */
 
-  Future<List<dynamic>> getSalesHistory({
-    String? from,
-    String? to,
-  }) async {
+  Future<List<dynamic>> getSalesHistory({String? from, String? to}) async {
     final uri = Uri.parse('$baseUrl/sales-history').replace(
       queryParameters: {
         if (from != null) 'from': from,
@@ -416,11 +516,9 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
       return jsonDecode(response.body);
     }
 
-    throw Exception(
-      'Failed to load sales history',
-    );
+    throw Exception('Failed to load sales history');
   }
-  
+
   /*
   |--------------------------------------------------------------------------
   | Load Daily Sales Report
@@ -428,9 +526,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
   | Returns today's detailed POS sales report.
   */
   Future<Map<String, dynamic>> getDailySalesReport() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/reports/daily-sales'),
-    );
+    final response = await http.get(Uri.parse('$baseUrl/reports/daily-sales'));
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -438,6 +534,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
 
     throw Exception('Failed to load daily sales report');
   }
+
   /*
   |--------------------------------------------------------------------------
   | Save Draft Restaurant Order
@@ -460,11 +557,10 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
       },
       body: jsonEncode({
         'restaurant_table_id': restaurantTableId,
-        'customer_id': customerId,        
+        'customer_id': customerId,
         'order_type': orderType,
         'items': items,
         'notes': notes,
-
       }),
     );
 
@@ -498,6 +594,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
 
     throw Exception('Failed to send draft items to kitchen: ${response.body}');
   }
+
   /*
   |--------------------------------------------------------------------------
   | Process Counter Order Payment
@@ -525,10 +622,8 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
     | Food Court Buzzer
     |--------------------------------------------------------------------------
     */
-
     String? buzzerNumber,
   }) async {
-
     final response = await http.post(
       Uri.parse('$baseUrl/counter-orders'),
 
@@ -551,21 +646,17 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
         | Buzzer Number
         |--------------------------------------------------------------------------
         */
-
         'buzzer_number': buzzerNumber,
       }),
     );
 
-    if (response.statusCode == 200 ||
-        response.statusCode == 201) {
-
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body);
     }
 
-    throw Exception(
-      'Failed to process counter order: ${response.body}',
-    );
+    throw Exception('Failed to process counter order: ${response.body}');
   }
+
   /*
   |--------------------------------------------------------------------------
   | Void Restaurant Order Item
@@ -585,9 +676,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: jsonEncode({
-        'void_reason': voidReason,
-      }),
+      body: jsonEncode({'void_reason': voidReason}),
     );
 
     if (response.statusCode == 200) {
@@ -597,7 +686,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
     throw Exception('Failed to void item: ${response.body}');
   }
 
-    /*
+  /*
   |--------------------------------------------------------------------------
   | Create Category
   |--------------------------------------------------------------------------
@@ -623,11 +712,8 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
       }),
     );
 
-    if (response.statusCode != 200 &&
-        response.statusCode != 201) {
-      throw Exception(
-        'Failed to create category',
-      );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to create category');
     }
   }
 
@@ -644,9 +730,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
     required bool isActive,
   }) async {
     final response = await http.put(
-      Uri.parse(
-        '$baseUrl/categories/$categoryId',
-      ),
+      Uri.parse('$baseUrl/categories/$categoryId'),
 
       headers: {
         'Content-Type': 'application/json',
@@ -661,9 +745,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
     );
 
     if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to update category',
-      );
+      throw Exception('Failed to update category');
     }
   }
 
@@ -673,23 +755,15 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
   |--------------------------------------------------------------------------
   */
 
-  Future<void> deleteCategory(
-    int categoryId,
-  ) async {
+  Future<void> deleteCategory(int categoryId) async {
     final response = await http.delete(
-      Uri.parse(
-        '$baseUrl/categories/$categoryId',
-      ),
+      Uri.parse('$baseUrl/categories/$categoryId'),
 
-      headers: {
-        'Accept': 'application/json',
-      },
+      headers: {'Accept': 'application/json'},
     );
 
     if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to delete category',
-      );
+      throw Exception('Failed to delete category');
     }
   }
 
@@ -701,9 +775,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
   | Back Office uses getCategories() to show all categories.
   */
   Future<List<dynamic>> getActiveCategories() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/active-categories'),
-    );
+    final response = await http.get(Uri.parse('$baseUrl/active-categories'));
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -756,11 +828,8 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
       }),
     );
 
-    if (response.statusCode != 200 &&
-        response.statusCode != 201) {
-      throw Exception(
-        'Failed to create product',
-      );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to create product');
     }
   }
 
@@ -810,9 +879,7 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
     );
 
     if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to update product',
-      );
+      throw Exception('Failed to update product');
     }
   }
 
@@ -822,21 +889,15 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
   |--------------------------------------------------------------------------
   */
 
-  Future<void> deleteProduct(
-    int productId,
-  ) async {
+  Future<void> deleteProduct(int productId) async {
     final response = await http.delete(
       Uri.parse('$baseUrl/products/$productId'),
 
-      headers: {
-        'Accept': 'application/json',
-      },
+      headers: {'Accept': 'application/json'},
     );
 
     if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to delete product',
-      );
+      throw Exception('Failed to delete product');
     }
   }
   /*
@@ -849,36 +910,26 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
     required int productId,
     required String filePath,
   }) async {
-    final request =
-        http.MultipartRequest(
+    final request = http.MultipartRequest(
       'POST',
-      Uri.parse(
-        '$baseUrl/products/$productId/image',
-      ),
+      Uri.parse('$baseUrl/products/$productId/image'),
     );
 
-    request.headers['Accept'] =
-        'application/json';
+    request.headers['Accept'] = 'application/json';
 
     request.files.add(
       await http.MultipartFile.fromPath(
         'image',
         filePath,
 
-        contentType: MediaType(
-          'image',
-          'jpeg',
-        ),
+        contentType: MediaType('image', 'jpeg'),
       ),
     );
 
-    final response =
-        await request.send();
+    final response = await request.send();
 
     if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to upload product image',
-      );
+      throw Exception('Failed to upload product image');
     }
   }
 
@@ -892,37 +943,26 @@ Future<List<dynamic>> getKitchenDisplayOrders() async {
     required int categoryId,
     required String filePath,
   }) async {
-    final request =
-        http.MultipartRequest(
+    final request = http.MultipartRequest(
       'POST',
-      Uri.parse(
-        '$baseUrl/categories/$categoryId/image',
-      ),
+      Uri.parse('$baseUrl/categories/$categoryId/image'),
     );
 
-    request.headers['Accept'] =
-        'application/json';
+    request.headers['Accept'] = 'application/json';
 
     request.files.add(
       await http.MultipartFile.fromPath(
         'image',
         filePath,
 
-        contentType: MediaType(
-          'image',
-          'jpeg',
-        ),
+        contentType: MediaType('image', 'jpeg'),
       ),
     );
 
-    final response =
-        await request.send();
+    final response = await request.send();
 
     if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to upload category image',
-      );
+      throw Exception('Failed to upload category image');
     }
   }
-
 }

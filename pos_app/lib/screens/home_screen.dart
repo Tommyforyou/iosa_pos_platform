@@ -9,6 +9,7 @@ import 'counter_pos_screen.dart';
 import 'category_management_screen.dart';
 import 'product_management_screen.dart';
 import 'sales_history_screen.dart';
+import 'purchase_receipt_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -237,6 +238,25 @@ class HomeScreen extends StatelessWidget {
                 const ProductManagementScreen(),
               ),
             ),
+
+            /*
+            |--------------------------------------------------------------------------
+            | CRUD Products
+            |--------------------------------------------------------------------------
+            | Manage Product and Prices
+            */   
+
+            _HomeCard(
+              title: 'Purchase OCR',
+              subtitle: 'Scan and review supplier receipts',
+              icon: Icons.document_scanner,
+              onTap: () => openScreen(
+                context,
+                const PurchaseReceiptScreen(),
+              ),
+            ),
+
+
 
           ],
         ),
