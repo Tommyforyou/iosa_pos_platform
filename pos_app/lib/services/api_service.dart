@@ -53,6 +53,41 @@ class ApiService {
 
   /*
   |--------------------------------------------------------------------------
+  | Stock Movements
+  |--------------------------------------------------------------------------
+  | Gets Stock movements
+  */
+
+  Future<List<dynamic>> getStockMovements({
+    String? product,
+    String? movementType,
+    String? from,
+    String? to,
+  }) async {
+    final uri = Uri.parse('$baseUrl/stock-movements').replace(
+      queryParameters: {
+        if (product != null && product.isNotEmpty) 'product': product,
+        if (movementType != null && movementType.isNotEmpty)
+          'movement_type': movementType,
+        if (from != null) 'from': from,
+        if (to != null) 'to': to,
+      },
+    );
+
+    final response = await http.get(
+      uri,
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to load stock movements: ${response.body}');
+  }
+
+  /*
+  |--------------------------------------------------------------------------
   | Load Categories
   |--------------------------------------------------------------------------
   | Gets product/menu categories from Laravel.
@@ -217,6 +252,29 @@ class ApiService {
     }
 
     throw Exception('Failed to update supplier: ${response.body}');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Daily Z-Report
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getDailyZReport({String? date}) async {
+    final uri = Uri.parse(
+      '$baseUrl/z-report/daily',
+    ).replace(queryParameters: {if (date != null) 'date': date});
+
+    final response = await http.get(
+      uri,
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to load Z-Report: ${response.body}');
   }
 
   /*

@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SupplierController;
+use App\Http\Controllers\Api\ZReportController;
+use App\Http\Controllers\Api\StockMovementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -420,7 +422,6 @@ use App\Http\Controllers\Api\PurchaseController;
             );
 
             /*
-            /*
             |--------------------------------------------------------------------------
             | Suppliers
             |--------------------------------------------------------------------------
@@ -444,6 +445,26 @@ use App\Http\Controllers\Api\PurchaseController;
             Route::put(
                 'suppliers/{supplier}',
                 [ SupplierController::class, 'update' ]
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Stock Movement
+            |--------------------------------------------------------------------------
+            */            
+            Route::get(
+                'stock-movements',
+                [ StockMovementController::class, 'index' ]
+            );
+            /*
+            |--------------------------------------------------------------------------
+            | Z report
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                'z-report/daily',
+                [ ZReportController::class, 'daily' ]
             );
 
             Route::get( '/user', function ( Request $request ) {

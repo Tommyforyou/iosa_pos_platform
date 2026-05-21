@@ -12,6 +12,8 @@ import 'sales_history_screen.dart';
 import 'purchase_receipt_screen.dart';
 import 'purchase_screen.dart';
 import 'supplier_screen.dart';
+import 'z_report_screen.dart';
+import 'stock_movement_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -198,41 +200,159 @@ class HomeScreen extends StatelessWidget {
 
             /*
             |--------------------------------------------------------------------------
-            | CRUD Products
+            | Z report
             |--------------------------------------------------------------------------
-            | Manage Product and Prices
+            | Show Daily Sales
             */
             _HomeCard(
-              title: 'Purchase OCR',
-              subtitle: 'Scan and review supplier receipts',
-              icon: Icons.document_scanner,
-              onTap: () => openScreen(context, const PurchaseReceiptScreen()),
+              title: 'Z-Report',
+              subtitle: 'Daily sales closing and cash reconciliation',
+              icon: Icons.summarize,
+              onTap: () => openScreen(context, const ZReportScreen()),
+            ),
+
+           /*
+            |--------------------------------------------------------------------------
+            | Show Stock Movement
+            |--------------------------------------------------------------------------
+            | 
+            */
+
+            _HomeCard(
+              title: 'Stock Movements',
+              subtitle: 'Audit inventory in/out history',
+              icon: Icons.timeline,
+              onTap: () => openScreen(context, const StockMovementScreen()),
             ),
 
             /*
             |--------------------------------------------------------------------------
-            | Show Suppliers
+            | Purchasing Group
             |--------------------------------------------------------------------------
-            | Manage Product and Prices
             */
-            _HomeCard(
-              title: 'Suppliers',
-              subtitle: 'Manage supplier records',
-              icon: Icons.business,
-              onTap: () => openScreen(context, const SupplierScreen()),
-            ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 20),
 
-            /*
-            |--------------------------------------------------------------------------
-            | Show Purchases
-            |--------------------------------------------------------------------------
-            | Manage Product and Prices
-            */
-            _HomeCard(
-              title: 'Purchases',
-              subtitle: 'View converted purchase transactions',
-              icon: Icons.shopping_cart_checkout,
-              onTap: () => openScreen(context, const PurchaseScreen()),
+              padding: const EdgeInsets.all(20),
+
+              decoration: BoxDecoration(
+                color: Colors.white,
+
+                borderRadius: BorderRadius.circular(28),
+
+                border: Border.all(color: Colors.grey.shade200),
+
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+
+                    blurRadius: 12,
+
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+
+                children: [
+                  /*
+                  |--------------------------------------------------------------------------
+                  | Section Header
+                  |--------------------------------------------------------------------------
+                  */
+                  Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.12),
+
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+
+                        child: const Icon(
+                          Icons.shopping_cart_checkout,
+
+                          color: Colors.orange,
+                          size: 28,
+                        ),
+                      ),
+
+                      const SizedBox(width: 14),
+
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+
+                          children: [
+                            Text(
+                              'Purchasing',
+
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            SizedBox(height: 3),
+
+                            Text(
+                              'Supplier management, OCR receipts and purchase tracking.',
+
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  /*
+                  |--------------------------------------------------------------------------
+                  | Nested Cards
+                  |--------------------------------------------------------------------------
+                  */
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1.2,
+                    children: [
+                      _MiniHomeCard(
+                        title: 'Purchase OCR',
+                        subtitle: 'Scan receipts',
+                        icon: Icons.document_scanner,
+                        onTap: () =>
+                            openScreen(context, const PurchaseReceiptScreen()),
+                      ),
+
+                      _MiniHomeCard(
+                        title: 'Purchases',
+                        subtitle: 'Purchase list',
+                        icon: Icons.shopping_cart_checkout,
+                        onTap: () =>
+                            openScreen(context, const PurchaseScreen()),
+                      ),
+
+                      _MiniHomeCard(
+                        title: 'Suppliers',
+                        subtitle: 'Supplier records',
+                        icon: Icons.business,
+                        onTap: () =>
+                            openScreen(context, const SupplierScreen()),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -291,6 +411,75 @@ class _HomeCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Reusable Home Card Widget
+|--------------------------------------------------------------------------
+| This keeps the home screen clean and gives every POS module
+| the same premium card style.
+*/
+
+class _MiniHomeCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _MiniHomeCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+
+      borderRadius: BorderRadius.circular(20),
+
+      child: Container(
+        padding: const EdgeInsets.all(18),
+
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7F9FC),
+
+          borderRadius: BorderRadius.circular(20),
+
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+
+          children: [
+            Icon(icon, size: 34, color: Colors.blueGrey),
+
+            const SizedBox(height: 12),
+
+            Text(
+              title,
+              textAlign: TextAlign.center,
+
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+
+            const SizedBox(height: 6),
+
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+
+              style: const TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ],
         ),
       ),
     );

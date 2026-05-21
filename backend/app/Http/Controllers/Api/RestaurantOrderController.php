@@ -8,6 +8,9 @@ use App\Models\RestaurantOrderItem;
 use App\Models\RestaurantTable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Product;
+use App\Models\StockMovement;
+use App\Models\RestaurantOrder;
 
 class RestaurantOrderController extends Controller
 {
@@ -452,7 +455,96 @@ class RestaurantOrderController extends Controller
             ], 500);
         }
     }
-    
+
+    /*
+    |--------------------------------------------------------------------------
+    | Deduct Stock For Restaurant Order
+    |--------------------------------------------------------------------------
+    */
+
+    private function deductStockForOrder(RestaurantOrder $order): void
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Load Order Items
+        |--------------------------------------------------------------------------
+        */
+
+        $order->load('items');
+
+        foreach ($order->items as $item) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Skip Invalid Product
+            |--------------------------------------------------------------------------
+            */
+
+            if (!$item->product_id) {
+                continue;
+            }
+
+            $product = Product::find($item->product_id);
+
+            if (!$product) {
+                continue;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Prevent Duplicate Stock Deduction
+            |--------------------------------------------------------------------------
+            */
+
+            $alreadyDeducted = StockMovement::where('reference_type', 'restaurant_order')
+                ->where('reference_id', $order->id)
+                ->where('product_id', $product->id)
+                ->where('movement_type', 'sale')
+                ->exists();
+
+            if ($alreadyDeducted) {
+                continue;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Calculate Quantity
+            |--------------------------------------------------------------------------
+            */
+
+            $quantitySold = (float) $item->quantity;
+
+            $beforeQuantity = (float) ($product->stock_quantity ?? 0);
+
+            $afterQuantity = $beforeQuantity - $quantitySold;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update Product Stock
+            |--------------------------------------------------------------------------
+            */
+
+            $product->update([
+                'stock_quantity' => $afterQuantity,
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Record Stock Movement
+            |--------------------------------------------------------------------------
+            */
+
+            StockMovement::create([
+                'product_id' => $product->id,
+                'user_id' => auth()->id(),
+                'movement_type' => 'sale',
+                'quantity' => -abs($quantitySold),
+                'before_quantity' => $beforeQuantity,
+                'after_quantity' => $afterQuantity,
+                'remarks' => 'Restaurant sale - ' . $order->order_number,
+            ]);
+        }
+    }    
    
     /*
     |--------------------------------------------------------------------------

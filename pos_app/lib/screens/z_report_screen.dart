@@ -1,0 +1,729 @@
+import 'package:flutter/material.dart';
+
+import '../services/api_service.dart';
+import '../utils/money.dart';
+import 'package:printing/printing.dart';
+import 'package:pdf/widgets.dart' as pw;
+
+/*
+|--------------------------------------------------------------------------
+| Z Report Screen
+|--------------------------------------------------------------------------
+| Daily POS closing summary.
+|
+| Shows:
+| - total sales
+| - VAT collected
+| - discounts
+| - order count
+| - payment method breakdown
+| - cash expected
+| - cash counted
+| - over / short
+*/
+
+class ZReportScreen extends StatefulWidget {
+  const ZReportScreen({super.key});
+
+  @override
+  State<ZReportScreen> createState() => _ZReportScreenState();
+}
+
+class _ZReportScreenState extends State<ZReportScreen> {
+  /*
+  |--------------------------------------------------------------------------
+  | API Service
+  |--------------------------------------------------------------------------
+  */
+
+  final ApiService apiService = ApiService();
+
+  /*
+  |--------------------------------------------------------------------------
+  | State
+  |--------------------------------------------------------------------------
+  */
+
+  bool isLoading = true;
+
+  Map<String, dynamic>? report;
+
+  DateTime selectedDate = DateTime.now();
+
+  final TextEditingController cashCountedController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    loadReport();
+  }
+
+  @override
+  void dispose() {
+    cashCountedController.dispose();
+    super.dispose();
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Date Formatter
+  |--------------------------------------------------------------------------
+  */
+
+  String formatDate(DateTime date) {
+    return date.toIso8601String().split('T').first;
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Load Report
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> loadReport() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+
+      final result = await apiService.getDailyZReport(
+        date: formatDate(selectedDate),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        report = result;
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Print Z-Report
+|--------------------------------------------------------------------------
+*/
+
+  Future<void> printZReport() async {
+    if (report == null) {
+      return;
+    }
+
+    final pdf = pw.Document();
+
+    final breakdown = paymentBreakdown;
+
+    pdf.addPage(
+      pw.Page(
+        build: (context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                'DAILY Z-REPORT',
+                style: pw.TextStyle(
+                  fontSize: 22,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+
+              pw.SizedBox(height: 8),
+
+              pw.Text('Date: ${formatDate(selectedDate)}'),
+
+              pw.Divider(),
+
+              pw.Text('Orders: ${report?['order_count']}'),
+              pw.Text('Total Sales: ${formatMoney(amount('total_sales'))}'),
+              pw.Text('VAT Collected: ${formatMoney(amount('vat_collected'))}'),
+              pw.Text('Discounts: ${formatMoney(amount('discounts'))}'),
+
+              pw.SizedBox(height: 12),
+
+              pw.Text(
+                'Payment Breakdown',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              ),
+
+              pw.Text('Cash: ${formatMoney(toMoneyDouble(breakdown['cash']))}'),
+              pw.Text('Card: ${formatMoney(toMoneyDouble(breakdown['card']))}'),
+              pw.Text(
+                'Juice: ${formatMoney(toMoneyDouble(breakdown['juice']))}',
+              ),
+              pw.Text(
+                'Cheque: ${formatMoney(toMoneyDouble(breakdown['cheque']))}',
+              ),
+              pw.Text(
+                'Complimentary: ${formatMoney(toMoneyDouble(breakdown['complimentary']))}',
+              ),
+
+              pw.SizedBox(height: 12),
+
+              pw.Text(
+                'Cash Reconciliation',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              ),
+
+              pw.Text('Cash Expected: ${formatMoney(amount('cash_expected'))}'),
+              pw.Text('Cash Counted: ${formatMoney(cashCounted())}'),
+              pw.Text('Over / Short: ${formatMoney(overShort())}'),
+
+              pw.Divider(),
+
+              pw.Text('Generated by IOSA POS'),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      name: 'Z-Report-${formatDate(selectedDate)}',
+      onLayout: (_) async => pdf.save(),
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Pick Date
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked == null) {
+      return;
+    }
+
+    setState(() {
+      selectedDate = picked;
+    });
+
+    await loadReport();
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Payment Breakdown
+  |--------------------------------------------------------------------------
+  */
+
+  Map<String, dynamic> get paymentBreakdown {
+    final data = report?['payment_breakdown'];
+
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+
+    return {};
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Amount Helpers
+  |--------------------------------------------------------------------------
+  */
+
+  double amount(String key) {
+    return toMoneyDouble(report?[key]);
+  }
+
+  double paymentAmount(String key) {
+    return toMoneyDouble(paymentBreakdown[key]);
+  }
+
+  double cashCounted() {
+    return toMoneyDouble(cashCountedController.text);
+  }
+
+  double overShort() {
+    return cashCounted() - amount('cash_expected');
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | KPI Card
+  |--------------------------------------------------------------------------
+  */
+
+  Widget kpiCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: color),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(title, style: TextStyle(color: Colors.grey.shade700)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Payment Row
+  |--------------------------------------------------------------------------
+  */
+
+  Widget paymentRow({
+    required String label,
+    required String keyName,
+    required IconData icon,
+    required Color color,
+  }) {
+    final value = paymentAmount(keyName);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withOpacity(0.20)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          Text(
+            formatMoney(value),
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Build
+  |--------------------------------------------------------------------------
+  */
+
+  @override
+  Widget build(BuildContext context) {
+    final difference = overShort();
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F6FA),
+      body: SafeArea(
+        child: Column(
+          children: [
+            /*
+            |--------------------------------------------------------------------------
+            | Header
+            |--------------------------------------------------------------------------
+            */
+            Container(
+              padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    icon: const Icon(Icons.arrow_back),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.summarize, color: Colors.indigo, size: 32),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Daily Z-Report',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 3),
+                        Text(
+                          'End-of-day sales, VAT and payment reconciliation.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: pickDate,
+                    icon: const Icon(Icons.date_range),
+                    label: Text(formatDate(selectedDate)),
+                  ),
+                  const SizedBox(width: 12),
+                  OutlinedButton.icon(
+                    onPressed: loadReport,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Refresh'),
+                  ),
+                ],
+              ),
+            ),
+
+            /*
+            |--------------------------------------------------------------------------
+            | Content
+            |--------------------------------------------------------------------------
+            */
+            Expanded(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : report == null
+                  ? const Center(child: Text('No report available'))
+                  : Padding(
+                      padding: const EdgeInsets.all(22),
+                      child: Column(
+                        children: [
+                          /*
+                              |--------------------------------------------------------------------------
+                              | KPI Summary
+                              |--------------------------------------------------------------------------
+                              */
+                          Row(
+                            children: [
+                              kpiCard(
+                                title: 'Orders',
+                                value: report?['order_count'].toString() ?? '0',
+                                icon: Icons.receipt_long,
+                                color: Colors.blue,
+                              ),
+                              const SizedBox(width: 14),
+                              kpiCard(
+                                title: 'Total Sales',
+                                value: formatMoney(amount('total_sales')),
+                                icon: Icons.payments,
+                                color: Colors.green,
+                              ),
+                              const SizedBox(width: 14),
+                              kpiCard(
+                                title: 'VAT Collected',
+                                value: formatMoney(amount('vat_collected')),
+                                icon: Icons.percent,
+                                color: Colors.orange,
+                              ),
+                              const SizedBox(width: 14),
+                              kpiCard(
+                                title: 'Discounts',
+                                value: formatMoney(amount('discounts')),
+                                icon: Icons.discount,
+                                color: Colors.purple,
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          Expanded(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                /*
+                                    |--------------------------------------------------------------------------
+                                    | Payment Breakdown
+                                    |--------------------------------------------------------------------------
+                                    */
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(20),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(24),
+                                      border: Border.all(
+                                        color: Colors.grey.shade200,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(
+                                            0.035,
+                                          ),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Payment Breakdown',
+                                          style: TextStyle(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 18),
+                                        paymentRow(
+                                          label: 'Cash',
+                                          keyName: 'cash',
+                                          icon: Icons.money,
+                                          color: Colors.green,
+                                        ),
+                                        paymentRow(
+                                          label: 'Card',
+                                          keyName: 'card',
+                                          icon: Icons.credit_card,
+                                          color: Colors.blue,
+                                        ),
+                                        paymentRow(
+                                          label: 'Juice',
+                                          keyName: 'juice',
+                                          icon: Icons.phone_android,
+                                          color: Colors.deepPurple,
+                                        ),
+                                        paymentRow(
+                                          label: 'Cheque',
+                                          keyName: 'cheque',
+                                          icon: Icons.description,
+                                          color: Colors.brown,
+                                        ),
+                                        paymentRow(
+                                          label: 'Complimentary',
+                                          keyName: 'complimentary',
+                                          icon: Icons.card_giftcard,
+                                          color: Colors.grey,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(width: 18),
+
+                                /*
+                                    |--------------------------------------------------------------------------
+                                    | Cash Reconciliation
+                                    |--------------------------------------------------------------------------
+                                    */
+                                Container(
+                                  width: 420,
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(
+                                      color: Colors.grey.shade200,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.035),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Cash Reconciliation',
+                                        style: TextStyle(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 18),
+
+                                      /*
+                                          |--------------------------------------------------------------------------
+                                          | Cash Expected
+                                          |--------------------------------------------------------------------------
+                                          */
+                                      Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.withOpacity(0.10),
+                                          borderRadius: BorderRadius.circular(
+                                            18,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            const Expanded(
+                                              child: Text(
+                                                'Cash Expected',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                            Text(
+                                              formatMoney(
+                                                amount('cash_expected'),
+                                              ),
+                                              style: const TextStyle(
+                                                color: Colors.green,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 18),
+
+                                      TextField(
+                                        controller: cashCountedController,
+                                        keyboardType: TextInputType.number,
+                                        onChanged: (_) {
+                                          setState(() {});
+                                        },
+                                        decoration: InputDecoration(
+                                          labelText: 'Cash Counted',
+                                          prefixIcon: const Icon(
+                                            Icons.calculate,
+                                          ),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 18),
+
+                                      Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: difference == 0
+                                              ? Colors.grey.withOpacity(0.10)
+                                              : difference > 0
+                                              ? Colors.green.withOpacity(0.10)
+                                              : Colors.red.withOpacity(0.10),
+                                          borderRadius: BorderRadius.circular(
+                                            18,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            const Expanded(
+                                              child: Text(
+                                                'Over / Short',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                            Text(
+                                              formatMoney(difference),
+                                              style: TextStyle(
+                                                color: difference == 0
+                                                    ? Colors.grey
+                                                    : difference > 0
+                                                    ? Colors.green
+                                                    : Colors.red,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      const Spacer(),
+
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 54,
+                                        child: ElevatedButton.icon(
+                                          onPressed: printZReport,
+                                          icon: const Icon(Icons.print),
+                                          label: const Text('Print Z-Report'),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
