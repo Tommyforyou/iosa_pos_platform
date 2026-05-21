@@ -10,7 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Product;
 use App\Models\StockMovement;
-use App\Models\RestaurantOrder;
 
 class RestaurantOrderController extends Controller
 {
@@ -1157,7 +1156,7 @@ class RestaurantOrderController extends Controller
 | - fast food
 | - hybrid inventory models
 */
-private function deductStockForOrder(RestaurantOrder $order): void
+private function olddeductStockForOrder(RestaurantOrder $order): void
 {
     $order->load('items');
 

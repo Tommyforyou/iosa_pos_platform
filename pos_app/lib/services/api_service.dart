@@ -52,6 +52,41 @@ class ApiService {
   }
 
   /*
+|--------------------------------------------------------------------------
+| Create Quick Sale
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> createQuickSale({
+    int? customerId,
+    required String saleType,
+    required String paymentMethod,
+    required List<Map<String, dynamic>> items,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/quick-sales'),
+
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+
+      body: jsonEncode({
+        'customer_id': customerId,
+        'sale_type': saleType,
+        'payment_method': paymentMethod,
+        'items': items,
+      }),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to create quick sale: ${response.body}');
+  }
+
+  /*
   |--------------------------------------------------------------------------
   | Stock Movements
   |--------------------------------------------------------------------------

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\ZReportController;
 use App\Http\Controllers\Api\StockMovementController;
+use App\Http\Controllers\Api\QuickSaleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -451,7 +452,7 @@ use App\Http\Controllers\Api\PurchaseController;
             |--------------------------------------------------------------------------
             | Stock Movement
             |--------------------------------------------------------------------------
-            */            
+            */
             Route::get(
                 'stock-movements',
                 [ StockMovementController::class, 'index' ]
@@ -461,6 +462,16 @@ use App\Http\Controllers\Api\PurchaseController;
             | Z report
             |--------------------------------------------------------------------------
             */
+            /*
+            |--------------------------------------------------------------------------
+            | Quick Sales
+            |--------------------------------------------------------------------------
+            */
+
+            Route::post(
+                'quick-sales',
+                [ QuickSaleController::class, 'store' ]
+            );
 
             Route::get(
                 'z-report/daily',

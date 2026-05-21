@@ -14,6 +14,7 @@ import 'purchase_screen.dart';
 import 'supplier_screen.dart';
 import 'z_report_screen.dart';
 import 'stock_movement_screen.dart';
+import 'quick_sale_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -211,18 +212,30 @@ class HomeScreen extends StatelessWidget {
               onTap: () => openScreen(context, const ZReportScreen()),
             ),
 
-           /*
+            /*
             |--------------------------------------------------------------------------
             | Show Stock Movement
             |--------------------------------------------------------------------------
             | 
             */
-
             _HomeCard(
               title: 'Stock Movements',
               subtitle: 'Audit inventory in/out history',
               icon: Icons.timeline,
               onTap: () => openScreen(context, const StockMovementScreen()),
+            ),
+
+            /*
+            |--------------------------------------------------------------------------
+            | Quick Sale
+            |--------------------------------------------------------------------------
+            | 
+            */
+            _HomeCard(
+              title: 'Quick Sale',
+              subtitle: 'Create invoice-style sale quickly',
+              icon: Icons.flash_on,
+              onTap: () => openScreen(context, const QuickSaleScreen()),
             ),
 
             /*
