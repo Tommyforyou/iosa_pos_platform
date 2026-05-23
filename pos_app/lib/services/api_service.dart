@@ -87,6 +87,68 @@ class ApiService {
   }
 
   /*
+|--------------------------------------------------------------------------
+| Get Customers
+|--------------------------------------------------------------------------
+*/
+
+  Future<List<dynamic>> getCustomers({String? search}) async {
+    final uri = Uri.parse('$baseUrl/customers').replace(
+      queryParameters: {
+        if (search != null && search.isNotEmpty) 'search': search,
+      },
+    );
+
+    final response = await http.get(
+      uri,
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to load customers: ${response.body}');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Create Customer
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> createCustomer({
+    required String name,
+    required String phone,
+    String? brn,
+    String? vatNumber,
+    String? email,
+    String? address,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/customers'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'name': name,
+        'phone': phone,
+        'brn': brn,
+        'vat_number': vatNumber,
+        'email': email,
+        'address': address,
+      }),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to create customer: ${response.body}');
+  }
+
+  /*
   |--------------------------------------------------------------------------
   | Stock Movements
   |--------------------------------------------------------------------------
@@ -608,40 +670,6 @@ class ApiService {
     throw Exception('Failed to search customer');
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Create Customer
-  |--------------------------------------------------------------------------
-  */
-
-  Future<Map<String, dynamic>> createCustomer({
-    required String name,
-    required String phone,
-    String? address,
-    String? email,
-  }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/customers'),
-
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-
-      body: jsonEncode({
-        'name': name,
-        'phone': phone,
-        'address': address,
-        'email': email,
-      }),
-    );
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return jsonDecode(response.body);
-    }
-
-    throw Exception('Failed to create customer');
-  }
 
   /*
   |--------------------------------------------------------------------------

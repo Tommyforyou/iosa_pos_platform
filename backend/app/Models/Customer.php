@@ -17,6 +17,8 @@ class Customer extends Model
         'credit_limit',
         'current_balance',
         'is_active',
+        'brn',
+        'vat_number',        
     ];
 
     protected $casts = [

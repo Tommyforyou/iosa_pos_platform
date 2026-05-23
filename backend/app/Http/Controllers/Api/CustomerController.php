@@ -14,9 +14,23 @@ class CustomerController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function index()
+    public function index(Request $request)
     {
-        return Customer::orderBy('name')->get();
+        $query = Customer::query();
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'ILIKE', '%' . $request->search . '%')
+                    ->orWhere('phone', 'ILIKE', '%' . $request->search . '%')
+                    ->orWhere('brn', 'ILIKE', '%' . $request->search . '%')
+                    ->orWhere('vat_number', 'ILIKE', '%' . $request->search . '%');
+            });
+        }
+
+        return $query
+            ->orderBy('name')
+            ->limit(100)
+            ->get();
     }
 
     /*
@@ -53,6 +67,8 @@ class CustomerController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:255'],
+            'brn' => ['nullable', 'string', 'max:255'],
+            'vat_number' => ['nullable', 'string', 'max:255'],      
             'address' => ['nullable', 'string'],
             'email' => ['nullable', 'email'],
             'notes' => ['nullable', 'string'],
@@ -67,6 +83,8 @@ class CustomerController extends Controller
                 'business_id' => 1,
                 'name' => $validated['name'],
                 'address' => $validated['address'] ?? null,
+                'brn' => $validated['brn'] ?? null,
+                'vat_number' => $validated['vat_number'] ?? null,
                 'email' => $validated['email'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'is_active' => $validated['is_active'] ?? true,
@@ -91,6 +109,8 @@ class CustomerController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:255'],
+            'brn' => ['nullable', 'string', 'max:255'],
+            'vat_number' => ['nullable', 'string', 'max:255'],            
             'address' => ['nullable', 'string'],
             'email' => ['nullable', 'email'],
             'notes' => ['nullable', 'string'],

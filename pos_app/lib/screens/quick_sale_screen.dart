@@ -26,16 +26,26 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
   bool isSaving = false;
 
   final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController quantityController = TextEditingController(text: '1');
+  final TextEditingController quantityController = TextEditingController(
+    text: '1',
+  );
   final TextEditingController priceController = TextEditingController();
 
   List<Map<String, dynamic>> items = [];
+
+  Map<String, dynamic>? selectedCustomer;
+
+  final TextEditingController customerSearchController =
+      TextEditingController();
+
+  List<dynamic> customerResults = [];
 
   @override
   void dispose() {
     descriptionController.dispose();
     quantityController.dispose();
     priceController.dispose();
+    customerSearchController.dispose();
     super.dispose();
   }
 
@@ -86,7 +96,74 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
     });
   }
 
+  /*
+  |--------------------------------------------------------------------------
+  | Search Customers
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> searchCustomers() async {
+    try {
+      final data = await apiService.getCustomers(
+        search: customerSearchController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        customerResults = data;
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
+    }
+  }
+  /*
+  |--------------------------------------------------------------------------
+  | Select Customer
+  |--------------------------------------------------------------------------
+  */
+
+  void selectCustomer(dynamic customer) {
+    setState(() {
+      selectedCustomer = Map<String, dynamic>.from(customer);
+      customerResults = [];
+      customerSearchController.text = customer['name'] ?? '';
+    });
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Save Quick Sale
+  |--------------------------------------------------------------------------
+  */
+
   Future<void> saveSale() async {
+    /*
+    |--------------------------------------------------------------------------
+    | Customer Required Validation
+    |--------------------------------------------------------------------------
+    */
+
+    if ((saleType == 'vat_invoice' || saleType == 'credit') &&
+        selectedCustomer == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Customer is required for VAT invoices and credit sales.',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+
+      return;
+    }
+
     if (items.isEmpty) {
       return;
     }
@@ -97,6 +174,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
       });
 
       await apiService.createQuickSale(
+        customerId: selectedCustomer?['id'],
         saleType: saleType,
         paymentMethod: paymentMethod,
         items: items,
@@ -118,10 +196,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) {
@@ -134,11 +209,15 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final allowedPaymentMethods = ['cash', 'card', 'juice', 'cheque', 'credit'];
+
+    if (!allowedPaymentMethods.contains(paymentMethod)) {
+      paymentMethod = 'cash';
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6FA),
-      appBar: AppBar(
-        title: const Text('Quick Sale'),
-      ),
+      appBar: AppBar(title: const Text('Quick Sale')),
       body: Padding(
         padding: const EdgeInsets.all(22),
         child: Row(
@@ -238,6 +317,132 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
                     const SizedBox(height: 20),
 
+                    /*
+|--------------------------------------------------------------------------
+| Customer Section
+|--------------------------------------------------------------------------
+*/
+                    const Text(
+                      'Customer',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF7F9FC),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (saleType == 'vat_invoice' || saleType == 'credit')
+                            Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(bottom: 14),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.10),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    color: Colors.orange,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      'Customer information is required for VAT invoices and credit sales.',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: customerSearchController,
+                                  onChanged: (_) => searchCustomers(),
+                                  decoration: InputDecoration(
+                                    labelText:
+                                        'Customer name / phone / BRN / VAT',
+                                    prefixIcon: const Icon(Icons.search),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              ElevatedButton.icon(
+                                onPressed: () {},
+                                icon: const Icon(Icons.person_add),
+                                label: const Text('New Customer'),
+                              ),
+                            ],
+                          ),
+
+                          if (selectedCustomer != null) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.10),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Text(
+                                '${selectedCustomer!['name'] ?? ''} | BRN: ${selectedCustomer!['brn'] ?? '-'} | VAT: ${selectedCustomer!['vat_number'] ?? '-'}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+
+                          if (customerResults.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 180,
+                              child: ListView.separated(
+                                itemCount: customerResults.length,
+                                separatorBuilder: (_, __) => Divider(
+                                  height: 1,
+                                  color: Colors.grey.shade200,
+                                ),
+                                itemBuilder: (context, index) {
+                                  final customer = customerResults[index];
+
+                                  return ListTile(
+                                    leading: const CircleAvatar(
+                                      child: Icon(Icons.person),
+                                    ),
+                                    title: Text(customer['name'] ?? ''),
+                                    subtitle: Text(
+                                      '${customer['phone'] ?? ''} | BRN: ${customer['brn'] ?? '-'} | VAT: ${customer['vat_number'] ?? '-'}',
+                                    ),
+                                    onTap: () {
+                                      selectCustomer(customer);
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+
                     const Text(
                       'Add Item',
                       style: TextStyle(
@@ -325,9 +530,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
                     Expanded(
                       child: items.isEmpty
-                          ? const Center(
-                              child: Text('No items added'),
-                            )
+                          ? const Center(child: Text('No items added'))
                           : ListView.builder(
                               itemCount: items.length,
                               itemBuilder: (context, index) {
@@ -335,13 +538,40 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
                                 return ListTile(
                                   title: Text(item['description']),
+
                                   subtitle: Text(
                                     '${item['quantity']} × ${formatMoney(toMoneyDouble(item['unit_price_excl_vat']))}',
                                   ),
-                                  trailing: Text(
-                                    formatMoney(
-                                      toMoneyDouble(item['line_total_incl_vat']),
-                                    ),
+
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        formatMoney(
+                                          toMoneyDouble(
+                                            item['line_total_incl_vat'],
+                                          ),
+                                        ),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+
+                                      const SizedBox(width: 8),
+
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          color: Colors.red,
+                                        ),
+
+                                        onPressed: () {
+                                          setState(() {
+                                            items.removeAt(index);
+                                          });
+                                        },
+                                      ),
+                                    ],
                                   ),
                                 );
                               },
@@ -399,9 +629,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                       child: ElevatedButton.icon(
                         onPressed: isSaving ? null : saveSale,
                         icon: const Icon(Icons.save),
-                        label: Text(
-                          isSaving ? 'Saving...' : 'Save Sale',
-                        ),
+                        label: Text(isSaving ? 'Saving...' : 'Save Sale'),
                       ),
                     ),
                   ],

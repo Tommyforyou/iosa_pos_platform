@@ -15,13 +15,32 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('restaurant_orders', function (Blueprint $table) {
-            $table->string('payment_status')->default('unpaid');
-            $table->string('payment_method')->nullable();
-            $table->decimal('subtotal', 12, 2)->default(0);
-            $table->decimal('tax_amount', 12, 2)->default(0);
-            $table->decimal('discount_amount', 12, 2)->default(0);
-            $table->decimal('total_amount', 12, 2)->default(0);
-            $table->timestamp('paid_at')->nullable();
+            if (!Schema::hasColumn('restaurant_orders', 'payment_status')) {
+                $table->string('payment_status')->default('unpaid');
+            }
+             if (!Schema::hasColumn('restaurant_orders', 'payment_method')) {
+                $table->string('payment_method')->nullable();
+            }
+
+            if (!Schema::hasColumn('restaurant_orders', 'subtotal')) {
+                $table->decimal('subtotal', 15, 2)->default(0);
+            }
+
+            if (!Schema::hasColumn('restaurant_orders', 'tax_amount')) {
+                $table->decimal('tax_amount', 15, 2)->default(0);
+            }
+
+            if (!Schema::hasColumn('restaurant_orders', 'discount_amount')) {
+                $table->decimal('discount_amount', 15, 2)->default(0);
+            }
+
+            if (!Schema::hasColumn('restaurant_orders', 'total_amount')) {
+                $table->decimal('total_amount', 15, 2)->default(0);
+            }
+                
+            if (!Schema::hasColumn('restaurant_orders', 'paid_at')) {
+                 $table->timestamp('paid_at')->nullable();
+            }
         });
     }
 

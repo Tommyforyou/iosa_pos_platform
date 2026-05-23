@@ -43,7 +43,7 @@ class QuickSaleController extends Controller
                 ->sum('line_total_incl_vat');
 
             $sale = Sale::create([
-                'business_id' => 1,
+                'business_id' => null,
                 'customer_id' => $validated['customer_id'] ?? null,
                  'invoice_number' => 'QS-' . now()->format('YmdHis') . '-' . random_int(1000, 9999),
                 'sale_type' => $validated['sale_type'],
