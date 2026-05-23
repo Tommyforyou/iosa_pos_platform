@@ -30,6 +30,7 @@ class QuickSaleController extends Controller
             'items.*.unit_price_excl_vat' => ['required', 'numeric', 'min:0'],
             'items.*.vat_amount' => ['required', 'numeric', 'min:0'],
             'items.*.line_total_incl_vat' => ['required', 'numeric', 'min:0'],
+            'items.*.save_as_product' => ['nullable', 'boolean'],
         ]);
 
         return DB::transaction(function () use ($validated) {
@@ -59,8 +60,31 @@ class QuickSaleController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
-                $sale->items()->create([
-                    'product_id' => $item['product_id'] ?? null,
+            $productId = $item['product_id'] ?? null;
+
+                if (
+                    empty($productId) &&
+                    !empty($item['save_as_product'])
+                ) {
+                    $product = Product::create([
+                        'business_id' => null,
+                        'product_category_id' => null,
+                        'name' => $item['description'],
+                        'selling_price' => $item['unit_price_excl_vat'],
+                        'cost_price' => 0,
+                        'stock_quantity' => 0,
+                        'reorder_level' => 0,
+                        'unit' => 'pcs',
+                        'vat_applicable' => true,
+                        'vat_rate' => 15,
+                        'is_active' => true,
+                    ]);
+
+                    $productId = $product->id;
+                }    
+            
+                  $sale->items()->create([
+                    'product_id' => $productId,
                     'product_name' => $item['description'],
 
                     'quantity' => $item['quantity'],
@@ -75,7 +99,7 @@ class QuickSaleController extends Controller
                     $this->deductProductStock(
                         productId: $item['product_id'],
                         quantity: (float) $item['quantity'],
-                        reference: $sale->sale_number,
+                        reference: $sale->invoice_number,
                     );
                 }
             }

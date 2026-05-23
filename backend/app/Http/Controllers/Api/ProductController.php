@@ -11,17 +11,22 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Product::with('category')
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
-    }
+        $query = Product::with('category')
+            ->where('is_active', true);
 
-    public function show(Product $product)
-    {
-        return $product->load('category');
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'ILIKE', '%' . $request->search . '%')
+                    ->orWhere('sku', 'ILIKE', '%' . $request->search . '%');
+            });
+        }
+
+        return $query
+            ->orderBy('name')
+            ->limit(100)
+            ->get();
     }
 
 

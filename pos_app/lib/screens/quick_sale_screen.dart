@@ -25,6 +25,14 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
   bool isSaving = false;
 
+  bool saveNewItemAsProduct = true;
+
+  Map<String, dynamic>? selectedProduct;
+
+  List<dynamic> productResults = [];
+
+  final TextEditingController productSearchController = TextEditingController();
+
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController quantityController = TextEditingController(
     text: '1',
@@ -46,6 +54,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
     quantityController.dispose();
     priceController.dispose();
     customerSearchController.dispose();
+    productSearchController.dispose();
     super.dispose();
   }
 
@@ -82,13 +91,18 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
     setState(() {
       items.add({
-        'product_id': null,
+        'product_id': selectedProduct?['id'],
         'description': description,
         'quantity': quantity,
         'unit_price_excl_vat': unitPrice,
         'vat_amount': vat,
         'line_total_incl_vat': totalInclVat,
+        'save_as_product': selectedProduct == null && saveNewItemAsProduct,
       });
+
+      selectedProduct = null;
+      productResults = [];
+      productSearchController.clear();
 
       descriptionController.clear();
       quantityController.text = '1';
@@ -96,6 +110,54 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
     });
   }
 
+  /*
+  |--------------------------------------------------------------------------
+  | Select Product
+  |--------------------------------------------------------------------------
+  */
+
+  void selectProduct(dynamic product) {
+    setState(() {
+      selectedProduct = Map<String, dynamic>.from(product);
+
+      descriptionController.text = product['name'] ?? '';
+
+      priceController.text = product['selling_price']?.toString() ?? '0';
+
+      productSearchController.text = product['name'] ?? '';
+
+      productResults = [];
+    });
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Search Products
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> searchProducts() async {
+    try {
+      final data = await apiService.getProducts(
+        search: productSearchController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        productResults = data;
+        debugPrint('Products found: ${data.length}');
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
   /*
   |--------------------------------------------------------------------------
   | Search Customers
@@ -453,12 +515,101 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
                     const SizedBox(height: 12),
 
-                    TextField(
-                      controller: descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Description',
-                        border: OutlineInputBorder(),
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextField(
+                          controller: productSearchController,
+
+                          onChanged: (_) {
+                            searchProducts();
+                          },
+
+                          decoration: InputDecoration(
+                            labelText: 'Search product',
+
+                            prefixIcon: const Icon(Icons.search),
+
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+
+                        if (productResults.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+
+                          Container(
+                            height: 180,
+
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+
+                              borderRadius: BorderRadius.circular(14),
+
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+
+                            child: ListView.separated(
+                              itemCount: productResults.length,
+
+                              separatorBuilder: (_, __) => Divider(
+                                height: 1,
+                                color: Colors.grey.shade200,
+                              ),
+
+                              itemBuilder: (context, index) {
+                                final product = productResults[index];
+
+                                return ListTile(
+                                  leading: const CircleAvatar(
+                                    child: Icon(Icons.inventory_2),
+                                  ),
+
+                                  title: Text(product['name'] ?? ''),
+
+                                  subtitle: Text(
+                                    'Stock: ${product['stock_quantity'] ?? 0}',
+                                  ),
+
+                                  trailing: Text(
+                                    formatMoney(
+                                      toMoneyDouble(product['selling_price']),
+                                    ),
+                                  ),
+
+                                  onTap: () {
+                                    selectProduct(product);
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 12),
+
+                        TextField(
+                          controller: descriptionController,
+
+                          decoration: const InputDecoration(
+                            labelText: 'Description',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+
+                        CheckboxListTile(
+                          value: saveNewItemAsProduct,
+                          title: const Text(
+                            'Save this item as product for next time',
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              saveNewItemAsProduct = value ?? true;
+                            });
+                          },
+                        ),
+                      ],
                     ),
 
                     const SizedBox(height: 12),

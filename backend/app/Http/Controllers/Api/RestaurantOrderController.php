@@ -495,8 +495,10 @@ class RestaurantOrderController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            $alreadyDeducted = StockMovement::where('reference_type', 'restaurant_order')
-                ->where('reference_id', $order->id)
+            $alreadyDeducted = StockMovement::where(
+                    'remarks',
+                    'Restaurant sale - ' . $order->order_number
+                )
                 ->where('product_id', $product->id)
                 ->where('movement_type', 'sale')
                 ->exists();

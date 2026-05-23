@@ -37,12 +37,26 @@ class ApiService {
 
   /*
   |--------------------------------------------------------------------------
-  | Load Products
+  | Get Products
   |--------------------------------------------------------------------------
-  | Gets active products/menu items from Laravel.
   */
-  Future<List<dynamic>> getProducts() async {
-    final response = await http.get(Uri.parse('$baseUrl/products'));
+
+  Future<List<dynamic>> getProducts({
+    String? search,
+  }) async {
+    final uri = Uri.parse('$baseUrl/products').replace(
+      queryParameters: {
+        if (search != null && search.isNotEmpty)
+          'search': search,
+      },
+    );
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Accept': 'application/json',
+      },
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -52,10 +66,10 @@ class ApiService {
   }
 
   /*
-|--------------------------------------------------------------------------
-| Create Quick Sale
-|--------------------------------------------------------------------------
-*/
+  |--------------------------------------------------------------------------
+  | Create Quick Sale
+  |--------------------------------------------------------------------------
+  */
 
   Future<Map<String, dynamic>> createQuickSale({
     int? customerId,
@@ -86,7 +100,7 @@ class ApiService {
     throw Exception('Failed to create quick sale: ${response.body}');
   }
 
-  /*
+/*
 |--------------------------------------------------------------------------
 | Get Customers
 |--------------------------------------------------------------------------
@@ -111,7 +125,7 @@ class ApiService {
     throw Exception('Failed to load customers: ${response.body}');
   }
 
-  /*
+/*
 |--------------------------------------------------------------------------
 | Create Customer
 |--------------------------------------------------------------------------
@@ -669,7 +683,6 @@ class ApiService {
 
     throw Exception('Failed to search customer');
   }
-
 
   /*
   |--------------------------------------------------------------------------
