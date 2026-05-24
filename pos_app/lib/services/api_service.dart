@@ -1129,6 +1129,7 @@ class ApiService {
     required bool isActive,
     String? description,
     String productType = 'general',
+    String? barcode,
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/products'),
@@ -1151,6 +1152,7 @@ class ApiService {
         'vat_rate': vatRate,
         'description': description,
         'is_active': isActive,
+        'barcode': barcode,
       }),
     );
 
@@ -1179,6 +1181,7 @@ class ApiService {
     required bool isActive,
     String? description,
     String productType = 'general',
+    String? barcode,
   }) async {
     final response = await http.put(
       Uri.parse('$baseUrl/products/$productId'),
@@ -1201,6 +1204,7 @@ class ApiService {
         'vat_rate': vatRate,
         'description': description,
         'is_active': isActive,
+        'barcode': barcode,
       }),
     );
 

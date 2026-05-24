@@ -22,6 +22,7 @@ import '../utils/money.dart';
 | - upload product image
 */
 
+
 class ProductManagementScreen extends StatefulWidget {
   const ProductManagementScreen({super.key});
 
@@ -30,8 +31,7 @@ class ProductManagementScreen extends StatefulWidget {
       _ProductManagementScreenState();
 }
 
-class _ProductManagementScreenState
-    extends State<ProductManagementScreen> {
+class _ProductManagementScreenState extends State<ProductManagementScreen> {
   /*
   |--------------------------------------------------------------------------
   | API Service
@@ -96,9 +96,7 @@ class _ProductManagementScreenState
 
   Future<void> uploadProductImage(int productId) async {
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-      );
+      final result = await FilePicker.platform.pickFiles(type: FileType.image);
 
       if (result == null) {
         return;
@@ -120,9 +118,7 @@ class _ProductManagementScreenState
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Product image uploaded successfully'),
-        ),
+        const SnackBar(content: Text('Product image uploaded successfully')),
       );
     } catch (e) {
       debugPrint(e.toString());
@@ -130,10 +126,7 @@ class _ProductManagementScreenState
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     }
   }
@@ -144,9 +137,7 @@ class _ProductManagementScreenState
   |--------------------------------------------------------------------------
   */
 
-  Future<void> showProductDialog({
-    dynamic product,
-  }) async {
+  Future<void> showProductDialog({dynamic product}) async {
     if (categories.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -158,9 +149,11 @@ class _ProductManagementScreenState
       return;
     }
 
-    final nameController = TextEditingController(
-      text: product?['name'] ?? '',
+    final TextEditingController barcodeController = TextEditingController(
+      text: product?['barcode'] ?? '',
     );
+
+    final nameController = TextEditingController(text: product?['name'] ?? '');
 
     final sellingPriceController = TextEditingController(
       text: product?['selling_price']?.toString() ?? '0',
@@ -202,9 +195,7 @@ class _ProductManagementScreenState
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text(
-                product == null ? 'Create Product' : 'Edit Product',
-              ),
+              title: Text(product == null ? 'Create Product' : 'Edit Product'),
               content: SizedBox(
                 width: 540,
                 child: SingleChildScrollView(
@@ -216,7 +207,6 @@ class _ProductManagementScreenState
                       | Product Name
                       |--------------------------------------------------------------------------
                       */
-
                       TextField(
                         controller: nameController,
                         decoration: const InputDecoration(
@@ -224,7 +214,20 @@ class _ProductManagementScreenState
                           border: OutlineInputBorder(),
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      /*
+                      |--------------------------------------------------------------------------
+                      | Barcode
+                      |--------------------------------------------------------------------------
+                      */
+                      TextField(
+                        controller: barcodeController,
 
+                        decoration: const InputDecoration(
+                          labelText: 'Barcode',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
                       const SizedBox(height: 16),
 
                       /*
@@ -232,21 +235,20 @@ class _ProductManagementScreenState
                       | Category
                       |--------------------------------------------------------------------------
                       */
-
                       DropdownButtonFormField<int>(
                         value: selectedCategoryId,
                         decoration: const InputDecoration(
                           labelText: 'Category',
                           border: OutlineInputBorder(),
                         ),
-                        items: categories.map<DropdownMenuItem<int>>(
-                          (category) {
-                            return DropdownMenuItem<int>(
-                              value: category['id'],
-                              child: Text(category['name']),
-                            );
-                          },
-                        ).toList(),
+                        items: categories.map<DropdownMenuItem<int>>((
+                          category,
+                        ) {
+                          return DropdownMenuItem<int>(
+                            value: category['id'],
+                            child: Text(category['name']),
+                          );
+                        }).toList(),
                         onChanged: (value) {
                           setDialogState(() {
                             selectedCategoryId = value;
@@ -261,7 +263,6 @@ class _ProductManagementScreenState
                       | Pricing
                       |--------------------------------------------------------------------------
                       */
-
                       Row(
                         children: [
                           Expanded(
@@ -295,7 +296,6 @@ class _ProductManagementScreenState
                       | Inventory
                       |--------------------------------------------------------------------------
                       */
-
                       Row(
                         children: [
                           Expanded(
@@ -329,7 +329,6 @@ class _ProductManagementScreenState
                       | Unit
                       |--------------------------------------------------------------------------
                       */
-
                       TextField(
                         controller: unitController,
                         decoration: const InputDecoration(
@@ -345,7 +344,6 @@ class _ProductManagementScreenState
                       | Description
                       |--------------------------------------------------------------------------
                       */
-
                       TextField(
                         controller: descriptionController,
                         maxLines: 3,
@@ -362,7 +360,6 @@ class _ProductManagementScreenState
                       | VAT
                       |--------------------------------------------------------------------------
                       */
-
                       SwitchListTile(
                         value: vatApplicable,
                         title: const Text('VAT Applicable'),
@@ -389,7 +386,6 @@ class _ProductManagementScreenState
                       | Active Status
                       |--------------------------------------------------------------------------
                       */
-
                       SwitchListTile(
                         value: isActive,
                         title: const Text('Active Product'),
@@ -428,20 +424,15 @@ class _ProductManagementScreenState
     }
 
     try {
-      final sellingPrice =
-          double.tryParse(sellingPriceController.text) ?? 0;
+      final sellingPrice = double.tryParse(sellingPriceController.text) ?? 0;
 
-      final costPrice =
-          double.tryParse(costPriceController.text) ?? 0;
+      final costPrice = double.tryParse(costPriceController.text) ?? 0;
 
-      final stockQuantity =
-          double.tryParse(stockController.text) ?? 0;
+      final stockQuantity = double.tryParse(stockController.text) ?? 0;
 
-      final reorderLevel =
-          double.tryParse(reorderController.text) ?? 0;
+      final reorderLevel = double.tryParse(reorderController.text) ?? 0;
 
-      final vatRate =
-          double.tryParse(vatRateController.text) ?? 15;
+      final vatRate = double.tryParse(vatRateController.text) ?? 15;
 
       if (product == null) {
         await apiService.createProduct(
@@ -456,6 +447,7 @@ class _ProductManagementScreenState
           vatRate: vatRate,
           isActive: isActive,
           description: descriptionController.text.trim(),
+          barcode: barcodeController.text.trim(),
         );
       } else {
         await apiService.updateProduct(
@@ -471,6 +463,7 @@ class _ProductManagementScreenState
           vatRate: vatRate,
           isActive: isActive,
           description: descriptionController.text.trim(),
+          barcode: barcodeController.text.trim(),
         );
       }
 
@@ -479,9 +472,7 @@ class _ProductManagementScreenState
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Product saved successfully'),
-        ),
+        const SnackBar(content: Text('Product saved successfully')),
       );
     } catch (e) {
       debugPrint(e.toString());
@@ -489,10 +480,7 @@ class _ProductManagementScreenState
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     }
   }
@@ -512,9 +500,7 @@ class _ProductManagementScreenState
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Product deleted successfully'),
-        ),
+        const SnackBar(content: Text('Product deleted successfully')),
       );
     } catch (e) {
       debugPrint(e.toString());
@@ -522,10 +508,7 @@ class _ProductManagementScreenState
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     }
   }
@@ -542,9 +525,7 @@ class _ProductManagementScreenState
       builder: (context) {
         return AlertDialog(
           title: const Text('Delete Product'),
-          content: const Text(
-            'Are you sure you want to delete this product?',
-          ),
+          content: const Text('Are you sure you want to delete this product?'),
           actions: [
             TextButton(
               onPressed: () {
@@ -577,9 +558,7 @@ class _ProductManagementScreenState
   String productCategoryName(dynamic product) {
     final categoryId = product['product_category_id'];
 
-    final match = categories.where(
-      (category) => category['id'] == categoryId,
-    );
+    final match = categories.where((category) => category['id'] == categoryId);
 
     if (match.isEmpty) {
       return 'No Category';
@@ -615,130 +594,109 @@ class _ProductManagementScreenState
         label: const Text('New Product'),
       ),
       body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : products.isEmpty
-              ? const Center(
-                  child: Text(
-                    'No products found',
-                    style: TextStyle(fontSize: 20),
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: products.length,
-                  itemBuilder: (context, index) {
-                    final product = products[index];
+          ? const Center(
+              child: Text('No products found', style: TextStyle(fontSize: 20)),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: products.length,
+              itemBuilder: (context, index) {
+                final product = products[index];
 
-                    return Card(
-                      child: ListTile(
-                        /*
+                return Card(
+                  child: ListTile(
+                    /*
                         |--------------------------------------------------------------------------
                         | Product Image
                         |--------------------------------------------------------------------------
                         */
+                    leading: product['image_url'] != null
+                        ? CircleAvatar(
+                            backgroundImage: NetworkImage(product['image_url']),
+                          )
+                        : const CircleAvatar(child: Icon(Icons.fastfood)),
 
-                        leading: product['image_url'] != null
-                            ? CircleAvatar(
-                                backgroundImage: NetworkImage(
-                                  product['image_url'],
-                                ),
-                              )
-                            : const CircleAvatar(
-                                child: Icon(Icons.fastfood),
-                              ),
-
-                        /*
+                    /*
                         |--------------------------------------------------------------------------
                         | Product Name
                         |--------------------------------------------------------------------------
                         */
+                    title: Text(
+                      product['name'],
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
 
-                        title: Text(
-                          product['name'],
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        /*
+                    /*
                         |--------------------------------------------------------------------------
                         | Product Details
                         |--------------------------------------------------------------------------
                         */
+                    subtitle: Text(
+                      '${productCategoryName(product)} • '
+                      '${formatMoney(product['selling_price'])} • '
+                      'Stock: ${product['stock_quantity']} ${product['unit'] ?? ''}',
+                    ),
 
-                        subtitle: Text(
-                          '${productCategoryName(product)} • '
-                          '${formatMoney(product['selling_price'])} • '
-                          'Stock: ${product['stock_quantity']} ${product['unit'] ?? ''}',
-                        ),
-
-                        /*
+                    /*
                         |--------------------------------------------------------------------------
                         | Actions
                         |--------------------------------------------------------------------------
                         */
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          product['is_active']
+                              ? Icons.check_circle
+                              : Icons.cancel,
+                          color: product['is_active']
+                              ? Colors.green
+                              : Colors.red,
+                        ),
 
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              product['is_active']
-                                  ? Icons.check_circle
-                                  : Icons.cancel,
-                              color: product['is_active']
-                                  ? Colors.green
-                                  : Colors.red,
-                            ),
-
-                            /*
+                        /*
                             |--------------------------------------------------------------------------
                             | Upload Image
                             |--------------------------------------------------------------------------
                             */
+                        IconButton(
+                          icon: const Icon(Icons.image),
+                          onPressed: () {
+                            uploadProductImage(product['id']);
+                          },
+                        ),
 
-                            IconButton(
-                              icon: const Icon(Icons.image),
-                              onPressed: () {
-                                uploadProductImage(product['id']);
-                              },
-                            ),
-
-                            /*
+                        /*
                             |--------------------------------------------------------------------------
                             | Edit Product
                             |--------------------------------------------------------------------------
                             */
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () {
+                            showProductDialog(product: product);
+                          },
+                        ),
 
-                            IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () {
-                                showProductDialog(product: product);
-                              },
-                            ),
-
-                            /*
+                        /*
                             |--------------------------------------------------------------------------
                             | Delete Product
                             |--------------------------------------------------------------------------
                             */
-
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                              ),
-                              onPressed: () {
-                                confirmDeleteProduct(product['id']);
-                              },
-                            ),
-                          ],
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            confirmDeleteProduct(product['id']);
+                          },
                         ),
-                      ),
-                    );
-                  },
-                ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 }

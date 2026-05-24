@@ -18,8 +18,9 @@ class ProductController extends Controller
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
-                $q->where('name', 'ILIKE', '%' . $request->search . '%')
-                    ->orWhere('sku', 'ILIKE', '%' . $request->search . '%');
+               $q->where('name', 'ILIKE', '%' . $request->search . '%')
+                ->orWhere('sku', 'ILIKE', '%' . $request->search . '%')
+                ->orWhere('barcode', 'ILIKE', '%' . $request->search . '%');
             });
         }
 
@@ -78,6 +79,7 @@ public function store(Request $request)
         'unit' => ['nullable', 'string', 'max:50'],
         'description' => ['nullable', 'string'],
         'is_active' => ['nullable', 'boolean'],
+        'barcode' => ['nullable', 'string', 'max:255'],
     ]);
 
     $product = Product::create([
@@ -94,6 +96,7 @@ public function store(Request $request)
         'unit' => $validated['unit'] ?? 'pcs',
         'description' => $validated['description'] ?? null,
         'is_active' => $validated['is_active'] ?? true,
+        'barcode' => $validated['barcode'] ?? null,
     ]);
 
     return response()->json([
@@ -125,6 +128,7 @@ public function store(Request $request)
             'unit' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string'],
             'is_active' => ['nullable', 'boolean'],
+            'barcode' => ['nullable', 'string', 'max:255'],
         ]);
 
         $product->update($validated);

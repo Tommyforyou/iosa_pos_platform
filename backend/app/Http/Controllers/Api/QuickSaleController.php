@@ -31,6 +31,7 @@ class QuickSaleController extends Controller
             'items.*.vat_amount' => ['required', 'numeric', 'min:0'],
             'items.*.line_total_incl_vat' => ['required', 'numeric', 'min:0'],
             'items.*.save_as_product' => ['nullable', 'boolean'],
+            'items.*.barcode' => ['nullable', 'string', 'max:255'],
         ]);
 
         return DB::transaction(function () use ($validated) {
@@ -57,6 +58,7 @@ class QuickSaleController extends Controller
                 'discount_amount' => 0,
                 'total_incl_vat' => $total,
                 'sale_date' => now(),
+                
             ]);
 
             foreach ($validated['items'] as $item) {
@@ -78,6 +80,7 @@ class QuickSaleController extends Controller
                         'vat_applicable' => true,
                         'vat_rate' => 15,
                         'is_active' => true,
+                        'barcode' => $item['barcode'] ?? null,
                     ]);
 
                     $productId = $product->id;
@@ -107,7 +110,7 @@ class QuickSaleController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Quick sale created successfully',
-                'sale' => $sale->fresh('items'),
+'               sale' => $sale->fresh(['customer','items',]),
             ], 201);
         });
     }
