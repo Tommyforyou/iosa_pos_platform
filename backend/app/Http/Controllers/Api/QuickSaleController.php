@@ -35,14 +35,21 @@ class QuickSaleController extends Controller
         ]);
 
         return DB::transaction(function () use ($validated) {
-            $subtotal = collect($validated['items'])
-                ->sum('unit_price_excl_vat');
+                $subtotal = collect($validated['items'])
+                    ->sum(function ($item) {
+                        return ((float) $item['quantity']) *
+                            ((float) $item['unit_price_excl_vat']);
+                    });
 
-            $vatAmount = collect($validated['items'])
-                ->sum('vat_amount');
+                $vatAmount = collect($validated['items'])
+                    ->sum(function ($item) {
+                        return (float) $item['vat_amount'];
+                    });
 
-            $total = collect($validated['items'])
-                ->sum('line_total_incl_vat');
+                $total = collect($validated['items'])
+                    ->sum(function ($item) {
+                        return (float) $item['line_total_incl_vat'];
+                    });
 
             $sale = Sale::create([
                 'business_id' => null,
@@ -53,10 +60,10 @@ class QuickSaleController extends Controller
                     ? 'unpaid'
                     : 'paid',
                 'payment_method' => $validated['payment_method'],
-                'subtotal_excl_vat' => $subtotal,
+                'subtotal' => $subtotal,
                 'vat_amount' => $vatAmount,
                 'discount_amount' => 0,
-                'total_incl_vat' => $total,
+                'total_amount' => $total,
                 'sale_date' => now(),
                 
             ]);
@@ -107,11 +114,14 @@ class QuickSaleController extends Controller
                 }
             }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Quick sale created successfully',
-'               sale' => $sale->fresh(['customer','items',]),
-            ], 201);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Quick sale created successfully',
+                    'sale' => $sale->fresh([
+                        'customer',
+                        'items',
+                    ]),
+                ], 201);
         });
     }
 

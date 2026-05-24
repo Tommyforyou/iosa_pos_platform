@@ -41,21 +41,16 @@ class ApiService {
   |--------------------------------------------------------------------------
   */
 
-  Future<List<dynamic>> getProducts({
-    String? search,
-  }) async {
+  Future<List<dynamic>> getProducts({String? search}) async {
     final uri = Uri.parse('$baseUrl/products').replace(
       queryParameters: {
-        if (search != null && search.isNotEmpty)
-          'search': search,
+        if (search != null && search.isNotEmpty) 'search': search,
       },
     );
 
     final response = await http.get(
       uri,
-      headers: {
-        'Accept': 'application/json',
-      },
+      headers: {'Accept': 'application/json'},
     );
 
     if (response.statusCode == 200) {
@@ -94,13 +89,14 @@ class ApiService {
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return jsonDecode(response.body);
+      final data = jsonDecode(response.body);
+      return Map<String, dynamic>.from(data);
     }
 
     throw Exception('Failed to create quick sale: ${response.body}');
   }
 
-/*
+  /*
 |--------------------------------------------------------------------------
 | Get Customers
 |--------------------------------------------------------------------------
@@ -125,7 +121,7 @@ class ApiService {
     throw Exception('Failed to load customers: ${response.body}');
   }
 
-/*
+  /*
 |--------------------------------------------------------------------------
 | Create Customer
 |--------------------------------------------------------------------------

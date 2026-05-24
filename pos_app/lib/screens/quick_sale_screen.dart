@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-
 import '../services/api_service.dart';
 import '../utils/money.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:intl/intl.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -33,6 +33,15 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
   List<dynamic> productResults = [];
 
+  /*
+  |--------------------------------------------------------------------------
+  | Controllers
+  |--------------------------------------------------------------------------
+  */
+
+  final TextEditingController amountTenderedController =
+      TextEditingController();
+
   final TextEditingController productSearchController = TextEditingController();
   final TextEditingController newItemBarcodeController =
       TextEditingController();
@@ -42,8 +51,44 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
     text: '1',
   );
   final TextEditingController priceController = TextEditingController();
-  final TextEditingController amountTenderedController =
-      TextEditingController();
+
+  /*
+  |--------------------------------------------------------------------------
+  | Amount Tendered
+  |--------------------------------------------------------------------------
+  */
+
+  double amountTendered() {
+    return toMoneyDouble(amountTenderedController.text);
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Payment Rules
+  |--------------------------------------------------------------------------
+  */
+
+  bool canEditAmountTendered() {
+    return paymentMethod == 'cash';
+  }
+
+  void syncTenderedWithPaymentMethod() {
+    if (paymentMethod == 'cash') {
+      return;
+    }
+
+    if (paymentMethod == 'credit') {
+      amountTenderedController.clear();
+
+      return;
+    }
+
+    amountTenderedController.text = grandTotal().toStringAsFixed(2);
+  }
+
+  double changeDue() {
+    return amountTendered() - grandTotal();
+  }
 
   List<Map<String, dynamic>> items = [];
 
@@ -84,14 +129,6 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
     });
   }
 
-  double amountTendered() {
-    return toMoneyDouble(amountTenderedController.text);
-  }
-
-  double changeDue() {
-    return amountTendered() - grandTotal();
-  }
-
   void appendTendered(String value) {
     setState(() {
       amountTenderedController.text = amountTenderedController.text + value;
@@ -112,7 +149,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
   Future<void> printQuickSaleInvoice(Map<String, dynamic> sale) async {
     final pdf = pw.Document();
-
+    final money = NumberFormat('#,##0.00');
     final saleItems = sale['items'] ?? [];
 
     pdf.addPage(
@@ -169,19 +206,36 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                       pw.Text('${item['quantity']}'),
                       pw.SizedBox(width: 12),
                       pw.Text(
-                        '${item['line_total'] ?? item['line_total_incl_vat'] ?? '0'}',
+                        money.format(
+                          double.tryParse(item['line_total'].toString()) ?? 0,
+                        ),
                       ),
                     ],
                   ),
                 ),
-
               pw.Divider(),
 
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
+                  pw.Text('Subtotal'),
+                  pw.Text(
+                    money.format(
+                      double.tryParse(sale['subtotal'].toString()) ?? 0,
+                    ),
+                  ),
+                ],
+              ),
+
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
                   pw.Text('VAT'),
-                  pw.Text('${sale['vat_amount'] ?? '0'}'),
+                  pw.Text(
+                    money.format(
+                      double.tryParse(sale['vat_amount'].toString()) ?? 0,
+                    ),
+                  ),
                 ],
               ),
 
@@ -193,7 +247,33 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                     style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                   ),
                   pw.Text(
-                    '${sale['total_incl_vat'] ?? sale['total_amount'] ?? '0'}',
+                    money.format(
+                      double.tryParse(sale['total_amount'].toString()) ?? 0,
+                    ),
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 10),
+
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('Amount Tendered'),
+                  pw.Text(money.format(amountTendered())),
+                ],
+              ),
+
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    'Change Due',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+
+                  pw.Text(
+                    money.format(changeDue()),
                     style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                   ),
                 ],
@@ -577,8 +657,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
           backgroundColor: Colors.green,
         ),
       );
-      
-      
+
       // Printing Receipt
       if (result['sale'] != null) {
         await printQuickSaleInvoice(Map<String, dynamic>.from(result['sale']));
@@ -703,6 +782,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                             onChanged: (value) {
                               setState(() {
                                 paymentMethod = value ?? 'cash';
+                                syncTenderedWithPaymentMethod();
                               });
                             },
                           ),
@@ -1198,10 +1278,13 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
                     TextField(
                       controller: amountTenderedController,
+                      enabled: canEditAmountTendered(),
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Amount Tendered',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
+                        filled: !canEditAmountTendered(),
+                        fillColor: Colors.grey.shade100,
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
@@ -1247,13 +1330,15 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                           'C',
                         ])
                           ElevatedButton(
-                            onPressed: () {
-                              if (key == 'C') {
-                                clearTendered();
-                              } else {
-                                appendTendered(key);
-                              }
-                            },
+                            onPressed: canEditAmountTendered()
+                                ? () {
+                                    if (key == 'C') {
+                                      clearTendered();
+                                    } else {
+                                      appendTendered(key);
+                                    }
+                                  }
+                                : null,
                             child: Text(key),
                           ),
                       ],
