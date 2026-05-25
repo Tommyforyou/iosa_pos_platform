@@ -16,6 +16,7 @@ import 'z_report_screen.dart';
 import 'stock_movement_screen.dart';
 import 'quick_sale_screen.dart';
 import 'quick_sale_history_screen.dart';
+import 'business_settings_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -228,6 +229,18 @@ class HomeScreen extends StatelessWidget {
 
             /*
             |--------------------------------------------------------------------------
+            | Show Stock Movement
+            |--------------------------------------------------------------------------
+            */
+            
+            _HomeCard(
+              title: 'Business Settings',
+              subtitle: 'Company, VAT and MRA setup',
+              icon: Icons.settings,
+              onTap: () => openScreen(context, const BusinessSettingsScreen()),
+            ),
+            /*
+            |--------------------------------------------------------------------------
             | Purchasing Group
             |--------------------------------------------------------------------------
             */
@@ -356,7 +369,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-             /*
+            /*
             |--------------------------------------------------------------------------
             | Sales Group
             |--------------------------------------------------------------------------
@@ -461,7 +474,8 @@ class HomeScreen extends StatelessWidget {
                         title: 'Quick Sale',
                         subtitle: 'Create invoice-style sale quickly',
                         icon: Icons.flash_on,
-                        onTap: () => openScreen(context, const QuickSaleScreen()),
+                        onTap: () =>
+                            openScreen(context, const QuickSaleScreen()),
                       ),
 
                       _MiniHomeCard(
@@ -469,7 +483,7 @@ class HomeScreen extends StatelessWidget {
                         subtitle: 'Quick Sale History',
                         icon: Icons.shopping_cart_checkout,
                         onTap: () =>
-                            openScreen(context, const  QuickSaleHistoryScreen()),
+                            openScreen(context, const QuickSaleHistoryScreen()),
                       ),
 
                       _MiniHomeCard(

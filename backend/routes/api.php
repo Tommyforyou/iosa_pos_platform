@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\StockMovementController;
 use App\Http\Controllers\Api\QuickSaleController;
 use App\Http\Controllers\Api\QuickSaleHistoryController;
 use App\Http\Controllers\Api\QuickSaleVoidController;
+use App\Http\Controllers\Api\BusinessSettingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -471,7 +472,6 @@ use App\Http\Controllers\Api\PurchaseController;
                 [ QuickSaleController::class, 'store' ]
             );
 
-
             /*
             |--------------------------------------------------------------------------
             | Z report
@@ -493,6 +493,22 @@ use App\Http\Controllers\Api\PurchaseController;
             Route::post(
                 'quick-sales/{sale}/void',
                 [ QuickSaleVoidController::class, 'void' ]
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Business Settings
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                'business-settings',
+                [ BusinessSettingController::class, 'show' ]
+            );
+
+            Route::post(
+                'business-settings',
+                [ BusinessSettingController::class, 'update' ]
             );
 
             /*

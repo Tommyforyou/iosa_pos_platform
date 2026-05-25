@@ -36,6 +36,53 @@ class ApiService {
   static const String baseUrl = 'http://127.0.0.1:8000/api';
 
   /*
+|--------------------------------------------------------------------------
+| Get Business Settings
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getBusinessSettings() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/business-settings'),
+
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load business settings');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Update Business Settings
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> updateBusinessSettings({
+    required Map<String, dynamic> data,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/business-settings'),
+
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to update business settings');
+  }
+
+  /*
   |--------------------------------------------------------------------------
   | Get Products
   |--------------------------------------------------------------------------
