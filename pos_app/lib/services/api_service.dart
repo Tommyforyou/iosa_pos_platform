@@ -61,6 +61,34 @@ class ApiService {
   }
 
   /*
+|--------------------------------------------------------------------------
+| Void Quick Sale
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> voidQuickSale({
+    required int saleId,
+    required String reason,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/quick-sales/$saleId/void'),
+
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+
+      body: jsonEncode({'reason': reason}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to void sale: ${response.body}');
+  }
+
+  /*
   |--------------------------------------------------------------------------
   | Create Quick Sale
   |--------------------------------------------------------------------------
@@ -95,12 +123,42 @@ class ApiService {
 
     throw Exception('Failed to create quick sale: ${response.body}');
   }
-
   /*
 |--------------------------------------------------------------------------
-| Get Customers
+| Quick Sale History
 |--------------------------------------------------------------------------
 */
+
+  Future<List<dynamic>> getQuickSalesHistory({
+    String? from,
+    String? to,
+    String? search,
+  }) async {
+    final uri = Uri.parse('$baseUrl/quick-sales-history').replace(
+      queryParameters: {
+        if (from != null) 'from': from,
+        if (to != null) 'to': to,
+        if (search != null && search.isNotEmpty) 'search': search,
+      },
+    );
+
+    final response = await http.get(
+      uri,
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to load quick sale history');
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Get Customers
+  |--------------------------------------------------------------------------
+  */
 
   Future<List<dynamic>> getCustomers({String? search}) async {
     final uri = Uri.parse('$baseUrl/customers').replace(

@@ -4,6 +4,7 @@ import '../utils/money.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +25,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
   String saleType = 'walk_in';
   String paymentMethod = 'cash';
+  String printFormat = 'thermal';
 
   bool isSaving = false;
 
@@ -140,14 +142,220 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
       amountTenderedController.clear();
     });
   }
-
   /*
 |--------------------------------------------------------------------------
-| Print Quick Sale Invoice
+| Print Thermal Receipt
 |--------------------------------------------------------------------------
 */
 
-  Future<void> printQuickSaleInvoice(Map<String, dynamic> sale) async {
+  Future<void> printThermalReceipt(Map<String, dynamic> sale) async {
+    final pdf = pw.Document();
+
+    final money = NumberFormat('#,##0.00');
+
+    final saleItems = sale['items'] ?? [];
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat(
+          80 * PdfPageFormat.mm,
+          double.infinity,
+
+          marginAll: 4 * PdfPageFormat.mm,
+        ),
+
+        build: (context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+
+            children: [
+              /*
+            |--------------------------------------------------------------------------
+            | Header
+            |--------------------------------------------------------------------------
+            */
+              pw.Center(
+                child: pw.Text(
+                  'IOSA POS',
+
+                  style: pw.TextStyle(
+                    fontSize: 16,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ),
+
+              pw.Center(
+                child: pw.Text(
+                  'Quick Sale Receipt',
+
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+              ),
+
+              pw.SizedBox(height: 6),
+
+              pw.Divider(),
+
+              pw.Text(
+                'Invoice: ${sale['invoice_number'] ?? '-'}',
+                style: const pw.TextStyle(fontSize: 9),
+              ),
+
+              pw.Text(
+                'Payment: ${sale['payment_method'] ?? '-'}',
+                style: const pw.TextStyle(fontSize: 9),
+              ),
+
+              if (sale['customer'] != null)
+                pw.Text(
+                  'Customer: ${sale['customer']['name']}',
+                  style: const pw.TextStyle(fontSize: 9),
+                ),
+
+              pw.Divider(),
+
+              /*
+            |--------------------------------------------------------------------------
+            | Items
+            |--------------------------------------------------------------------------
+            */
+              for (final item in saleItems)
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+
+                  children: [
+                    pw.Text(
+                      item['product_name'] ?? '-',
+
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+
+                      children: [
+                        pw.Text(
+                          '${item['quantity']} x '
+                          '${money.format(double.tryParse(item['unit_price'].toString()) ?? 0)}',
+
+                          style: const pw.TextStyle(fontSize: 9),
+                        ),
+
+                        pw.Text(
+                          money.format(
+                            double.tryParse(item['line_total'].toString()) ?? 0,
+                          ),
+
+                          style: const pw.TextStyle(fontSize: 9),
+                        ),
+                      ],
+                    ),
+
+                    pw.SizedBox(height: 4),
+                  ],
+                ),
+
+              pw.Divider(),
+
+              /*
+            |--------------------------------------------------------------------------
+            | Totals
+            |--------------------------------------------------------------------------
+            */
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+
+                children: [
+                  pw.Text(
+                    'TOTAL',
+
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+
+                  pw.Text(
+                    money.format(
+                      double.tryParse(sale['total_amount'].toString()) ?? 0,
+                    ),
+
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+
+              pw.SizedBox(height: 8),
+
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+
+                children: [
+                  pw.Text('Tendered', style: const pw.TextStyle(fontSize: 9)),
+
+                  pw.Text(
+                    money.format(amountTendered()),
+                    style: const pw.TextStyle(fontSize: 9),
+                  ),
+                ],
+              ),
+
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+
+                children: [
+                  pw.Text(
+                    'Change',
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 10,
+                    ),
+                  ),
+
+                  pw.Text(
+                    money.format(changeDue()),
+
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+
+              pw.SizedBox(height: 10),
+
+              pw.Center(
+                child: pw.Text(
+                  'Thank you',
+
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      name: 'Thermal-${sale['invoice_number']}',
+
+      onLayout: (_) async => pdf.save(),
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Print Quick Sale Invoice
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> printA4Invoice(Map<String, dynamic> sale) async {
     final pdf = pw.Document();
     final money = NumberFormat('#,##0.00');
     final saleItems = sale['items'] ?? [];
@@ -658,9 +866,20 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
         ),
       );
 
-      // Printing Receipt
-      if (result['sale'] != null) {
-        await printQuickSaleInvoice(Map<String, dynamic>.from(result['sale']));
+      /*
+      |--------------------------------------------------------------------------
+      | Printing Receipt
+      |--------------------------------------------------------------------------
+      */
+
+      final saleData = result['sale'];
+
+      if (saleData != null) {
+        if (printFormat == 'thermal') {
+          await printThermalReceipt(Map<String, dynamic>.from(saleData as Map));
+        } else {
+          await printA4Invoice(Map<String, dynamic>.from(saleData as Map));
+        }
       }
 
       setState(() {
@@ -793,10 +1012,10 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                     const SizedBox(height: 20),
 
                     /*
-|--------------------------------------------------------------------------
-| Customer Section
-|--------------------------------------------------------------------------
-*/
+                    |--------------------------------------------------------------------------
+                    | Customer Section
+                    |--------------------------------------------------------------------------
+                    */
                     const Text(
                       'Customer',
                       style: TextStyle(
@@ -870,10 +1089,10 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                           ),
 
                           /*
-|--------------------------------------------------------------------------
-| Selected Customer Card
-|--------------------------------------------------------------------------
-*/
+                          |--------------------------------------------------------------------------
+                          | Selected Customer Card
+                          |--------------------------------------------------------------------------
+                          */
                           if (selectedCustomer != null) ...[
                             const SizedBox(height: 12),
 
@@ -1342,6 +1561,41 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                             child: Text(key),
                           ),
                       ],
+                    ),
+
+                    const SizedBox(height: 18),
+                    const SizedBox(height: 18),
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Print Format
+                    |--------------------------------------------------------------------------
+                    */
+                    DropdownButtonFormField<String>(
+                      value: printFormat,
+
+                      decoration: const InputDecoration(
+                        labelText: 'Print Format',
+                        border: OutlineInputBorder(),
+                      ),
+
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'thermal',
+                          child: Text('Thermal Receipt'),
+                        ),
+
+                        DropdownMenuItem(
+                          value: 'a4',
+                          child: Text('A4 Invoice'),
+                        ),
+                      ],
+
+                      onChanged: (value) {
+                        setState(() {
+                          printFormat = value ?? 'thermal';
+                        });
+                      },
                     ),
 
                     const SizedBox(height: 18),

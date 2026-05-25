@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\ZReportController;
 use App\Http\Controllers\Api\StockMovementController;
 use App\Http\Controllers\Api\QuickSaleController;
+use App\Http\Controllers\Api\QuickSaleHistoryController;
+use App\Http\Controllers\Api\QuickSaleVoidController;
 
 /*
 |--------------------------------------------------------------------------
@@ -457,14 +459,10 @@ use App\Http\Controllers\Api\PurchaseController;
                 'stock-movements',
                 [ StockMovementController::class, 'index' ]
             );
+
             /*
             |--------------------------------------------------------------------------
-            | Z report
-            |--------------------------------------------------------------------------
-            */
-            /*
-            |--------------------------------------------------------------------------
-            | Quick Sales
+            | quick-sales
             |--------------------------------------------------------------------------
             */
 
@@ -473,10 +471,37 @@ use App\Http\Controllers\Api\PurchaseController;
                 [ QuickSaleController::class, 'store' ]
             );
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Z report
+            |--------------------------------------------------------------------------
+            */
+
             Route::get(
                 'z-report/daily',
                 [ ZReportController::class, 'daily' ]
             );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Void Quick Sale
+            |--------------------------------------------------------------------------
+            | Cancels sale, restores stock and keeps audit trail.
+            */
+
+            Route::post(
+                'quick-sales/{sale}/void',
+                [ QuickSaleVoidController::class, 'void' ]
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Quick Sales History
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get( 'quick-sales-history', [ QuickSaleHistoryController::class, 'index' ] );
 
             Route::get( '/user', function ( Request $request ) {
                 return $request->user();

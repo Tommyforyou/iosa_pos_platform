@@ -21,6 +21,7 @@ class Sale extends Model
         'total_amount',
         'payment_status',
         'sale_status',
+        'notes',
     ];
 
     protected $casts = [

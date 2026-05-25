@@ -15,6 +15,7 @@ import 'supplier_screen.dart';
 import 'z_report_screen.dart';
 import 'stock_movement_screen.dart';
 import 'quick_sale_screen.dart';
+import 'quick_sale_history_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -227,19 +228,6 @@ class HomeScreen extends StatelessWidget {
 
             /*
             |--------------------------------------------------------------------------
-            | Quick Sale
-            |--------------------------------------------------------------------------
-            | 
-            */
-            _HomeCard(
-              title: 'Quick Sale',
-              subtitle: 'Create invoice-style sale quickly',
-              icon: Icons.flash_on,
-              onTap: () => openScreen(context, const QuickSaleScreen()),
-            ),
-
-            /*
-            |--------------------------------------------------------------------------
             | Purchasing Group
             |--------------------------------------------------------------------------
             */
@@ -353,6 +341,135 @@ class HomeScreen extends StatelessWidget {
                         icon: Icons.shopping_cart_checkout,
                         onTap: () =>
                             openScreen(context, const PurchaseScreen()),
+                      ),
+
+                      _MiniHomeCard(
+                        title: 'Suppliers',
+                        subtitle: 'Supplier records',
+                        icon: Icons.business,
+                        onTap: () =>
+                            openScreen(context, const SupplierScreen()),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+             /*
+            |--------------------------------------------------------------------------
+            | Sales Group
+            |--------------------------------------------------------------------------
+            */
+            Container(
+              margin: const EdgeInsets.only(bottom: 20),
+
+              padding: const EdgeInsets.all(20),
+
+              decoration: BoxDecoration(
+                color: Colors.white,
+
+                borderRadius: BorderRadius.circular(28),
+
+                border: Border.all(color: Colors.grey.shade200),
+
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+
+                    blurRadius: 12,
+
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+
+                children: [
+                  /*
+                  |--------------------------------------------------------------------------
+                  | Section Header
+                  |--------------------------------------------------------------------------
+                  */
+                  Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.12),
+
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+
+                        child: const Icon(
+                          Icons.shopping_cart_checkout,
+
+                          color: Colors.orange,
+                          size: 28,
+                        ),
+                      ),
+
+                      const SizedBox(width: 14),
+
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+
+                          children: [
+                            Text(
+                              'Sales',
+
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            SizedBox(height: 3),
+
+                            Text(
+                              'QuickSales, Customers and Sales History.',
+
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  /*
+                  |--------------------------------------------------------------------------
+                  | Nested Cards
+                  |--------------------------------------------------------------------------
+                  */
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1.1,
+                    children: [
+                      _MiniHomeCard(
+                        title: 'Quick Sale',
+                        subtitle: 'Create invoice-style sale quickly',
+                        icon: Icons.flash_on,
+                        onTap: () => openScreen(context, const QuickSaleScreen()),
+                      ),
+
+                      _MiniHomeCard(
+                        title: 'Sales',
+                        subtitle: 'Quick Sale History',
+                        icon: Icons.shopping_cart_checkout,
+                        onTap: () =>
+                            openScreen(context, const  QuickSaleHistoryScreen()),
                       ),
 
                       _MiniHomeCard(
