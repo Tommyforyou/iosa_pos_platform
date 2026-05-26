@@ -15,5 +15,10 @@ class BusinessSetting extends Model {
         'logo_path',
         'receipt_footer',
         'default_print_format',
+        'mra_enabled',
+    ];
+
+    protected $casts = [
+        'mra_enabled' => 'boolean',
     ];
 }

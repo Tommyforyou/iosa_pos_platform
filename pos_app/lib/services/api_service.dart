@@ -112,6 +112,23 @@ class ApiService {
     throw Exception('Failed to upload business logo: $body');
   }
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | Retry MRA Submission
+  |--------------------------------------------------------------------------
+  */
+
+  Future<Map<String, dynamic>> retryMraSubmission(int saleId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/sales/$saleId/retry-mra'),
+
+      headers: {'Accept': 'application/json'},
+    );
+
+    return Map<String, dynamic>.from(jsonDecode(response.body));
+  }
+
   /*
   |--------------------------------------------------------------------------
   | Get Products

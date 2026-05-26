@@ -6,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 /*
 |--------------------------------------------------------------------------
@@ -127,6 +128,27 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
   }
 
   /*
+|--------------------------------------------------------------------------
+| Load MRA QR Image
+|--------------------------------------------------------------------------
+*/
+
+  Future<pw.MemoryImage?> loadMraQrImage(String? base64Qr) async {
+    try {
+      if (base64Qr == null || base64Qr.isEmpty) {
+        return null;
+      }
+
+      final bytes = base64Decode(base64Qr);
+
+      return pw.MemoryImage(bytes);
+    } catch (e) {
+      debugPrint(e.toString());
+      return null;
+    }
+  }
+
+  /*
   |--------------------------------------------------------------------------
   | Amount Tendered
   |--------------------------------------------------------------------------
@@ -223,9 +245,12 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
   Future<void> printThermalReceipt(Map<String, dynamic> sale) async {
     final pdf = pw.Document();
     final logoImage = await loadBusinessLogoForPrint();
+    final mraQrImage = await loadMraQrImage(sale['mra_qr_code']);
     final money = NumberFormat('#,##0.00');
 
     final saleItems = sale['items'] ?? [];
+
+    debugPrint(sale['mra_qr_code'].toString());
 
     pdf.addPage(
       pw.Page(
@@ -309,7 +334,10 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                 'Invoice: ${sale['invoice_number'] ?? '-'}',
                 style: const pw.TextStyle(fontSize: 9),
               ),
-
+              pw.Text(
+                'Date: ${sale['created_at'] ?? '-'}',
+                style: const pw.TextStyle(fontSize: 9),
+              ),
               pw.Text(
                 'Payment: ${sale['payment_method'] ?? '-'}',
                 style: const pw.TextStyle(fontSize: 9),
@@ -443,6 +471,46 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                   style: const pw.TextStyle(fontSize: 10),
                 ),
               ),
+
+              /*
+              |--------------------------------------------------------------------------
+              | MRA Fiscal Information
+              |--------------------------------------------------------------------------
+              */
+              if (sale['mra_submitted'] == true) ...[
+                pw.SizedBox(height: 10),
+
+                pw.Divider(),
+
+                pw.SizedBox(height: 6),
+
+                pw.Center(
+                  child: pw.Text(
+                    'MRA FISCALISED',
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+
+                pw.SizedBox(height: 4),
+
+                pw.Center(
+                  child: pw.Text(
+                    'IRN: ${sale['mra_irn'] ?? ''}',
+                    textAlign: pw.TextAlign.center,
+                    style: const pw.TextStyle(fontSize: 8),
+                  ),
+                ),
+
+                pw.SizedBox(height: 8),
+
+                if (mraQrImage != null)
+                  pw.Center(
+                    child: pw.Image(mraQrImage, width: 120, height: 120),
+                  ),
+              ],
             ],
           );
         },
@@ -465,6 +533,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
   Future<void> printA4Invoice(Map<String, dynamic> sale) async {
     final pdf = pw.Document();
     final logoImage = await loadBusinessLogoForPrint();
+    final mraQrImage = await loadMraQrImage(sale['mra_qr_code']);
     final money = NumberFormat('#,##0.00');
     final saleItems = sale['items'] ?? [];
 
@@ -486,11 +555,13 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
               pw.SizedBox(height: 10),
 
-              pw.Text(
-                businessSettings?['company_name'] ?? 'IOSA POS',
-                style: pw.TextStyle(
-                  fontSize: 10,
-                  fontWeight: pw.FontWeight.bold,
+              pw.Center(
+                child: pw.Text(
+                  businessSettings?['company_name'] ?? 'IOSA POS',
+                  style: pw.TextStyle(
+                    fontSize: 14,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
               ),
 
@@ -521,20 +592,79 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
               pw.SizedBox(height: 6),
 
-              pw.Text('Quick Sale Invoice'),
+              pw.Text('Sale Invoice'),
 
               pw.Divider(),
 
               pw.Text('Invoice: ${sale['invoice_number'] ?? '-'}'),
+              pw.Text('Date: ${sale['created_at'] ?? '-'}'),
               pw.Text('Sale Type: ${sale['sale_type'] ?? '-'}'),
               pw.Text('Payment: ${sale['payment_method'] ?? '-'}'),
 
-              if (sale['customer'] != null) ...[
-                pw.SizedBox(height: 8),
-                pw.Text('Customer: ${sale['customer']['name'] ?? '-'}'),
-                pw.Text('BRN: ${sale['customer']['brn'] ?? '-'}'),
-                pw.Text('VAT: ${sale['customer']['vat_number'] ?? '-'}'),
-              ],
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  /*
+                  |--------------------------------------------------------------------------
+                  | Customer Information
+                  |--------------------------------------------------------------------------
+                  */
+                  pw.Expanded(
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        if (sale['customer'] != null) ...[
+                          pw.SizedBox(height: 8),
+
+                          pw.Text(
+                            'Customer',
+                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                          ),
+
+                          pw.SizedBox(height: 4),
+
+                          pw.Text(sale['customer']['name'] ?? '-'),
+
+                          pw.Text('BRN: ${sale['customer']['brn'] ?? '-'}'),
+
+                          pw.Text(
+                            'VAT: ${sale['customer']['vat_number'] ?? '-'}',
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  /*
+                  |--------------------------------------------------------------------------
+                  | MRA QR + IRN
+                  |--------------------------------------------------------------------------
+                  */
+                  if (sale['mra_submitted'] == true && mraQrImage != null)
+                    pw.Column(
+                      children: [
+                        pw.Image(
+                          mraQrImage,
+                          width: 90,
+                          height: 90,
+                          fit: pw.BoxFit.contain,
+                        ),
+
+                        pw.SizedBox(height: 4),
+
+                        pw.SizedBox(
+                          width: 120,
+                          child: pw.Text(
+                            sale['mra_irn'] ?? '',
+                            textAlign: pw.TextAlign.center,
+                            style: const pw.TextStyle(fontSize: 7),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
 
               pw.SizedBox(height: 12),
 
@@ -633,7 +763,6 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
               ),
 
               pw.SizedBox(height: 16),
-
               pw.Text(businessSettings?['receipt_footer'] ?? 'Thank you'),
             ],
           );

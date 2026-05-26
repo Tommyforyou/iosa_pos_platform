@@ -419,10 +419,309 @@ class MraService
         | 5. Save IRN + QR + response
         */
 
-        public function submitSale(
+        public function submitSale( \App\Models\Sale $sale ): array
+ {
+            /*
+            |--------------------------------------------------------------------------
+            | Prevent Duplicate Submission
+            |--------------------------------------------------------------------------
+            */
+
+            if ( $sale->mra_submitted ) {
+                return [
+                    'success' => false,
+                    'message' => 'This sale has already been submitted to MRA.',
+                    'sale_id' => $sale->id,
+                    'mra_irn' => $sale->mra_irn,
+                ];
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Load Required Relationships
+            |--------------------------------------------------------------------------
+            */
+
+            $sale->load( [
+                'customer',
+                'items',
+            ] );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Step 1: Authenticate With MRA
+            |--------------------------------------------------------------------------
+            */
+
+            $tokenResult = $this->generateToken();
+
+            if ( !$tokenResult[ 'success' ] ) {
+
+                return [
+                    'success' => false,
+                    'stage' => 'authentication',
+                    'response' => $tokenResult,
+                ];
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Step 2: Extract Token + Decrypted MRA Key
+            |--------------------------------------------------------------------------
+            */
+
+            $token = $tokenResult[ 'body' ][ 'token' ];
+
+            $decryptedMraKey =
+            $tokenResult[ 'decrypted_mra_key_for_debug' ];
+
+            /*
+            |--------------------------------------------------------------------------
+            | Step 3: Build Real Invoice Payload
+            |--------------------------------------------------------------------------
+            */
+
+            $invoicePayload =
+            $this->buildSaleInvoicePayload( $sale );
+
+            $invoiceJson =
+            json_encode( $invoicePayload );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Step 4: Encrypt Invoice
+            |--------------------------------------------------------------------------
+            */
+
+            $encryptedInvoice =
+            $this->encryptInvoicePayload(
+                $invoiceJson,
+                $decryptedMraKey
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Step 5: Build MRA Transmission Request
+            |--------------------------------------------------------------------------
+            */
+
+            $requestPayload = [
+
+                'requestId' =>
+                'SALE-' . $sale->id . '-' . now()->timestamp,
+
+                'requestDateTime' =>
+                now()->format( 'Ymd H:i:s' ),
+
+                'encryptedInvoice' =>
+                $encryptedInvoice,
+            ];
+
+            /*
+            |--------------------------------------------------------------------------
+            | Step 6: Submit Invoice To MRA
+            |--------------------------------------------------------------------------
+            */
+
+            $response = Http::withoutVerifying()
+            ->acceptJson()
+            ->asJson()
+            ->withHeaders( [
+
+                'username' =>
+                config( 'services.mra.username' ),
+
+                'ebsMraId' =>
+                config( 'services.mra.ebs_mra_id' ),
+
+                'areaCode' =>
+                config( 'services.mra.area_code' ),
+
+                'token' => $token,
+
+                'Content-Type' =>
+                'application/json',
+
+            ] )
+            ->post(
+                config( 'services.mra.invoice_url' ),
+                $requestPayload
+            );
+
+            $responseBody = $response->json();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Step 7: Save MRA Response To Sale
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $response->successful() &&
+                isset( $responseBody[ 'fiscalisedInvoices' ][ 0 ] ) &&
+                ( $responseBody[ 'status' ] ?? null ) === 'SUCCESS' &&
+                ( $responseBody[ 'fiscalisedInvoices' ][ 0 ][ 'status' ] ?? null ) === 'SUCCESS'
+            ) {
+
+                $invoice =
+                $responseBody[ 'fiscalisedInvoices' ][ 0 ];
+
+                $sale->update( [
+                    'mra_submitted' => true,
+                    'mra_irn' => $invoice[ 'irn' ] ?? null,
+                    'mra_qr_code' =>$invoice[ 'qrCode' ] ?? null,
+                    'mra_status' =>$invoice[ 'status' ] ?? 'SUCCESS',
+                    'mra_submitted_at' => now(),
+
+                    'mra_response' =>$responseBody,
+                ] );
+            } else {
+                $sale->update( [
+                    'mra_submitted' => false,
+                    'mra_status' => $responseBody[ 'fiscalisedInvoices' ][ 0 ][ 'status' ]
+                    ?? $responseBody[ 'status' ]
+                    ?? 'ERROR',
+                    'mra_response' => $responseBody,
+                ] );
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Step 8: Return Result
+            |--------------------------------------------------------------------------
+            */
+
+            return [
+
+                'success' =>
+                $response->successful(),
+
+                'sale_id' =>
+                $sale->id,
+
+                'invoice_number' =>
+                $sale->invoice_number,
+
+                'body' =>
+                $responseBody,
+
+                'raw' =>
+                $response->body(),
+            ];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Build MRA Invoice Payload From Sale
+        |--------------------------------------------------------------------------
+        | Converts IOSA POS sale data into the JSON structure expected by MRA.
+        */
+
+        private function buildSaleInvoicePayload(
             \App\Models\Sale $sale
         ): array {
+            $settings = \App\Models\BusinessSetting::first();
 
+            $customer = $sale->customer;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Buyer Type
+            |--------------------------------------------------------------------------
+            | VAT customer = VATR
+            | Normal walk-in customer = empty buyer section
+            */
+
+            $buyerType = $customer && $customer->vat_number
+            ? 'VATR'
+            : '';
+
+            /*
+            |--------------------------------------------------------------------------
+            | Item List
+            |--------------------------------------------------------------------------
+            */
+
+            $itemList = [];
+
+            foreach ( $sale->items as $index => $item ) {
+                $itemList[] = [
+                    'itemNo' => ( string ) ( $index + 1 ),
+                    'taxCode' => ( ( float ) $item->vat_amount ) > 0 ? 'TC01' : 'TC02',
+                    'nature' => 'GOODS',
+                    'productCodeMra' => '',
+                    'productCodeOwn' => ( string ) ( $item->product_id ?? '' ),
+                    'itemDesc' => $item->product_name ?? 'Item',
+                    'quantity' => ( string ) $item->quantity,
+                    'unitPrice' => ( string ) $item->unit_price,
+                    'discount' => ( string ) ( $item->discount_amount ?? 0 ),
+                    'discountedValue' => ( string ) $item->unit_price,
+                    'amtWoVatCur' => ( string ) (
+                        ( ( float ) $item->line_total ) -
+                        ( ( float ) $item->vat_amount )
+                    ),
+                    'amtWoVatMur' => ( string ) (
+                        ( ( float ) $item->line_total ) -
+                        ( ( float ) $item->vat_amount )
+                    ),
+                    'vatAmt' => ( string ) $item->vat_amount,
+                    'totalPrice' => ( string ) $item->line_total,
+                ];
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Invoice Payload
+            |--------------------------------------------------------------------------
+            */
+
+            return [
+                [
+                    'invoiceCounter' => ( string ) $sale->id,
+                    'transactionType' => $customer ? 'B2B' : 'B2C',
+                    'personType' => 'VATR',
+                    'invoiceTypeDesc' => 'STD',
+                    'currency' => 'MUR',
+                    'invoiceIdentifier' => $sale->invoice_number,
+                    'invoiceRefIdentifier' => '',
+                    'previousNoteHash' => 'prevNote',
+
+                    'totalVatAmount' => ( string ) $sale->vat_amount,
+                    'totalAmtWoVatCur' => ( string ) $sale->subtotal,
+                    'totalAmtWoVatMur' => ( string ) $sale->subtotal,
+                    'totalAmtPaid' => ( string ) $sale->total_amount,
+                    'invoiceTotal' => ( string ) $sale->total_amount,
+                    'discountTotalAmount' => ( string ) $sale->discount_amount,
+
+                    'dateTimeInvoiceIssued' => $sale->created_at
+                    ->format( 'Ymd H:i:s' ),
+
+                    'seller' => [
+                        'name' => $settings?->company_name ?? 'IOSA POS',
+                        'tradeName' => $settings?->company_name ?? 'IOSA POS',
+                        // In Mauritius, TAN is typically the VAT Registration Number.
+                        'tan' => $settings?->vat_number ?? '',
+                        'brn' => $settings?->brn ?? '',
+                        'businessAddr' => $settings?->address ?? '',
+                        'businessPhoneNo' => $settings?->phone ?? '',
+                        'ebsCounterNo' => config( 'services.mra.area_code' ),
+                        'cashierId' => 'Admin',
+                    ],
+
+                    'buyer' => [
+                        'name' => $customer?->name ?? '',
+                        'tan' => '',
+                        'brn' => $customer?->brn ?? '',
+                        'businessAddr' => $customer?->address ?? '',
+                        'buyerType' => $buyerType,
+                        'nic' => '',
+                    ],
+
+                    'itemList' => $itemList,
+
+                    'salesTransactions' => strtoupper( $sale->payment_method ?? 'CASH' ),
+                ],
+            ];
         }
 
     }

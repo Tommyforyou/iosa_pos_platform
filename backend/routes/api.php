@@ -10,6 +10,18 @@ use App\Http\Controllers\Api\QuickSaleHistoryController;
 use App\Http\Controllers\Api\QuickSaleVoidController;
 use App\Http\Controllers\Api\BusinessSettingController;
 use App\Http\Controllers\Api\MraTestController;
+use App\Http\Controllers\Api\MraSaleController;
+
+/*
+|--------------------------------------------------------------------------
+| Submit Real Sale To MRA
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    'sales/{sale}/submit-mra',
+    [ MraSaleController::class, 'submit' ]
+);
 
 /*
 |--------------------------------------------------------------------------
@@ -550,7 +562,28 @@ use App\Http\Controllers\Api\PurchaseController;
                 'mra/test-invoice',
                 [ MraTestController::class, 'submitTestInvoice' ]
             );
-            
+
+            /*
+            |--------------------------------------------------------------------------
+            | Submit Real Sale To MRA
+            |--------------------------------------------------------------------------
+            */
+
+            Route::post(
+                'sales/{sale}/submit-mra',
+                [ MraSaleController::class, 'submit' ]
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Retry Failed MRA Submission
+            |--------------------------------------------------------------------------
+            */
+
+            Route::post(
+                'sales/{sale}/retry-mra',
+                [ MraSaleController::class, 'retry' ]
+            );
 
             Route::get( '/user', function ( Request $request ) {
                 return $request->user();

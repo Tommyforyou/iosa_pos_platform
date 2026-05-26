@@ -8,6 +8,7 @@ use App\Models\Sale;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\MraService;
 
 class QuickSaleController extends Controller
 {
@@ -17,7 +18,7 @@ class QuickSaleController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function store(Request $request)
+   public function store(Request $request, MraService $mraService)
     {
         $validated = $request->validate([
             'customer_id' => ['nullable', 'exists:customers,id'],
@@ -34,7 +35,7 @@ class QuickSaleController extends Controller
             'items.*.barcode' => ['nullable', 'string', 'max:255'],
         ]);
 
-        return DB::transaction(function () use ($validated) {
+        return DB::transaction(function () use ($validated, $mraService) {
                 $subtotal = collect($validated['items'])
                     ->sum(function ($item) {
                         return ((float) $item['quantity']) *
@@ -114,14 +115,33 @@ class QuickSaleController extends Controller
                 }
             }
 
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Quick sale created successfully',
-                    'sale' => $sale->fresh([
-                        'customer',
-                        'items',
-                    ]),
-                ], 201);
+            /*
+            |--------------------------------------------------------------------------
+            | Optional MRA e-Invoicing Submission
+            |--------------------------------------------------------------------------
+            | If MRA is enabled in Business Settings, fiscalise the sale before printing.
+            */
+
+            $mraResult = null;
+
+            $settings = \App\Models\BusinessSetting::first();
+
+            if ($settings?->mra_enabled) {
+                $mraResult = $mraService->submitSale($sale);
+
+                $sale->refresh();
+            }             
+           
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Quick sale created successfully',
+                'sale' => $sale->fresh([
+                    'customer',
+                    'items',
+                ]),
+                'mra' => $mraResult,
+            ], 201);
         });
     }
 

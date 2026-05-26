@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'dart:convert';
 
 /*
 |--------------------------------------------------------------------------
@@ -73,6 +74,27 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
     toDateController.dispose();
 
     super.dispose();
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Load MRA QR Image
+|--------------------------------------------------------------------------
+*/
+
+  Future<pw.MemoryImage?> loadMraQrImage(String? base64Qr) async {
+    try {
+      if (base64Qr == null || base64Qr.isEmpty) {
+        return null;
+      }
+
+      final bytes = base64Decode(base64Qr);
+
+      return pw.MemoryImage(bytes);
+    } catch (e) {
+      debugPrint(e.toString());
+      return null;
+    }
   }
 
   /*
@@ -361,6 +383,8 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
 
     final saleItems = sale['items'] ?? [];
 
+    final mraQrImage = await loadMraQrImage(sale['mra_qr_code']);
+
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat(
@@ -504,6 +528,38 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                   style: const pw.TextStyle(fontSize: 10),
                 ),
               ),
+
+              if (sale['mra_submitted'] == true) ...[
+                pw.SizedBox(height: 10),
+                pw.Divider(),
+                pw.Center(
+                  child: pw.Text(
+                    'MRA FISCALISED',
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+                pw.SizedBox(height: 4),
+                pw.Center(
+                  child: pw.Text(
+                    'IRN: ${sale['mra_irn'] ?? ''}',
+                    textAlign: pw.TextAlign.center,
+                    style: const pw.TextStyle(fontSize: 8),
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                if (mraQrImage != null)
+                  pw.Center(
+                    child: pw.Image(
+                      mraQrImage,
+                      width: 120,
+                      height: 120,
+                      fit: pw.BoxFit.contain,
+                    ),
+                  ),
+              ],
             ],
           );
         },
@@ -527,6 +583,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
     final pdf = pw.Document();
     final money = NumberFormat('#,##0.00');
     final saleItems = sale['items'] ?? [];
+    final mraQrImage = await loadMraQrImage(sale['mra_qr_code']);
 
     pdf.addPage(
       pw.Page(
@@ -632,6 +689,34 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
               ),
               pw.SizedBox(height: 10),
               pw.Text('Thank you.'),
+
+              if (sale['mra_submitted'] == true) ...[
+                pw.SizedBox(height: 16),
+                pw.Divider(),
+                pw.Center(
+                  child: pw.Text(
+                    'MRA FISCALISED INVOICE',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                ),
+                pw.SizedBox(height: 6),
+                pw.Center(
+                  child: pw.Text(
+                    'IRN: ${sale['mra_irn'] ?? ''}',
+                    textAlign: pw.TextAlign.center,
+                  ),
+                ),
+                pw.SizedBox(height: 10),
+                if (mraQrImage != null)
+                  pw.Center(
+                    child: pw.Image(
+                      mraQrImage,
+                      width: 130,
+                      height: 130,
+                      fit: pw.BoxFit.contain,
+                    ),
+                  ),
+              ],
             ],
           );
         },
@@ -864,6 +949,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                           return _SaleCard(
                             sale: sale,
                             money: money,
+                            onRetrySuccess: loadSales,
 
                             // Show Sales
                             onView: () {
@@ -999,13 +1085,17 @@ class _SaleCard extends StatelessWidget {
   final VoidCallback onPrint;
   final VoidCallback onView;
   final VoidCallback onVoid;
+  final VoidCallback onRetrySuccess;
 
-  const _SaleCard({
+  final ApiService apiService = ApiService();
+
+  _SaleCard({
     required this.sale,
     required this.money,
     required this.onPrint,
     required this.onView,
     required this.onVoid,
+    required this.onRetrySuccess,
   });
 
   @override
@@ -1052,6 +1142,114 @@ class _SaleCard extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+
+                /*
+                |--------------------------------------------------------------------------
+                | MRA Status Badge
+                |--------------------------------------------------------------------------
+                */
+                if (sale['mra_submitted'] == true)
+                  Container(
+                    margin: const EdgeInsets.only(top: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: const Text(
+                      'MRA FISCALISED',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                    ),
+                  )
+                else if (sale['mra_status'] == 'ERROR')
+                  Container(
+                    margin: const EdgeInsets.only(top: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.orange,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: const Text(
+                      'MRA FAILED',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                    ),
+                  )
+                else if (sale['mra_submitted'] == false &&
+                    sale['sale_type'] != 'walk_in')
+                  Container(
+                    margin: const EdgeInsets.only(top: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: const Text(
+                      'MRA PENDING',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Retry MRA Submission
+                |--------------------------------------------------------------------------
+                */
+                if (sale['mra_submitted'] != true)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        try {
+                          final response = await apiService.retryMraSubmission(
+                            sale['id'],
+                          );
+
+                          if (!context.mounted) return;
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                response['success'] == true
+                                    ? 'MRA retry successful'
+                                    : 'MRA retry failed',
+                              ),
+                            ),
+                          );
+
+                          onRetrySuccess();
+                        } catch (e) {
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(e.toString())));
+                        }
+                      },
+
+                      icon: const Icon(Icons.refresh),
+
+                      label: const Text('Retry MRA'),
+                    ),
+                  ),
 
                 /*
                 |--------------------------------------------------------------------------
