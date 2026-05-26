@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\QuickSaleController;
 use App\Http\Controllers\Api\QuickSaleHistoryController;
 use App\Http\Controllers\Api\QuickSaleVoidController;
 use App\Http\Controllers\Api\BusinessSettingController;
+use App\Http\Controllers\Api\MraTestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -527,6 +528,29 @@ use App\Http\Controllers\Api\PurchaseController;
             */
 
             Route::get( 'quick-sales-history', [ QuickSaleHistoryController::class, 'index' ] );
+
+            /*
+            |--------------------------------------------------------------------------
+            | MRA Test Routes
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                'mra/test-token',
+                [ MraTestController::class, 'token' ]
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | MRA Test Invoice Transmission
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                'mra/test-invoice',
+                [ MraTestController::class, 'submitTestInvoice' ]
+            );
+            
 
             Route::get( '/user', function ( Request $request ) {
                 return $request->user();
