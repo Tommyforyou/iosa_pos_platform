@@ -43,6 +43,7 @@ dependencies:
   file_picker: ^10.3.3
   esc_pos_utils_plus: ^2.0.4
   esc_pos_printer_plus: ^0.1.1
+  image_picker: ^1.2.2
 
 dev_dependencies:
   flutter_test:

@@ -33,8 +33,9 @@ class ApiService {
   | - Android emulator usually uses http://10.0.2.2:8000/api
   | - Real Android tablet must use the computer LAN IP address
   */
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+  static const String publicBaseUrl = 'http://127.0.0.1:8000';
 
+  static const String baseUrl = '$publicBaseUrl/api';
   /*
 |--------------------------------------------------------------------------
 | Get Business Settings
@@ -80,6 +81,35 @@ class ApiService {
     }
 
     throw Exception('Failed to update business settings');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Upload Business Logo
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> uploadBusinessLogo({
+    required String filePath,
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/business-settings/logo'),
+    );
+
+    request.headers['Accept'] = 'application/json';
+
+    request.files.add(await http.MultipartFile.fromPath('logo', filePath));
+
+    final response = await request.send();
+
+    final body = await response.stream.bytesToString();
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(body));
+    }
+
+    throw Exception('Failed to upload business logo: $body');
   }
 
   /*

@@ -5,6 +5,7 @@ import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
+import 'package:http/http.dart' as http;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,6 +22,12 @@ class QuickSaleScreen extends StatefulWidget {
 }
 
 class _QuickSaleScreenState extends State<QuickSaleScreen> {
+  /*
+  |--------------------------------------------------------------------------
+  | Variables
+  |--------------------------------------------------------------------------
+  */
+
   final ApiService apiService = ApiService();
 
   String saleType = 'walk_in';
@@ -34,6 +41,8 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
   Map<String, dynamic>? selectedProduct;
 
   List<dynamic> productResults = [];
+
+  Map<String, dynamic>? businessSettings;
 
   /*
   |--------------------------------------------------------------------------
@@ -53,6 +62,69 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
     text: '1',
   );
   final TextEditingController priceController = TextEditingController();
+
+  /*
+  |--------------------------------------------------------------------------
+  | Init State
+  |--------------------------------------------------------------------------
+  */
+
+  @override
+  void initState() {
+    super.initState();
+    loadBusinessSettings();
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Load Business Settings
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> loadBusinessSettings() async {
+    try {
+      final settings = await apiService.getBusinessSettings();
+
+      if (!mounted) return;
+
+      setState(() {
+        businessSettings = settings;
+
+        printFormat = settings['default_print_format'] ?? 'thermal';
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Load Business Logo For Printing
+|--------------------------------------------------------------------------
+*/
+
+  Future<pw.MemoryImage?> loadBusinessLogoForPrint() async {
+    try {
+      final logoPath = businessSettings?['logo_path'];
+
+      if (logoPath == null) {
+        return null;
+      }
+
+      final logoUrl = '${ApiService.publicBaseUrl}/storage/$logoPath';
+
+      final response = await http.get(Uri.parse(logoUrl));
+
+      if (response.statusCode != 200) {
+        return null;
+      }
+
+      return pw.MemoryImage(response.bodyBytes);
+    } catch (e) {
+      debugPrint(e.toString());
+      return null;
+    }
+  }
 
   /*
   |--------------------------------------------------------------------------
@@ -150,7 +222,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
   Future<void> printThermalReceipt(Map<String, dynamic> sale) async {
     final pdf = pw.Document();
-
+    final logoImage = await loadBusinessLogoForPrint();
     final money = NumberFormat('#,##0.00');
 
     final saleItems = sale['items'] ?? [];
@@ -174,16 +246,52 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
             | Header
             |--------------------------------------------------------------------------
             */
+              if (logoImage != null)
+                pw.Center(
+                  child: pw.Image(
+                    logoImage,
+                    width: 80,
+                    height: 80,
+                    fit: pw.BoxFit.contain,
+                  ),
+                ),
+
+              pw.SizedBox(height: 6),
+
               pw.Center(
                 child: pw.Text(
-                  'IOSA POS',
-
+                  businessSettings?['company_name'] ?? 'IOSA POS',
                   style: pw.TextStyle(
-                    fontSize: 16,
+                    fontSize: 10,
                     fontWeight: pw.FontWeight.bold,
                   ),
                 ),
               ),
+
+              if (businessSettings?['address'] != null)
+                pw.Center(
+                  child: pw.Text(
+                    businessSettings!['address'],
+                    style: const pw.TextStyle(fontSize: 8),
+                    textAlign: pw.TextAlign.center,
+                  ),
+                ),
+
+              if (businessSettings?['phone'] != null)
+                pw.Center(
+                  child: pw.Text(
+                    'Tel: ${businessSettings!['phone']}',
+                    style: const pw.TextStyle(fontSize: 8),
+                  ),
+                ),
+
+              if (businessSettings?['vat_number'] != null)
+                pw.Center(
+                  child: pw.Text(
+                    'VAT: ${businessSettings!['vat_number']}',
+                    style: const pw.TextStyle(fontSize: 8),
+                  ),
+                ),
 
               pw.Center(
                 child: pw.Text(
@@ -331,8 +439,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
               pw.Center(
                 child: pw.Text(
-                  'Thank you',
-
+                  businessSettings?['receipt_footer'] ?? 'Thank you',
                   style: const pw.TextStyle(fontSize: 10),
                 ),
               ),
@@ -357,6 +464,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
   Future<void> printA4Invoice(Map<String, dynamic> sale) async {
     final pdf = pw.Document();
+    final logoImage = await loadBusinessLogoForPrint();
     final money = NumberFormat('#,##0.00');
     final saleItems = sale['items'] ?? [];
 
@@ -366,13 +474,50 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
+              if (logoImage != null)
+                pw.Center(
+                  child: pw.Image(
+                    logoImage,
+                    width: 120,
+                    height: 120,
+                    fit: pw.BoxFit.contain,
+                  ),
+                ),
+
+              pw.SizedBox(height: 10),
+
               pw.Text(
-                'IOSA POS',
+                businessSettings?['company_name'] ?? 'IOSA POS',
                 style: pw.TextStyle(
-                  fontSize: 22,
+                  fontSize: 10,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
+
+              if (businessSettings?['address'] != null)
+                pw.Center(
+                  child: pw.Text(
+                    businessSettings!['address'],
+                    style: const pw.TextStyle(fontSize: 8),
+                    textAlign: pw.TextAlign.center,
+                  ),
+                ),
+
+              if (businessSettings?['phone'] != null)
+                pw.Center(
+                  child: pw.Text(
+                    'Tel: ${businessSettings!['phone']}',
+                    style: const pw.TextStyle(fontSize: 8),
+                  ),
+                ),
+
+              if (businessSettings?['vat_number'] != null)
+                pw.Center(
+                  child: pw.Text(
+                    'VAT: ${businessSettings!['vat_number']}',
+                    style: const pw.TextStyle(fontSize: 8),
+                  ),
+                ),
 
               pw.SizedBox(height: 6),
 
@@ -489,7 +634,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
               pw.SizedBox(height: 16),
 
-              pw.Text('Thank you.'),
+              pw.Text(businessSettings?['receipt_footer'] ?? 'Thank you'),
             ],
           );
         },

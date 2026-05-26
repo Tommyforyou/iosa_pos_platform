@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
+import 'dart:io';
+
+import 'package:image_picker/image_picker.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -12,8 +15,7 @@ class BusinessSettingsScreen extends StatefulWidget {
   const BusinessSettingsScreen({super.key});
 
   @override
-  State<BusinessSettingsScreen> createState() =>
-      _BusinessSettingsScreenState();
+  State<BusinessSettingsScreen> createState() => _BusinessSettingsScreenState();
 }
 
 class _BusinessSettingsScreenState extends State<BusinessSettingsScreen> {
@@ -31,6 +33,9 @@ class _BusinessSettingsScreenState extends State<BusinessSettingsScreen> {
   bool isSaving = false;
   bool mraEnabled = false;
   String defaultPrintFormat = 'thermal';
+  String? logoUrl;
+
+  File? selectedLogo;
 
   @override
   void initState() {
@@ -65,6 +70,9 @@ class _BusinessSettingsScreenState extends State<BusinessSettingsScreen> {
         defaultPrintFormat = settings['default_print_format'] ?? 'thermal';
         mraEnabled = settings['mra_enabled'] ?? false;
         isLoading = false;
+        logoUrl = settings['logo_path'] != null
+            ? '${ApiService.publicBaseUrl}/storage/${settings['logo_path']}'
+            : null;
       });
     } catch (e) {
       setState(() => isLoading = false);
@@ -101,10 +109,7 @@ class _BusinessSettingsScreenState extends State<BusinessSettingsScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) {
@@ -113,13 +118,54 @@ class _BusinessSettingsScreenState extends State<BusinessSettingsScreen> {
     }
   }
 
+  /*
+|--------------------------------------------------------------------------
+| Pick And Upload Logo
+|--------------------------------------------------------------------------
+*/
+
+  Future<void> pickAndUploadLogo() async {
+    try {
+      final picker = ImagePicker();
+
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+      if (pickedFile == null) return;
+
+      setState(() {
+        selectedLogo = File(pickedFile.path);
+      });
+
+      final result = await apiService.uploadBusinessLogo(
+        filePath: pickedFile.path,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        logoUrl = result['logo_url'];
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Logo uploaded successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6FA),
-      appBar: AppBar(
-        title: const Text('Business Settings'),
-      ),
+      appBar: AppBar(title: const Text('Business Settings')),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -132,6 +178,43 @@ class _BusinessSettingsScreenState extends State<BusinessSettingsScreen> {
                 ),
                 child: Column(
                   children: [
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Business Logo
+                    |--------------------------------------------------------------------------
+                    */
+                    Center(
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 110,
+                            height: 110,
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: logoUrl != null
+                                ? Image.network(logoUrl!, fit: BoxFit.contain)
+                                : const Icon(Icons.business, size: 50),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          ElevatedButton.icon(
+                            onPressed: pickAndUploadLogo,
+
+                            icon: const Icon(Icons.upload),
+
+                            label: const Text('Upload Logo'),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
                     TextField(
                       controller: companyNameController,
                       decoration: const InputDecoration(

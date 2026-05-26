@@ -510,7 +510,16 @@ use App\Http\Controllers\Api\PurchaseController;
                 'business-settings',
                 [ BusinessSettingController::class, 'update' ]
             );
+            /*
+            |--------------------------------------------------------------------------
+            | Business Logo Upload
+            |--------------------------------------------------------------------------
+            */
 
+            Route::post(
+                'business-settings/logo',
+                [ BusinessSettingController::class, 'uploadLogo' ]
+            );
             /*
             |--------------------------------------------------------------------------
             | Quick Sales History
