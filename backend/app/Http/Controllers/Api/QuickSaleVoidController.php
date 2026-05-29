@@ -23,12 +23,29 @@ class QuickSaleVoidController extends Controller
             'reason' => ['required', 'string', 'max:1000'],
         ]);
 
+
         if ($sale->sale_status === 'voided') {
             return response()->json([
                 'success' => false,
                 'message' => 'This sale has already been voided.',
             ], 422);
         }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Prevent Voiding Fiscalised Invoices
+        |--------------------------------------------------------------------------
+        */
+
+        if ($sale->mra_submitted) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Fiscalised invoices cannot be voided. Please issue a Credit Note.',
+            ], 422);
+        }
+
+
 
         return DB::transaction(function () use ($sale, $validated) {
             $sale->load('items');

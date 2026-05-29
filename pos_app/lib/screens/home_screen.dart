@@ -17,6 +17,7 @@ import 'stock_movement_screen.dart';
 import 'quick_sale_screen.dart';
 import 'quick_sale_history_screen.dart';
 import 'business_settings_screen.dart';
+import 'customer_management_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -96,8 +97,7 @@ class HomeScreen extends StatelessWidget {
               title: 'Takeaway',
               subtitle: 'Coming next',
               icon: Icons.shopping_bag,
-              onTap: () =>
-                  openScreen(context, const OrderScreen(orderType: 'takeaway')),
+              onTap: () => openScreen(context, const OrderScreen(orderType: 'takeaway')),
             ),
 
             /*
@@ -110,8 +110,7 @@ class HomeScreen extends StatelessWidget {
               title: 'Delivery',
               subtitle: 'Coming next',
               icon: Icons.delivery_dining,
-              onTap: () =>
-                  openScreen(context, const OrderScreen(orderType: 'delivery')),
+              onTap: () => openScreen(context, const OrderScreen(orderType: 'delivery')),
             ),
             /*
             |--------------------------------------------------------------------------
@@ -185,8 +184,7 @@ class HomeScreen extends StatelessWidget {
               title: 'Categories',
               subtitle: 'Manage product categories',
               icon: Icons.category,
-              onTap: () =>
-                  openScreen(context, const CategoryManagementScreen()),
+              onTap: () => openScreen(context, const CategoryManagementScreen()),
             ),
             /*
             |--------------------------------------------------------------------------
@@ -232,7 +230,6 @@ class HomeScreen extends StatelessWidget {
             | Show Stock Movement
             |--------------------------------------------------------------------------
             */
-            
             _HomeCard(
               title: 'Business Settings',
               subtitle: 'Company, VAT and MRA setup',
@@ -256,15 +253,7 @@ class HomeScreen extends StatelessWidget {
 
                 border: Border.all(color: Colors.grey.shade200),
 
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-
-                    blurRadius: 12,
-
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
               ),
 
               child: Column(
@@ -282,18 +271,9 @@ class HomeScreen extends StatelessWidget {
                         width: 52,
                         height: 52,
 
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.12),
+                        decoration: BoxDecoration(color: Colors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
 
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-
-                        child: const Icon(
-                          Icons.shopping_cart_checkout,
-
-                          color: Colors.orange,
-                          size: 28,
-                        ),
+                        child: const Icon(Icons.shopping_cart_checkout, color: Colors.orange, size: 28),
                       ),
 
                       const SizedBox(width: 14),
@@ -303,22 +283,11 @@ class HomeScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
 
                           children: [
-                            Text(
-                              'Purchasing',
-
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            Text('Purchasing', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
 
                             SizedBox(height: 3),
 
-                            Text(
-                              'Supplier management, OCR receipts and purchase tracking.',
-
-                              style: TextStyle(color: Colors.grey),
-                            ),
+                            Text('Supplier management, OCR receipts and purchase tracking.', style: TextStyle(color: Colors.grey)),
                           ],
                         ),
                       ),
@@ -344,24 +313,21 @@ class HomeScreen extends StatelessWidget {
                         title: 'Purchase OCR',
                         subtitle: 'Scan receipts',
                         icon: Icons.document_scanner,
-                        onTap: () =>
-                            openScreen(context, const PurchaseReceiptScreen()),
+                        onTap: () => openScreen(context, const PurchaseReceiptScreen()),
                       ),
 
                       _MiniHomeCard(
                         title: 'Purchases',
                         subtitle: 'Purchase list',
                         icon: Icons.shopping_cart_checkout,
-                        onTap: () =>
-                            openScreen(context, const PurchaseScreen()),
+                        onTap: () => openScreen(context, const PurchaseScreen()),
                       ),
 
                       _MiniHomeCard(
                         title: 'Suppliers',
                         subtitle: 'Supplier records',
                         icon: Icons.business,
-                        onTap: () =>
-                            openScreen(context, const SupplierScreen()),
+                        onTap: () => openScreen(context, const SupplierScreen()),
                       ),
                     ],
                   ),
@@ -386,116 +352,92 @@ class HomeScreen extends StatelessWidget {
 
                 border: Border.all(color: Colors.grey.shade200),
 
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-
-                    blurRadius: 12,
-
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
               ),
 
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
 
-                children: [
-                  /*
+                  children: [
+                    /*
                   |--------------------------------------------------------------------------
                   | Section Header
                   |--------------------------------------------------------------------------
                   */
-                  Row(
-                    children: [
-                      Container(
-                        width: 52,
-                        height: 52,
+                    Row(
+                      children: [
+                        Container(
+                          width: 52,
+                          height: 52,
 
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.12),
+                          decoration: BoxDecoration(color: Colors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
 
-                          borderRadius: BorderRadius.circular(16),
+                          child: const Icon(Icons.shopping_cart_checkout, color: Colors.orange, size: 28),
                         ),
 
-                        child: const Icon(
-                          Icons.shopping_cart_checkout,
+                        const SizedBox(width: 14),
 
-                          color: Colors.orange,
-                          size: 28,
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+
+                            children: [
+                              Text('Sales', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+
+                              SizedBox(height: 3),
+
+                              Text('QuickSales, Customers and Sales History.', style: TextStyle(color: Colors.grey)),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
+                    ),
 
-                      const SizedBox(width: 14),
+                    const SizedBox(height: 24),
 
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-
-                          children: [
-                            Text(
-                              'Sales',
-
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-
-                            SizedBox(height: 3),
-
-                            Text(
-                              'QuickSales, Customers and Sales History.',
-
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  /*
+                    /*
                   |--------------------------------------------------------------------------
                   | Nested Cards
                   |--------------------------------------------------------------------------
                   */
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.1,
-                    children: [
-                      _MiniHomeCard(
-                        title: 'Quick Sale',
-                        subtitle: 'Create invoice-style sale quickly',
-                        icon: Icons.flash_on,
-                        onTap: () =>
-                            openScreen(context, const QuickSaleScreen()),
-                      ),
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 1.1,
+                      children: [
+                        _MiniHomeCard(
+                          title: 'Quick Sale',
+                          subtitle: 'Create invoice-style sale quickly',
+                          icon: Icons.flash_on,
+                          onTap: () => openScreen(context, const QuickSaleScreen()),
+                        ),
 
-                      _MiniHomeCard(
-                        title: 'Sales',
-                        subtitle: 'Quick Sale History',
-                        icon: Icons.shopping_cart_checkout,
-                        onTap: () =>
-                            openScreen(context, const QuickSaleHistoryScreen()),
-                      ),
-
-                      _MiniHomeCard(
-                        title: 'Suppliers',
-                        subtitle: 'Supplier records',
-                        icon: Icons.business,
-                        onTap: () =>
-                            openScreen(context, const SupplierScreen()),
-                      ),
-                    ],
-                  ),
-                ],
+                        _MiniHomeCard(
+                          title: 'Sales History',
+                          subtitle: 'Quick Sale History',
+                          icon: Icons.shopping_cart_checkout,
+                          onTap: () => openScreen(context, const QuickSaleHistoryScreen()),
+                        ),
+                        _MiniHomeCard(
+                          title: 'Customers',
+                          subtitle: 'Manage customers and repayments',
+                          icon: Icons.people,
+                          onTap: () => openScreen(context, const CustomerManagementScreen()),
+                        ),
+                        _MiniHomeCard(
+                          title: 'Suppliers',
+                          subtitle: 'Supplier records',
+                          icon: Icons.business,
+                          onTap: () => openScreen(context, const SupplierScreen()),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -519,12 +461,7 @@ class _HomeCard extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _HomeCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.onTap,
-  });
+  const _HomeCard({required this.title, required this.subtitle, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -540,13 +477,7 @@ class _HomeCard extends StatelessWidget {
             children: [
               Icon(icon, size: 52, color: Colors.blueGrey),
               const SizedBox(height: 14),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
               const SizedBox(height: 6),
               Text(
                 subtitle,
@@ -575,12 +506,7 @@ class _MiniHomeCard extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _MiniHomeCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.onTap,
-  });
+  const _MiniHomeCard({required this.title, required this.subtitle, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

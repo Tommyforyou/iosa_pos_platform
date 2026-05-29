@@ -6,6 +6,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'dart:convert';
+import '../utils/date_helper.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +32,9 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
   final ApiService apiService = ApiService();
 
   final money = NumberFormat('#,##0.00');
+
+  Map<String, dynamic>? businessSettings;
+  String printFormat = 'thermal';
 
   /*
   |--------------------------------------------------------------------------
@@ -63,7 +67,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
   @override
   void initState() {
     super.initState();
-
+    loadBusinessSettings();
     loadSales();
   }
 
@@ -77,10 +81,32 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
   }
 
   /*
-|--------------------------------------------------------------------------
-| Load MRA QR Image
-|--------------------------------------------------------------------------
-*/
+  |--------------------------------------------------------------------------
+  | Load Business Settings
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> loadBusinessSettings() async {
+    try {
+      final settings = await apiService.getBusinessSettings();
+
+      if (!mounted) return;
+
+      setState(() {
+        businessSettings = settings;
+
+        printFormat = settings['default_print_format'] ?? 'thermal';
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Load MRA QR Image
+  |--------------------------------------------------------------------------
+  */
 
   Future<pw.MemoryImage?> loadMraQrImage(String? base64Qr) async {
     try {
@@ -129,32 +155,21 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                       child: Text(
                         'Reason: ${sale['notes']}',
 
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
                       ),
                     ),
 
                   const SizedBox(height: 16),
 
-                  const Text(
-                    'Items',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  const Text('Items', style: TextStyle(fontWeight: FontWeight.bold)),
 
                   const Divider(),
 
                   for (final item in items)
                     ListTile(
                       title: Text(item['product_name'] ?? '-'),
-                      subtitle: Text(
-                        '${item['quantity']} x Rs ${item['unit_price']}',
-                      ),
-                      trailing: Text(
-                        'Rs ${item['line_total']}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      subtitle: Text('${item['quantity']} x Rs ${item['unit_price']}'),
+                      trailing: Text('Rs ${item['line_total']}', style: const TextStyle(fontWeight: FontWeight.bold)),
                     ),
 
                   const Divider(),
@@ -166,13 +181,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                       children: [
                         Text('Subtotal: Rs ${sale['subtotal']}'),
                         Text('VAT: Rs ${sale['vat_amount']}'),
-                        Text(
-                          'Total: Rs ${sale['total_amount']}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
+                        Text('Total: Rs ${sale['total_amount']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                       ],
                     ),
                   ),
@@ -180,12 +189,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
               ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
+          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))],
         );
       },
     );
@@ -212,10 +216,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
             child: TextField(
               controller: reasonController,
               maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Reason for void',
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(labelText: 'Reason for void', border: OutlineInputBorder()),
             ),
           ),
 
@@ -248,27 +249,17 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
     }
 
     try {
-      await apiService.voidQuickSale(
-        saleId: sale['id'],
-        reason: reasonController.text.trim(),
-      );
+      await apiService.voidQuickSale(saleId: sale['id'], reason: reasonController.text.trim());
 
       await loadSales();
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Sale voided successfully'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sale voided successfully'), backgroundColor: Colors.green));
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
     }
   }
 
@@ -286,12 +277,8 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
     try {
       final data = await apiService.getQuickSalesHistory(
         search: searchController.text.trim(),
-        from: fromDateController.text.trim().isEmpty
-            ? null
-            : fromDateController.text.trim(),
-        to: toDateController.text.trim().isEmpty
-            ? null
-            : toDateController.text.trim(),
+        from: fromDateController.text.trim().isEmpty ? null : fromDateController.text.trim(),
+        to: toDateController.text.trim().isEmpty ? null : toDateController.text.trim(),
       );
 
       if (!mounted) return;
@@ -309,9 +296,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
         isLoading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
     }
   }
 
@@ -322,12 +307,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
   */
 
   Future<void> pickDate(TextEditingController controller) async {
-    final picked = await showDatePicker(
-      context: context,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-      initialDate: DateTime.now(),
-    );
+    final picked = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2100), initialDate: DateTime.now());
 
     if (picked == null) return;
 
@@ -376,7 +356,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
 |--------------------------------------------------------------------------
 */
 
-  Future<void> printThermalReceipt(Map<String, dynamic> sale) async {
+  Future<void> printThermalReceipt(Map<String, dynamic> sale, {bool isReprint = false}) async {
     final pdf = pw.Document();
 
     final money = NumberFormat('#,##0.00');
@@ -387,12 +367,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
 
     pdf.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat(
-          80 * PdfPageFormat.mm,
-          double.infinity,
-
-          marginAll: 4 * PdfPageFormat.mm,
-        ),
+        pageFormat: PdfPageFormat(80 * PdfPageFormat.mm, double.infinity, marginAll: 4 * PdfPageFormat.mm),
 
         build: (context) {
           return pw.Column(
@@ -404,44 +379,72 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
             | Header
             |--------------------------------------------------------------------------
             */
+              pw.Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  if (isReprint)
+                    pw.Container(
+                      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: pw.BoxDecoration(border: pw.Border.all()),
+                      child: pw.Text('REPRINT', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                    ),
+
+                  if (sale['sale_status'] == 'voided')
+                    pw.Container(
+                      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: pw.BoxDecoration(color: PdfColors.red),
+                      child: pw.Text(
+                        'VOID',
+                        style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 10),
+                      ),
+                    ),
+
+                  if (sale['mra_submitted'] == true)
+                    pw.Container(
+                      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: pw.BoxDecoration(border: pw.Border.all()),
+                      child: pw.Text('FISCALISED COPY', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+                    ),
+                ],
+              ),
+
+              pw.SizedBox(height: 8),
               pw.Center(
                 child: pw.Text(
-                  'IOSA POS',
-
-                  style: pw.TextStyle(
-                    fontSize: 16,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
+                  businessSettings?['company_name'] ?? 'IOSA POS',
+                  style: const pw.TextStyle(fontSize: 12),
+                  textAlign: pw.TextAlign.center,
                 ),
               ),
 
-              pw.Center(
-                child: pw.Text(
-                  'Quick Sale Receipt',
-
-                  style: const pw.TextStyle(fontSize: 10),
+              if (businessSettings?['address'] != null)
+                pw.Center(
+                  child: pw.Text(businessSettings!['address'], style: const pw.TextStyle(fontSize: 8), textAlign: pw.TextAlign.center),
                 ),
-              ),
+
+              if (businessSettings?['phone'] != null)
+                pw.Center(child: pw.Text('Tel: ${businessSettings!['phone']}', style: const pw.TextStyle(fontSize: 8))),
+
+              if (businessSettings?['vat_number'] != null)
+                pw.Center(child: pw.Text('VAT: ${businessSettings!['vat_number']}', style: const pw.TextStyle(fontSize: 8))),
+
+              pw.Center(child: pw.Text('Sales Invoice', style: const pw.TextStyle(fontSize: 10))),
 
               pw.SizedBox(height: 6),
 
               pw.Divider(),
 
-              pw.Text(
-                'Invoice: ${sale['invoice_number'] ?? '-'}',
-                style: const pw.TextStyle(fontSize: 9),
-              ),
+              pw.Text('Invoice: ${sale['invoice_number'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
+              pw.Text('Date: ${DateHelper.formatDateTime(sale['created_at'])}', style: const pw.TextStyle(fontSize: 9)),
+              pw.Text('Payment: ${sale['payment_method'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
 
-              pw.Text(
-                'Payment: ${sale['payment_method'] ?? '-'}',
-                style: const pw.TextStyle(fontSize: 9),
-              ),
-
-              if (sale['customer'] != null)
-                pw.Text(
-                  'Customer: ${sale['customer']['name']}',
-                  style: const pw.TextStyle(fontSize: 9),
-                ),
+              if (sale['customer'] != null) ...[
+                pw.SizedBox(height: 8),
+                pw.Text('Customer: ${sale['customer']['name'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
+                pw.Text('BRN: ${sale['customer']['brn'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
+                pw.Text('VAT: ${sale['customer']['vat_number'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
+              ],
 
               pw.Divider(),
 
@@ -455,11 +458,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
 
                   children: [
-                    pw.Text(
-                      item['product_name'] ?? '-',
-
-                      style: const pw.TextStyle(fontSize: 10),
-                    ),
+                    pw.Text(item['product_name'] ?? '-', style: const pw.TextStyle(fontSize: 10)),
 
                     pw.Row(
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -472,13 +471,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                           style: const pw.TextStyle(fontSize: 9),
                         ),
 
-                        pw.Text(
-                          money.format(
-                            double.tryParse(item['line_total'].toString()) ?? 0,
-                          ),
-
-                          style: const pw.TextStyle(fontSize: 9),
-                        ),
+                        pw.Text(money.format(double.tryParse(item['line_total'].toString()) ?? 0), style: const pw.TextStyle(fontSize: 9)),
                       ],
                     ),
 
@@ -497,68 +490,32 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
 
                 children: [
-                  pw.Text(
-                    'TOTAL',
-
-                    style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
+                  pw.Text('TOTAL', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12)),
 
                   pw.Text(
-                    money.format(
-                      double.tryParse(sale['total_amount'].toString()) ?? 0,
-                    ),
+                    money.format(double.tryParse(sale['total_amount'].toString()) ?? 0),
 
-                    style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold,
-                      fontSize: 12,
-                    ),
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12),
                   ),
                 ],
               ),
 
               pw.SizedBox(height: 10),
 
-              pw.Center(
-                child: pw.Text(
-                  'Thank you',
-
-                  style: const pw.TextStyle(fontSize: 10),
-                ),
-              ),
+              pw.Center(child: pw.Text('Thank you', style: const pw.TextStyle(fontSize: 10))),
 
               if (sale['mra_submitted'] == true) ...[
                 pw.SizedBox(height: 10),
                 pw.Divider(),
                 pw.Center(
-                  child: pw.Text(
-                    'MRA FISCALISED',
-                    style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold,
-                      fontSize: 10,
-                    ),
-                  ),
+                  child: pw.Text('MRA FISCALISED', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
                 ),
                 pw.SizedBox(height: 4),
                 pw.Center(
-                  child: pw.Text(
-                    'IRN: ${sale['mra_irn'] ?? ''}',
-                    textAlign: pw.TextAlign.center,
-                    style: const pw.TextStyle(fontSize: 8),
-                  ),
+                  child: pw.Text('IRN: ${sale['mra_irn'] ?? ''}', textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 8)),
                 ),
                 pw.SizedBox(height: 8),
-                if (mraQrImage != null)
-                  pw.Center(
-                    child: pw.Image(
-                      mraQrImage,
-                      width: 120,
-                      height: 120,
-                      fit: pw.BoxFit.contain,
-                    ),
-                  ),
+                if (mraQrImage != null) pw.Center(child: pw.Image(mraQrImage, width: 120, height: 120, fit: pw.BoxFit.contain)),
               ],
             ],
           );
@@ -566,11 +523,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
       ),
     );
 
-    await Printing.layoutPdf(
-      name: 'Thermal-${sale['invoice_number']}',
-
-      onLayout: (_) async => pdf.save(),
-    );
+    await Printing.layoutPdf(name: 'Thermal-${sale['invoice_number']}', onLayout: (_) async => pdf.save());
   }
 
   /*
@@ -579,7 +532,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
   |--------------------------------------------------------------------------
   */
 
-  Future<void> printA4Invoice(Map<String, dynamic> sale) async {
+  Future<void> printA4Invoice(Map<String, dynamic> sale, {bool isReprint = false}) async {
     final pdf = pw.Document();
     final money = NumberFormat('#,##0.00');
     final saleItems = sale['items'] ?? [];
@@ -591,37 +544,82 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(
-                'IOSA POS',
-                style: pw.TextStyle(
-                  fontSize: 22,
-                  fontWeight: pw.FontWeight.bold,
+              /*
+            |--------------------------------------------------------------------------
+            | Header
+            |--------------------------------------------------------------------------
+            */
+              pw.Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  if (isReprint)
+                    pw.Container(
+                      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: pw.BoxDecoration(border: pw.Border.all()),
+                      child: pw.Text('REPRINT', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                    ),
+
+                  if (sale['sale_status'] == 'voided')
+                    pw.Container(
+                      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: pw.BoxDecoration(color: PdfColors.red),
+                      child: pw.Text(
+                        'VOID',
+                        style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 10),
+                      ),
+                    ),
+
+                  if (sale['mra_submitted'] == true)
+                    pw.Container(
+                      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: pw.BoxDecoration(border: pw.Border.all()),
+                      child: pw.Text('FISCALISED COPY', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+                    ),
+                ],
+              ),
+
+              pw.SizedBox(height: 8),
+              pw.Center(
+                child: pw.Text(
+                  businessSettings?['company_name'] ?? 'IOSA POS',
+                  style: const pw.TextStyle(fontSize: 12),
+                  textAlign: pw.TextAlign.center,
                 ),
               ),
 
-              pw.SizedBox(height: 6),
+              if (businessSettings?['address'] != null)
+                pw.Center(
+                  child: pw.Text(businessSettings!['address'], style: const pw.TextStyle(fontSize: 8), textAlign: pw.TextAlign.center),
+                ),
 
-              pw.Text('Quick Sale Invoice'),
+              if (businessSettings?['phone'] != null)
+                pw.Center(child: pw.Text('Tel: ${businessSettings!['phone']}', style: const pw.TextStyle(fontSize: 8))),
+
+              if (businessSettings?['vat_number'] != null)
+                pw.Center(child: pw.Text('VAT: ${businessSettings!['vat_number']}', style: const pw.TextStyle(fontSize: 8))),
+
+              pw.Center(child: pw.Text('Sales Invoice', style: const pw.TextStyle(fontSize: 10))),
+
+              pw.SizedBox(height: 6),
 
               pw.Divider(),
 
-              pw.Text('Invoice: ${sale['invoice_number'] ?? '-'}'),
-              pw.Text('Sale Type: ${sale['sale_type'] ?? '-'}'),
-              pw.Text('Payment: ${sale['payment_method'] ?? '-'}'),
+              pw.Text('Invoice: ${sale['invoice_number'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
+              pw.Text('Date: ${DateHelper.formatDateTime(sale['created_at'])}', style: const pw.TextStyle(fontSize: 9)),
+              pw.Text('Payment: ${sale['payment_method'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
+              pw.Divider(),
 
               if (sale['customer'] != null) ...[
                 pw.SizedBox(height: 8),
-                pw.Text('Customer: ${sale['customer']['name'] ?? '-'}'),
-                pw.Text('BRN: ${sale['customer']['brn'] ?? '-'}'),
-                pw.Text('VAT: ${sale['customer']['vat_number'] ?? '-'}'),
+                pw.Text('Customer: ${sale['customer']['name'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
+                pw.Text('BRN: ${sale['customer']['brn'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
+                pw.Text('VAT: ${sale['customer']['vat_number'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
               ],
 
               pw.SizedBox(height: 12),
 
-              pw.Text(
-                'Items',
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              ),
+              pw.Text('Items', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
 
               pw.Divider(),
 
@@ -631,18 +629,10 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                   child: pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Expanded(
-                        child: pw.Text(
-                          item['product_name'] ?? item['description'] ?? '-',
-                        ),
-                      ),
+                      pw.Expanded(child: pw.Text(item['product_name'] ?? item['description'] ?? '-')),
                       pw.Text('${item['quantity']}'),
                       pw.SizedBox(width: 12),
-                      pw.Text(
-                        money.format(
-                          double.tryParse(item['line_total'].toString()) ?? 0,
-                        ),
-                      ),
+                      pw.Text(money.format(double.tryParse(item['line_total'].toString()) ?? 0)),
                     ],
                   ),
                 ),
@@ -650,41 +640,19 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
 
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text('Subtotal'),
-                  pw.Text(
-                    money.format(
-                      double.tryParse(sale['subtotal'].toString()) ?? 0,
-                    ),
-                  ),
-                ],
+                children: [pw.Text('Subtotal'), pw.Text(money.format(double.tryParse(sale['subtotal'].toString()) ?? 0))],
+              ),
+
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [pw.Text('VAT'), pw.Text(money.format(double.tryParse(sale['vat_amount'].toString()) ?? 0))],
               ),
 
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text('VAT'),
-                  pw.Text(
-                    money.format(
-                      double.tryParse(sale['vat_amount'].toString()) ?? 0,
-                    ),
-                  ),
-                ],
-              ),
-
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text(
-                    'Total',
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                  ),
-                  pw.Text(
-                    money.format(
-                      double.tryParse(sale['total_amount'].toString()) ?? 0,
-                    ),
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                  ),
+                  pw.Text('Total', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                  pw.Text(money.format(double.tryParse(sale['total_amount'].toString()) ?? 0), style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                 ],
               ),
               pw.SizedBox(height: 10),
@@ -694,28 +662,12 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                 pw.SizedBox(height: 16),
                 pw.Divider(),
                 pw.Center(
-                  child: pw.Text(
-                    'MRA FISCALISED INVOICE',
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                  ),
+                  child: pw.Text('MRA FISCALISED INVOICE', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                 ),
                 pw.SizedBox(height: 6),
-                pw.Center(
-                  child: pw.Text(
-                    'IRN: ${sale['mra_irn'] ?? ''}',
-                    textAlign: pw.TextAlign.center,
-                  ),
-                ),
+                pw.Center(child: pw.Text('IRN: ${sale['mra_irn'] ?? ''}', textAlign: pw.TextAlign.center)),
                 pw.SizedBox(height: 10),
-                if (mraQrImage != null)
-                  pw.Center(
-                    child: pw.Image(
-                      mraQrImage,
-                      width: 130,
-                      height: 130,
-                      fit: pw.BoxFit.contain,
-                    ),
-                  ),
+                if (mraQrImage != null) pw.Center(child: pw.Image(mraQrImage, width: 130, height: 130, fit: pw.BoxFit.contain)),
               ],
             ],
           );
@@ -723,10 +675,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
       ),
     );
 
-    await Printing.layoutPdf(
-      name: 'Quick-Sale-${sale['invoice_number'] ?? 'invoice'}',
-      onLayout: (_) async => pdf.save(),
-    );
+    await Printing.layoutPdf(name: 'Quick-Sale-${sale['invoice_number'] ?? 'invoice'}', onLayout: (_) async => pdf.save());
   }
 
   /*
@@ -771,27 +720,14 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Quick Sales History',
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        Text('Quick Sales History', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                         SizedBox(height: 3),
-                        Text(
-                          'Review invoice sales, VAT totals and reprint receipts.',
-                          style: TextStyle(color: Colors.grey),
-                        ),
+                        Text('Review invoice sales, VAT totals and reprint receipts.', style: TextStyle(color: Colors.grey)),
                       ],
                     ),
                   ),
 
-                  OutlinedButton.icon(
-                    onPressed: loadSales,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Refresh'),
-                  ),
+                  OutlinedButton.icon(onPressed: loadSales, icon: const Icon(Icons.refresh), label: const Text('Refresh')),
                 ],
               ),
             ),
@@ -813,30 +749,15 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                     */
                     Row(
                       children: [
-                        _StatCard(
-                          title: 'Sales Count',
-                          value: sales.length.toString(),
-                          icon: Icons.receipt,
-                          color: Colors.blue,
-                        ),
+                        _StatCard(title: 'Sales Count', value: sales.length.toString(), icon: Icons.receipt, color: Colors.blue),
 
                         const SizedBox(width: 16),
 
-                        _StatCard(
-                          title: 'Total Sales',
-                          value: 'Rs ${money.format(totalSales())}',
-                          icon: Icons.payments,
-                          color: Colors.green,
-                        ),
+                        _StatCard(title: 'Total Sales', value: 'Rs ${money.format(totalSales())}', icon: Icons.payments, color: Colors.green),
 
                         const SizedBox(width: 16),
 
-                        _StatCard(
-                          title: 'VAT Collected',
-                          value: 'Rs ${money.format(totalVat())}',
-                          icon: Icons.percent,
-                          color: Colors.orange,
-                        ),
+                        _StatCard(title: 'VAT Collected', value: 'Rs ${money.format(totalVat())}', icon: Icons.percent, color: Colors.orange),
 
                         const SizedBox(width: 16),
 
@@ -858,10 +779,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                     */
                     Container(
                       padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(22),
-                      ),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22)),
                       child: Row(
                         children: [
                           Expanded(
@@ -872,9 +790,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                               decoration: InputDecoration(
                                 labelText: 'Search invoice/customer',
                                 prefixIcon: const Icon(Icons.search),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                               ),
                             ),
                           ),
@@ -889,9 +805,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                               decoration: InputDecoration(
                                 labelText: 'From Date',
                                 prefixIcon: const Icon(Icons.calendar_month),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                               ),
                             ),
                           ),
@@ -906,25 +820,16 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                               decoration: InputDecoration(
                                 labelText: 'To Date',
                                 prefixIcon: const Icon(Icons.calendar_month),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                               ),
                             ),
                           ),
 
                           const SizedBox(width: 12),
 
-                          ElevatedButton.icon(
-                            onPressed: loadSales,
-                            icon: const Icon(Icons.filter_alt),
-                            label: const Text('Apply'),
-                          ),
+                          ElevatedButton.icon(onPressed: loadSales, icon: const Icon(Icons.filter_alt), label: const Text('Apply')),
 
-                          IconButton(
-                            onPressed: clearFilters,
-                            icon: const Icon(Icons.close),
-                          ),
+                          IconButton(onPressed: clearFilters, icon: const Icon(Icons.close)),
                         ],
                       ),
                     ),
@@ -937,10 +842,7 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                     |--------------------------------------------------------------------------
                     */
                     if (isLoading)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 120),
-                        child: CircularProgressIndicator(),
-                      )
+                      const Padding(padding: EdgeInsets.only(top: 120), child: CircularProgressIndicator())
                     else if (sales.isEmpty)
                       const _EmptyState()
                     else
@@ -992,9 +894,9 @@ class _QuickSaleHistoryScreenState extends State<QuickSaleHistoryScreen> {
                               );
 
                               if (format == 'thermal') {
-                                await printThermalReceipt(sale);
+                                await printThermalReceipt(sale, isReprint: true);
                               } else if (format == 'a4') {
-                                await printA4Invoice(sale);
+                                await printA4Invoice(sale, isReprint: true);
                               }
                             },
                           );
@@ -1023,12 +925,7 @@ class _StatCard extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const _StatCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
+  const _StatCard({required this.title, required this.value, required this.icon, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -1036,10 +933,7 @@ class _StatCard extends StatelessWidget {
       child: Container(
         height: 92,
         padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-        ),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(22)),
         child: Row(
           children: [
             CircleAvatar(
@@ -1056,10 +950,7 @@ class _StatCard extends StatelessWidget {
                   Text(
                     value,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 5),
                   Text(title, style: const TextStyle(color: Colors.grey)),
@@ -1108,16 +999,12 @@ class _SaleCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: sale['sale_status'] == 'voided'
-            ? Colors.red.shade50
-            : Colors.white,
+        color: sale['sale_status'] == 'voided' ? Colors.red.shade50 : Colors.white,
 
         borderRadius: BorderRadius.circular(22),
 
         border: Border.all(
-          color: sale['sale_status'] == 'voided'
-              ? Colors.red.shade300
-              : Colors.grey.shade200,
+          color: sale['sale_status'] == 'voided' ? Colors.red.shade300 : Colors.grey.shade200,
 
           width: sale['sale_status'] == 'voided' ? 2 : 1,
         ),
@@ -1135,13 +1022,7 @@ class _SaleCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  sale['invoice_number'] ?? '-',
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text(sale['invoice_number'] ?? '-', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
 
                 /*
                 |--------------------------------------------------------------------------
@@ -1151,62 +1032,31 @@ class _SaleCard extends StatelessWidget {
                 if (sale['mra_submitted'] == true)
                   Container(
                     margin: const EdgeInsets.only(top: 6),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(30)),
                     child: const Text(
                       'MRA FISCALISED',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                      ),
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
                     ),
                   )
                 else if (sale['mra_status'] == 'ERROR')
                   Container(
                     margin: const EdgeInsets.only(top: 6),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.orange,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(30)),
                     child: const Text(
                       'MRA FAILED',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                      ),
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
                     ),
                   )
-                else if (sale['mra_submitted'] == false &&
-                    sale['sale_type'] != 'walk_in')
+                else if (sale['mra_submitted'] == false && sale['sale_type'] != 'walk_in')
                   Container(
                     margin: const EdgeInsets.only(top: 6),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.grey,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: Colors.grey, borderRadius: BorderRadius.circular(30)),
                     child: const Text(
                       'MRA PENDING',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                      ),
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
                     ),
                   ),
 
@@ -1221,27 +1071,17 @@ class _SaleCard extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: () async {
                         try {
-                          final response = await apiService.retryMraSubmission(
-                            sale['id'],
-                          );
+                          final response = await apiService.retryMraSubmission(sale['id']);
 
                           if (!context.mounted) return;
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                response['success'] == true
-                                    ? 'MRA retry successful'
-                                    : 'MRA retry failed',
-                              ),
-                            ),
-                          );
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(response['success'] == true ? 'MRA retry successful' : 'MRA retry failed')));
 
                           onRetrySuccess();
                         } catch (e) {
-                          ScaffoldMessenger.of(
-                            context,
-                          ).showSnackBar(SnackBar(content: Text(e.toString())));
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
                         }
                       },
 
@@ -1260,24 +1100,14 @@ class _SaleCard extends StatelessWidget {
                   Container(
                     margin: const EdgeInsets.only(top: 6),
 
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
 
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
+                    decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(30)),
 
                     child: const Text(
                       'VOIDED',
 
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                      ),
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
                     ),
                   ),
 
@@ -1287,25 +1117,21 @@ class _SaleCard extends StatelessWidget {
                   spacing: 18,
                   runSpacing: 6,
                   children: [
-                    if (sale['sale_status'] == 'voided' &&
-                        sale['notes'] != null)
+                    if (sale['sale_status'] == 'voided' && sale['notes'] != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
 
                         child: Text(
                           'Reason: ${sale['notes']}',
 
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
                         ),
                       ),
 
                     Text('Customer: $customerName'),
                     Text('Type: ${sale['sale_type'] ?? '-'}'),
                     Text('Payment: ${sale['payment_method'] ?? '-'}'),
-                    Text('Date: ${sale['created_at'] ?? '-'}'),
+                    Text('Date: ${DateHelper.formatDateTime(sale['created_at'])}'),
                   ],
                 ),
               ],
@@ -1317,13 +1143,7 @@ class _SaleCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                'Rs ${money.format(total)}',
-                style: const TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('Rs ${money.format(total)}', style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold)),
 
               const SizedBox(height: 8),
 
@@ -1335,11 +1155,7 @@ class _SaleCard extends StatelessWidget {
                   | View Invoice
                   |--------------------------------------------------------------------------
                   */
-                  OutlinedButton.icon(
-                    onPressed: onView,
-                    icon: const Icon(Icons.visibility, size: 16),
-                    label: const Text('View'),
-                  ),
+                  OutlinedButton.icon(onPressed: onView, icon: const Icon(Icons.visibility, size: 16), label: const Text('View')),
 
                   const SizedBox(width: 8),
 
@@ -1364,15 +1180,11 @@ class _SaleCard extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: sale['sale_status'] == 'voided' ? null : onVoid,
 
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                    ),
+                    style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
 
                     icon: const Icon(Icons.block, size: 16),
 
-                    label: Text(
-                      sale['sale_status'] == 'voided' ? 'Voided' : 'Void',
-                    ),
+                    label: Text(sale['sale_status'] == 'voided' ? 'Voided' : 'Void'),
                   ),
                 ],
               ),
@@ -1401,18 +1213,12 @@ class _EmptyState extends StatelessWidget {
         child: Container(
           width: 380,
           padding: const EdgeInsets.all(34),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(26),
-          ),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(26)),
           child: const Column(
             children: [
               Icon(Icons.receipt_long, size: 54, color: Colors.grey),
               SizedBox(height: 14),
-              Text(
-                'No quick sales found',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
-              ),
+              Text('No quick sales found', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19)),
               SizedBox(height: 8),
               Text(
                 'Create a quick sale first, then it will appear here.',

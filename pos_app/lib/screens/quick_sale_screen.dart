@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../utils/date_helper.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -51,17 +52,13 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
   |--------------------------------------------------------------------------
   */
 
-  final TextEditingController amountTenderedController =
-      TextEditingController();
+  final TextEditingController amountTenderedController = TextEditingController();
 
   final TextEditingController productSearchController = TextEditingController();
-  final TextEditingController newItemBarcodeController =
-      TextEditingController();
+  final TextEditingController newItemBarcodeController = TextEditingController();
 
   final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController quantityController = TextEditingController(
-    text: '1',
-  );
+  final TextEditingController quantityController = TextEditingController(text: '1');
   final TextEditingController priceController = TextEditingController();
 
   /*
@@ -190,8 +187,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
   Map<String, dynamic>? selectedCustomer;
 
-  final TextEditingController customerSearchController =
-      TextEditingController();
+  final TextEditingController customerSearchController = TextEditingController();
 
   List<dynamic> customerResults = [];
 
@@ -254,12 +250,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
     pdf.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat(
-          80 * PdfPageFormat.mm,
-          double.infinity,
-
-          marginAll: 4 * PdfPageFormat.mm,
-        ),
+        pageFormat: PdfPageFormat(80 * PdfPageFormat.mm, double.infinity, marginAll: 4 * PdfPageFormat.mm),
 
         build: (context) {
           return pw.Column(
@@ -271,83 +262,41 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
             | Header
             |--------------------------------------------------------------------------
             */
-              if (logoImage != null)
-                pw.Center(
-                  child: pw.Image(
-                    logoImage,
-                    width: 80,
-                    height: 80,
-                    fit: pw.BoxFit.contain,
-                  ),
-                ),
+              if (logoImage != null) pw.Center(child: pw.Image(logoImage, width: 80, height: 80, fit: pw.BoxFit.contain)),
 
               pw.SizedBox(height: 6),
 
               pw.Center(
-                child: pw.Text(
-                  businessSettings?['company_name'] ?? 'IOSA POS',
-                  style: pw.TextStyle(
-                    fontSize: 10,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
+                child: pw.Text(businessSettings?['company_name'] ?? 'IOSA POS', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
               ),
 
               if (businessSettings?['address'] != null)
                 pw.Center(
-                  child: pw.Text(
-                    businessSettings!['address'],
-                    style: const pw.TextStyle(fontSize: 8),
-                    textAlign: pw.TextAlign.center,
-                  ),
+                  child: pw.Text(businessSettings!['address'], style: const pw.TextStyle(fontSize: 8), textAlign: pw.TextAlign.center),
                 ),
 
               if (businessSettings?['phone'] != null)
-                pw.Center(
-                  child: pw.Text(
-                    'Tel: ${businessSettings!['phone']}',
-                    style: const pw.TextStyle(fontSize: 8),
-                  ),
-                ),
+                pw.Center(child: pw.Text('Tel: ${businessSettings!['phone']}', style: const pw.TextStyle(fontSize: 8))),
 
               if (businessSettings?['vat_number'] != null)
-                pw.Center(
-                  child: pw.Text(
-                    'VAT: ${businessSettings!['vat_number']}',
-                    style: const pw.TextStyle(fontSize: 8),
-                  ),
-                ),
+                pw.Center(child: pw.Text('VAT: ${businessSettings!['vat_number']}', style: const pw.TextStyle(fontSize: 8))),
 
-              pw.Center(
-                child: pw.Text(
-                  'Quick Sale Receipt',
-
-                  style: const pw.TextStyle(fontSize: 10),
-                ),
-              ),
+              pw.Center(child: pw.Text('Quick Sale Receipt', style: const pw.TextStyle(fontSize: 10))),
 
               pw.SizedBox(height: 6),
 
               pw.Divider(),
 
-              pw.Text(
-                'Invoice: ${sale['invoice_number'] ?? '-'}',
-                style: const pw.TextStyle(fontSize: 9),
-              ),
-              pw.Text(
-                'Date: ${sale['created_at'] ?? '-'}',
-                style: const pw.TextStyle(fontSize: 9),
-              ),
-              pw.Text(
-                'Payment: ${sale['payment_method'] ?? '-'}',
-                style: const pw.TextStyle(fontSize: 9),
-              ),
+              pw.Text('Invoice: ${sale['invoice_number'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
+              pw.Text('Date: ${DateHelper.formatDateTime(sale['created_at'])}', style: const pw.TextStyle(fontSize: 9)),
+              pw.Text('Payment: ${sale['payment_method'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
 
-              if (sale['customer'] != null)
-                pw.Text(
-                  'Customer: ${sale['customer']['name']}',
-                  style: const pw.TextStyle(fontSize: 9),
-                ),
+              if (sale['customer'] != null) ...[
+                pw.SizedBox(height: 8),
+                pw.Text('Customer: ${sale['customer']['name'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
+                pw.Text('BRN: ${sale['customer']['brn'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
+                pw.Text('VAT: ${sale['customer']['vat_number'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
+              ],
 
               pw.Divider(),
 
@@ -361,11 +310,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
 
                   children: [
-                    pw.Text(
-                      item['product_name'] ?? '-',
-
-                      style: const pw.TextStyle(fontSize: 10),
-                    ),
+                    pw.Text(item['product_name'] ?? '-', style: const pw.TextStyle(fontSize: 10)),
 
                     pw.Row(
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -378,13 +323,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                           style: const pw.TextStyle(fontSize: 9),
                         ),
 
-                        pw.Text(
-                          money.format(
-                            double.tryParse(item['line_total'].toString()) ?? 0,
-                          ),
-
-                          style: const pw.TextStyle(fontSize: 9),
-                        ),
+                        pw.Text(money.format(double.tryParse(item['line_total'].toString()) ?? 0), style: const pw.TextStyle(fontSize: 9)),
                       ],
                     ),
 
@@ -403,24 +342,12 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
 
                 children: [
-                  pw.Text(
-                    'TOTAL',
-
-                    style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
+                  pw.Text('TOTAL', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12)),
 
                   pw.Text(
-                    money.format(
-                      double.tryParse(sale['total_amount'].toString()) ?? 0,
-                    ),
+                    money.format(double.tryParse(sale['total_amount'].toString()) ?? 0),
 
-                    style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold,
-                      fontSize: 12,
-                    ),
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12),
                   ),
                 ],
               ),
@@ -433,10 +360,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                 children: [
                   pw.Text('Tendered', style: const pw.TextStyle(fontSize: 9)),
 
-                  pw.Text(
-                    money.format(amountTendered()),
-                    style: const pw.TextStyle(fontSize: 9),
-                  ),
+                  pw.Text(money.format(amountTendered()), style: const pw.TextStyle(fontSize: 9)),
                 ],
               ),
 
@@ -444,33 +368,15 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
 
                 children: [
-                  pw.Text(
-                    'Change',
-                    style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold,
-                      fontSize: 10,
-                    ),
-                  ),
+                  pw.Text('Change', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
 
-                  pw.Text(
-                    money.format(changeDue()),
-
-                    style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold,
-                      fontSize: 10,
-                    ),
-                  ),
+                  pw.Text(money.format(changeDue()), style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
                 ],
               ),
 
               pw.SizedBox(height: 10),
 
-              pw.Center(
-                child: pw.Text(
-                  businessSettings?['receipt_footer'] ?? 'Thank you',
-                  style: const pw.TextStyle(fontSize: 10),
-                ),
-              ),
+              pw.Center(child: pw.Text(businessSettings?['receipt_footer'] ?? 'Thank you', style: const pw.TextStyle(fontSize: 10))),
 
               /*
               |--------------------------------------------------------------------------
@@ -485,31 +391,18 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                 pw.SizedBox(height: 6),
 
                 pw.Center(
-                  child: pw.Text(
-                    'MRA FISCALISED',
-                    style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold,
-                      fontSize: 10,
-                    ),
-                  ),
+                  child: pw.Text('MRA FISCALISED', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
                 ),
 
                 pw.SizedBox(height: 4),
 
                 pw.Center(
-                  child: pw.Text(
-                    'IRN: ${sale['mra_irn'] ?? ''}',
-                    textAlign: pw.TextAlign.center,
-                    style: const pw.TextStyle(fontSize: 8),
-                  ),
+                  child: pw.Text('IRN: ${sale['mra_irn'] ?? ''}', textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 8)),
                 ),
 
                 pw.SizedBox(height: 8),
 
-                if (mraQrImage != null)
-                  pw.Center(
-                    child: pw.Image(mraQrImage, width: 120, height: 120),
-                  ),
+                if (mraQrImage != null) pw.Center(child: pw.Image(mraQrImage, width: 120, height: 120)),
               ],
             ],
           );
@@ -517,11 +410,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
       ),
     );
 
-    await Printing.layoutPdf(
-      name: 'Thermal-${sale['invoice_number']}',
-
-      onLayout: (_) async => pdf.save(),
-    );
+    await Printing.layoutPdf(name: 'Thermal-${sale['invoice_number']}', onLayout: (_) async => pdf.save());
   }
 
   /*
@@ -543,52 +432,24 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              if (logoImage != null)
-                pw.Center(
-                  child: pw.Image(
-                    logoImage,
-                    width: 120,
-                    height: 120,
-                    fit: pw.BoxFit.contain,
-                  ),
-                ),
+              if (logoImage != null) pw.Center(child: pw.Image(logoImage, width: 120, height: 120, fit: pw.BoxFit.contain)),
 
               pw.SizedBox(height: 10),
 
               pw.Center(
-                child: pw.Text(
-                  businessSettings?['company_name'] ?? 'IOSA POS',
-                  style: pw.TextStyle(
-                    fontSize: 14,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
+                child: pw.Text(businessSettings?['company_name'] ?? 'IOSA POS', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
               ),
 
               if (businessSettings?['address'] != null)
                 pw.Center(
-                  child: pw.Text(
-                    businessSettings!['address'],
-                    style: const pw.TextStyle(fontSize: 8),
-                    textAlign: pw.TextAlign.center,
-                  ),
+                  child: pw.Text(businessSettings!['address'], style: const pw.TextStyle(fontSize: 8), textAlign: pw.TextAlign.center),
                 ),
 
               if (businessSettings?['phone'] != null)
-                pw.Center(
-                  child: pw.Text(
-                    'Tel: ${businessSettings!['phone']}',
-                    style: const pw.TextStyle(fontSize: 8),
-                  ),
-                ),
+                pw.Center(child: pw.Text('Tel: ${businessSettings!['phone']}', style: const pw.TextStyle(fontSize: 8))),
 
               if (businessSettings?['vat_number'] != null)
-                pw.Center(
-                  child: pw.Text(
-                    'VAT: ${businessSettings!['vat_number']}',
-                    style: const pw.TextStyle(fontSize: 8),
-                  ),
-                ),
+                pw.Center(child: pw.Text('VAT: ${businessSettings!['vat_number']}', style: const pw.TextStyle(fontSize: 8))),
 
               pw.SizedBox(height: 6),
 
@@ -597,7 +458,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
               pw.Divider(),
 
               pw.Text('Invoice: ${sale['invoice_number'] ?? '-'}'),
-              pw.Text('Date: ${sale['created_at'] ?? '-'}'),
+              pw.Text('Date: ${DateHelper.formatDateTime(sale['created_at'])}', style: const pw.TextStyle(fontSize: 9)),
               pw.Text('Sale Type: ${sale['sale_type'] ?? '-'}'),
               pw.Text('Payment: ${sale['payment_method'] ?? '-'}'),
 
@@ -617,20 +478,16 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                         if (sale['customer'] != null) ...[
                           pw.SizedBox(height: 8),
 
-                          pw.Text(
-                            'Customer',
-                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                          ),
+                          pw.Text('Customer', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
 
                           pw.SizedBox(height: 4),
 
-                          pw.Text(sale['customer']['name'] ?? '-'),
-
-                          pw.Text('BRN: ${sale['customer']['brn'] ?? '-'}'),
-
-                          pw.Text(
-                            'VAT: ${sale['customer']['vat_number'] ?? '-'}',
-                          ),
+                          if (sale['customer'] != null) ...[
+                            pw.SizedBox(height: 8),
+                            pw.Text('Customer: ${sale['customer']['name'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
+                            pw.Text('BRN: ${sale['customer']['brn'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
+                            pw.Text('VAT: ${sale['customer']['vat_number'] ?? '-'}', style: const pw.TextStyle(fontSize: 9)),
+                          ],
                         ],
                       ],
                     ),
@@ -644,22 +501,13 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                   if (sale['mra_submitted'] == true && mraQrImage != null)
                     pw.Column(
                       children: [
-                        pw.Image(
-                          mraQrImage,
-                          width: 90,
-                          height: 90,
-                          fit: pw.BoxFit.contain,
-                        ),
+                        pw.Image(mraQrImage, width: 90, height: 90, fit: pw.BoxFit.contain),
 
                         pw.SizedBox(height: 4),
 
                         pw.SizedBox(
                           width: 120,
-                          child: pw.Text(
-                            sale['mra_irn'] ?? '',
-                            textAlign: pw.TextAlign.center,
-                            style: const pw.TextStyle(fontSize: 7),
-                          ),
+                          child: pw.Text(sale['mra_irn'] ?? '', textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 7)),
                         ),
                       ],
                     ),
@@ -668,10 +516,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
               pw.SizedBox(height: 12),
 
-              pw.Text(
-                'Items',
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              ),
+              pw.Text('Items', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
 
               pw.Divider(),
 
@@ -681,18 +526,10 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                   child: pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Expanded(
-                        child: pw.Text(
-                          item['product_name'] ?? item['description'] ?? '-',
-                        ),
-                      ),
+                      pw.Expanded(child: pw.Text(item['product_name'] ?? item['description'] ?? '-')),
                       pw.Text('${item['quantity']}'),
                       pw.SizedBox(width: 12),
-                      pw.Text(
-                        money.format(
-                          double.tryParse(item['line_total'].toString()) ?? 0,
-                        ),
-                      ),
+                      pw.Text(money.format(double.tryParse(item['line_total'].toString()) ?? 0)),
                     ],
                   ),
                 ),
@@ -700,65 +537,34 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text('Subtotal'),
-                  pw.Text(
-                    money.format(
-                      double.tryParse(sale['subtotal'].toString()) ?? 0,
-                    ),
-                  ),
-                ],
+                children: [pw.Text('Subtotal'), pw.Text(money.format(double.tryParse(sale['subtotal'].toString()) ?? 0))],
+              ),
+
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [pw.Text('VAT'), pw.Text(money.format(double.tryParse(sale['vat_amount'].toString()) ?? 0))],
               ),
 
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text('VAT'),
-                  pw.Text(
-                    money.format(
-                      double.tryParse(sale['vat_amount'].toString()) ?? 0,
-                    ),
-                  ),
-                ],
-              ),
-
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text(
-                    'Total',
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                  ),
-                  pw.Text(
-                    money.format(
-                      double.tryParse(sale['total_amount'].toString()) ?? 0,
-                    ),
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                  ),
+                  pw.Text('Total', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                  pw.Text(money.format(double.tryParse(sale['total_amount'].toString()) ?? 0), style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                 ],
               ),
               pw.SizedBox(height: 10),
 
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text('Amount Tendered'),
-                  pw.Text(money.format(amountTendered())),
-                ],
+                children: [pw.Text('Amount Tendered'), pw.Text(money.format(amountTendered()))],
               ),
 
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text(
-                    'Change Due',
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                  ),
+                  pw.Text('Change Due', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
 
-                  pw.Text(
-                    money.format(changeDue()),
-                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                  ),
+                  pw.Text(money.format(changeDue()), style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                 ],
               ),
 
@@ -770,10 +576,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
       ),
     );
 
-    await Printing.layoutPdf(
-      name: 'Quick-Sale-${sale['invoice_number'] ?? 'invoice'}',
-      onLayout: (_) async => pdf.save(),
-    );
+    await Printing.layoutPdf(name: 'Quick-Sale-${sale['invoice_number'] ?? 'invoice'}', onLayout: (_) async => pdf.save());
   }
 
   /*
@@ -807,9 +610,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                 children: [
                   TextField(
                     controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Customer Name',
-                    ),
+                    decoration: const InputDecoration(labelText: 'Customer Name'),
                   ),
 
                   const SizedBox(height: 12),
@@ -880,18 +681,9 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
                   Navigator.pop(context);
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Customer created successfully'),
-                    ),
-                  );
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Customer created successfully')));
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(e.toString()),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
                 }
               },
 
@@ -918,8 +710,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
     setState(() {
       final existingIndex = items.indexWhere((item) {
-        return item['product_id'] != null &&
-            item['product_id'] == selectedProduct?['id'];
+        return item['product_id'] != null && item['product_id'] == selectedProduct?['id'];
       });
 
       if (existingIndex >= 0) {
@@ -999,9 +790,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
   Future<void> searchProducts() async {
     try {
-      final data = await apiService.getProducts(
-        search: productSearchController.text.trim(),
-      );
+      final data = await apiService.getProducts(search: productSearchController.text.trim());
 
       if (!mounted) return;
 
@@ -1020,8 +809,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
       if (data.length == 1) {
         final product = data.first;
 
-        if ((product['barcode'] ?? '').toString().trim() ==
-            productSearchController.text.trim()) {
+        if ((product['barcode'] ?? '').toString().trim() == productSearchController.text.trim()) {
           selectProduct(product);
 
           /*
@@ -1042,9 +830,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
   /*
@@ -1055,9 +841,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
   Future<void> searchCustomers() async {
     try {
-      final data = await apiService.getCustomers(
-        search: customerSearchController.text.trim(),
-      );
+      final data = await apiService.getCustomers(search: customerSearchController.text.trim());
 
       if (!mounted) return;
 
@@ -1069,9 +853,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
     }
   }
   /*
@@ -1101,16 +883,10 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
     |--------------------------------------------------------------------------
     */
 
-    if ((saleType == 'vat_invoice' || saleType == 'credit') &&
-        selectedCustomer == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Customer is required for VAT invoices and credit sales.',
-          ),
-          backgroundColor: Colors.orange,
-        ),
-      );
+    if ((saleType == 'vat_invoice' || saleType == 'credit') && selectedCustomer == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Customer is required for VAT invoices and credit sales.'), backgroundColor: Colors.orange));
 
       return;
     }
@@ -1133,12 +909,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Quick sale created successfully'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Quick sale created successfully'), backgroundColor: Colors.green));
 
       /*
       |--------------------------------------------------------------------------
@@ -1162,9 +933,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
     } finally {
       if (mounted) {
         setState(() {
@@ -1193,20 +962,11 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
               flex: 2,
               child: Container(
                 padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                ),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Sale Entry',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    const Text('Sale Entry', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
 
                     const SizedBox(height: 18),
 
@@ -1215,23 +975,11 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                         Expanded(
                           child: DropdownButtonFormField<String>(
                             value: saleType,
-                            decoration: const InputDecoration(
-                              labelText: 'Sale Type',
-                              border: OutlineInputBorder(),
-                            ),
+                            decoration: const InputDecoration(labelText: 'Sale Type', border: OutlineInputBorder()),
                             items: const [
-                              DropdownMenuItem(
-                                value: 'walk_in',
-                                child: Text('Walk-in'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'vat_invoice',
-                                child: Text('VAT Invoice'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'credit',
-                                child: Text('Credit Sale'),
-                              ),
+                              DropdownMenuItem(value: 'walk_in', child: Text('Walk-in')),
+                              DropdownMenuItem(value: 'vat_invoice', child: Text('VAT Invoice')),
+                              DropdownMenuItem(value: 'credit', child: Text('Credit Sale')),
                             ],
                             onChanged: (value) {
                               setState(() {
@@ -1246,31 +994,13 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                         Expanded(
                           child: DropdownButtonFormField<String>(
                             value: paymentMethod,
-                            decoration: const InputDecoration(
-                              labelText: 'Payment',
-                              border: OutlineInputBorder(),
-                            ),
+                            decoration: const InputDecoration(labelText: 'Payment', border: OutlineInputBorder()),
                             items: const [
-                              DropdownMenuItem(
-                                value: 'cash',
-                                child: Text('Cash'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'card',
-                                child: Text('Card'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'juice',
-                                child: Text('Juice'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'cheque',
-                                child: Text('Cheque'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'credit',
-                                child: Text('Credit'),
-                              ),
+                              DropdownMenuItem(value: 'cash', child: Text('Cash')),
+                              DropdownMenuItem(value: 'card', child: Text('Card')),
+                              DropdownMenuItem(value: 'juice', child: Text('Juice')),
+                              DropdownMenuItem(value: 'cheque', child: Text('Cheque')),
+                              DropdownMenuItem(value: 'credit', child: Text('Credit')),
                             ],
                             onChanged: (value) {
                               setState(() {
@@ -1290,13 +1020,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                     | Customer Section
                     |--------------------------------------------------------------------------
                     */
-                    const Text(
-                      'Customer',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    const Text('Customer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
 
                     const SizedBox(height: 12),
 
@@ -1315,22 +1039,12 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                               width: double.infinity,
                               margin: const EdgeInsets.only(bottom: 14),
                               padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.10),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
+                              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.10), borderRadius: BorderRadius.circular(14)),
                               child: const Row(
                                 children: [
-                                  Icon(
-                                    Icons.info_outline,
-                                    color: Colors.orange,
-                                  ),
+                                  Icon(Icons.info_outline, color: Colors.orange),
                                   SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      'Customer information is required for VAT invoices and credit sales.',
-                                    ),
-                                  ),
+                                  Expanded(child: Text('Customer information is required for VAT invoices and credit sales.')),
                                 ],
                               ),
                             ),
@@ -1342,12 +1056,9 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                                   controller: customerSearchController,
                                   onChanged: (_) => searchCustomers(),
                                   decoration: InputDecoration(
-                                    labelText:
-                                        'Customer name / phone / BRN / VAT',
+                                    labelText: 'Customer name / phone / BRN / VAT',
                                     prefixIcon: const Icon(Icons.search),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                                   ),
                                 ),
                               ),
@@ -1375,11 +1086,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
                               padding: const EdgeInsets.all(14),
 
-                              decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.10),
-
-                                borderRadius: BorderRadius.circular(14),
-                              ),
+                              decoration: BoxDecoration(color: Colors.green.withOpacity(0.10), borderRadius: BorderRadius.circular(14)),
 
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1391,18 +1098,14 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                                   |--------------------------------------------------------------------------
                                   */
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
                                     children: [
                                       Expanded(
                                         child: Text(
                                           selectedCustomer!['name'] ?? '',
 
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                         ),
                                       ),
 
@@ -1422,15 +1125,9 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                                           });
                                         },
 
-                                        icon: const Icon(
-                                          Icons.clear,
-                                          color: Colors.red,
-                                        ),
+                                        icon: const Icon(Icons.clear, color: Colors.red),
 
-                                        label: const Text(
-                                          'Clear',
-                                          style: TextStyle(color: Colors.red),
-                                        ),
+                                        label: const Text('Clear', style: TextStyle(color: Colors.red)),
                                       ),
                                     ],
                                   ),
@@ -1440,18 +1137,11 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                                   | Customer Details
                                   |--------------------------------------------------------------------------
                                   */
-                                  if (selectedCustomer!['phone'] != null)
-                                    Text(
-                                      'Phone: ${selectedCustomer!['phone']}',
-                                    ),
+                                  if (selectedCustomer!['phone'] != null) Text('Phone: ${selectedCustomer!['phone']}'),
 
-                                  if (selectedCustomer!['brn'] != null)
-                                    Text('BRN: ${selectedCustomer!['brn']}'),
+                                  if (selectedCustomer!['brn'] != null) Text('BRN: ${selectedCustomer!['brn']}'),
 
-                                  if (selectedCustomer!['vat_number'] != null)
-                                    Text(
-                                      'VAT: ${selectedCustomer!['vat_number']}',
-                                    ),
+                                  if (selectedCustomer!['vat_number'] != null) Text('VAT: ${selectedCustomer!['vat_number']}'),
                                 ],
                               ),
                             ),
@@ -1463,17 +1153,12 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                               height: 180,
                               child: ListView.separated(
                                 itemCount: customerResults.length,
-                                separatorBuilder: (_, __) => Divider(
-                                  height: 1,
-                                  color: Colors.grey.shade200,
-                                ),
+                                separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200),
                                 itemBuilder: (context, index) {
                                   final customer = customerResults[index];
 
                                   return ListTile(
-                                    leading: const CircleAvatar(
-                                      child: Icon(Icons.person),
-                                    ),
+                                    leading: const CircleAvatar(child: Icon(Icons.person)),
                                     title: Text(customer['name'] ?? ''),
                                     subtitle: Text(
                                       '${customer['phone'] ?? ''} | BRN: ${customer['brn'] ?? '-'} | VAT: ${customer['vat_number'] ?? '-'}',
@@ -1490,13 +1175,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                       ),
                     ),
 
-                    const Text(
-                      'Add Item',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    const Text('Add Item', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
 
                     const SizedBox(height: 12),
 
@@ -1515,9 +1194,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
                             prefixIcon: const Icon(Icons.search),
 
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                           ),
                         ),
 
@@ -1538,30 +1215,19 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                             child: ListView.separated(
                               itemCount: productResults.length,
 
-                              separatorBuilder: (_, __) => Divider(
-                                height: 1,
-                                color: Colors.grey.shade200,
-                              ),
+                              separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200),
 
                               itemBuilder: (context, index) {
                                 final product = productResults[index];
 
                                 return ListTile(
-                                  leading: const CircleAvatar(
-                                    child: Icon(Icons.inventory_2),
-                                  ),
+                                  leading: const CircleAvatar(child: Icon(Icons.inventory_2)),
 
                                   title: Text(product['name'] ?? ''),
 
-                                  subtitle: Text(
-                                    'Stock: ${product['stock_quantity'] ?? 0}',
-                                  ),
+                                  subtitle: Text('Stock: ${product['stock_quantity'] ?? 0}'),
 
-                                  trailing: Text(
-                                    formatMoney(
-                                      toMoneyDouble(product['selling_price']),
-                                    ),
-                                  ),
+                                  trailing: Text(formatMoney(toMoneyDouble(product['selling_price']))),
 
                                   onTap: () {
                                     selectProduct(product);
@@ -1577,27 +1243,19 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                         TextField(
                           controller: descriptionController,
 
-                          decoration: const InputDecoration(
-                            labelText: 'Description',
-                            border: OutlineInputBorder(),
-                          ),
+                          decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
                         ),
 
                         const SizedBox(height: 12),
 
                         TextField(
                           controller: newItemBarcodeController,
-                          decoration: const InputDecoration(
-                            labelText: 'Barcode for new item',
-                            border: OutlineInputBorder(),
-                          ),
+                          decoration: const InputDecoration(labelText: 'Barcode for new item', border: OutlineInputBorder()),
                         ),
 
                         CheckboxListTile(
                           value: saveNewItemAsProduct,
-                          title: const Text(
-                            'Save this item as product for next time',
-                          ),
+                          title: const Text('Save this item as product for next time'),
                           onChanged: (value) {
                             setState(() {
                               saveNewItemAsProduct = value ?? true;
@@ -1615,10 +1273,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                           child: TextField(
                             controller: quantityController,
                             keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Quantity',
-                              border: OutlineInputBorder(),
-                            ),
+                            decoration: const InputDecoration(labelText: 'Quantity', border: OutlineInputBorder()),
                           ),
                         ),
 
@@ -1628,10 +1283,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                           child: TextField(
                             controller: priceController,
                             keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Unit Price Excl VAT',
-                              border: OutlineInputBorder(),
-                            ),
+                            decoration: const InputDecoration(labelText: 'Unit Price Excl VAT', border: OutlineInputBorder()),
                           ),
                         ),
 
@@ -1639,11 +1291,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
                         SizedBox(
                           height: 56,
-                          child: ElevatedButton.icon(
-                            onPressed: addItem,
-                            icon: const Icon(Icons.add),
-                            label: const Text('Add'),
-                          ),
+                          child: ElevatedButton.icon(onPressed: addItem, icon: const Icon(Icons.add), label: const Text('Add')),
                         ),
                       ],
                     ),
@@ -1657,20 +1305,11 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
             Expanded(
               child: Container(
                 padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                ),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Invoice Summary',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    const Text('Invoice Summary', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
 
                     const SizedBox(height: 18),
 
@@ -1685,31 +1324,20 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                                 return ListTile(
                                   title: Text(item['description']),
 
-                                  subtitle: Text(
-                                    '${item['quantity']} × ${formatMoney(toMoneyDouble(item['unit_price_excl_vat']))}',
-                                  ),
+                                  subtitle: Text('${item['quantity']} × ${formatMoney(toMoneyDouble(item['unit_price_excl_vat']))}'),
 
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
-                                        formatMoney(
-                                          toMoneyDouble(
-                                            item['line_total_incl_vat'],
-                                          ),
-                                        ),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        formatMoney(toMoneyDouble(item['line_total_incl_vat'])),
+                                        style: const TextStyle(fontWeight: FontWeight.bold),
                                       ),
 
                                       const SizedBox(width: 8),
 
                                       IconButton(
-                                        icon: const Icon(
-                                          Icons.delete_outline,
-                                          color: Colors.red,
-                                        ),
+                                        icon: const Icon(Icons.delete_outline, color: Colors.red),
 
                                         onPressed: () {
                                           setState(() {
@@ -1728,41 +1356,22 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Subtotal Excl VAT'),
-                        Text(formatMoney(subtotal())),
-                      ],
+                      children: [const Text('Subtotal Excl VAT'), Text(formatMoney(subtotal()))],
                     ),
+
+                    const SizedBox(height: 8),
+
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('VAT'), Text(formatMoney(vatTotal()))]),
 
                     const SizedBox(height: 8),
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('VAT'),
-                        Text(formatMoney(vatTotal())),
-                      ],
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Total',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        const Text('Total', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                         Text(
                           formatMoney(grandTotal()),
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green),
                         ),
                       ],
                     ),
@@ -1790,10 +1399,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                         const Text('Change Due'),
                         Text(
                           formatMoney(changeDue()),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
                         ),
                       ],
                     ),
@@ -1808,20 +1414,7 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                       crossAxisSpacing: 8,
                       mainAxisSpacing: 8,
                       children: [
-                        for (final key in [
-                          '1',
-                          '2',
-                          '3',
-                          '4',
-                          '5',
-                          '6',
-                          '7',
-                          '8',
-                          '9',
-                          '0',
-                          '.',
-                          'C',
-                        ])
+                        for (final key in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', 'C'])
                           ElevatedButton(
                             onPressed: canEditAmountTendered()
                                 ? () {
@@ -1848,21 +1441,12 @@ class _QuickSaleScreenState extends State<QuickSaleScreen> {
                     DropdownButtonFormField<String>(
                       value: printFormat,
 
-                      decoration: const InputDecoration(
-                        labelText: 'Print Format',
-                        border: OutlineInputBorder(),
-                      ),
+                      decoration: const InputDecoration(labelText: 'Print Format', border: OutlineInputBorder()),
 
                       items: const [
-                        DropdownMenuItem(
-                          value: 'thermal',
-                          child: Text('Thermal Receipt'),
-                        ),
+                        DropdownMenuItem(value: 'thermal', child: Text('Thermal Receipt')),
 
-                        DropdownMenuItem(
-                          value: 'a4',
-                          child: Text('A4 Invoice'),
-                        ),
+                        DropdownMenuItem(value: 'a4', child: Text('A4 Invoice')),
                       ],
 
                       onChanged: (value) {

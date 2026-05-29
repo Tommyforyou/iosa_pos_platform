@@ -421,6 +421,9 @@ class MraService
 
         public function submitSale( \App\Models\Sale $sale ): array
  {
+
+
+
             /*
             |--------------------------------------------------------------------------
             | Prevent Duplicate Submission
@@ -435,6 +438,24 @@ class MraService
                     'mra_irn' => $sale->mra_irn,
                 ];
             }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Prevent Fiscalisation Of Voided Invoices
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                strtolower( $sale->sale_status ?? '' ) === 'voided'
+            ) {
+                return [
+                    'success' => false,
+                    'message' =>
+                    'Voided invoices cannot be fiscalised.',
+                    'sale_id' => $sale->id,
+                ];
+            }
+
 
             /*
             |--------------------------------------------------------------------------

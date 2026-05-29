@@ -98,6 +98,328 @@ class CustomerController extends Controller
         ]);
     }
 
+
+/*
+|--------------------------------------------------------------------------
+| Customer Outstanding Balance
+|--------------------------------------------------------------------------
+*/
+
+public function balance(Customer $customer)
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Total Credit Sales
+    |--------------------------------------------------------------------------
+    */
+
+    $totalSales = $customer->sales()
+        ->where('sale_status', '!=', 'voided')
+        ->sum('total_amount');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Total Payments
+    |--------------------------------------------------------------------------
+    */
+
+    $totalPayments = $customer->payments()
+        ->sum('amount');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Outstanding Balance
+    |--------------------------------------------------------------------------
+    */
+
+    $outstanding =
+        $totalSales - $totalPayments;
+
+    return response()->json([
+
+        'customer_id' => $customer->id,
+
+        'customer_name' => $customer->name,
+
+        'total_sales' => round($totalSales, 2),
+
+        'total_payments' => round($totalPayments, 2),
+
+        'outstanding_balance' => round($outstanding, 2),
+
+    ]);
+}
+
+
+
+/*
+    |--------------------------------------------------------------------------
+    | Customer Statement
+    |--------------------------------------------------------------------------
+    */
+
+    public function statement(Customer $customer)
+    {
+        $sales = $customer->sales()
+            ->where('sale_status', '!=', 'voided')
+            ->get()
+            ->map(function ($sale) {
+
+                return [
+                    'date' => $sale->created_at,
+                    'type' => 'invoice',
+                    'reference' => $sale->invoice_number,
+                    'debit' => (float) $sale->total_amount,
+                    'credit' => 0,
+                ];
+            });
+
+        $payments = $customer->payments()
+            ->get()
+            ->map(function ($payment) {
+
+                return [
+                    'date' => $payment->payment_date,
+                    'type' => 'payment',
+                    'reference' => $payment->reference
+                        ?? ('PAY-' . $payment->id),
+                    'debit' => 0,
+                    'credit' => (float) $payment->amount,
+                ];
+            });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Merge Transactions
+        |--------------------------------------------------------------------------
+        */
+
+        $transactions = $sales
+            ->concat($payments)
+            ->sortBy('date')
+            ->values();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Running Balance
+        |--------------------------------------------------------------------------
+        */
+
+        $balance = 0;
+
+        $transactions = $transactions->map(function ($tx) use (&$balance) {
+
+            $balance +=
+                ((float) $tx['debit']) -
+                ((float) $tx['credit']);
+
+            $tx['balance'] = round($balance, 2);
+
+            return $tx;
+        });
+
+        return response()->json([
+
+            'customer' => $customer,
+
+            'opening_balance' => 0,
+
+            'total_sales' => round(
+                $sales->sum('debit'),
+                2
+            ),
+
+            'total_payments' => round(
+                $payments->sum('credit'),
+                2
+            ),
+
+            'closing_balance' => round(
+                $balance,
+                2
+            ),
+
+            'outstanding_invoices' => $customer
+                ->sales()
+                ->where('sale_status', '!=', 'voided')
+                ->get()
+                ->map(function ($sale) {
+
+                    $paidAmount = (float) $sale
+                        ->paymentAllocations()
+                        ->sum('amount');
+
+                    $outstandingAmount =
+                        (float) $sale->total_amount -
+                        $paidAmount;
+
+                    return [
+
+                        'invoice_number' =>
+                            $sale->invoice_number,
+
+                        'date' =>
+                            $sale->created_at,
+
+                        'total_amount' =>
+                            round(
+                                (float) $sale->total_amount,
+                                2
+                            ),
+
+                        'paid_amount' =>
+                            round(
+                                $paidAmount,
+                                2
+                            ),
+
+                        'outstanding_amount' =>
+                            round(
+                                $outstandingAmount,
+                                2
+                            ),
+                    ];
+                })
+                ->filter(function ($invoice) {
+
+                    return
+                        $invoice['outstanding_amount']
+                        > 0;
+                })
+                ->values(),
+
+            'transactions' => $transactions,
+
+        ]);
+    }
+
+/*
+|--------------------------------------------------------------------------
+| Customer Transactions
+|--------------------------------------------------------------------------
+*/
+
+public function transactions(Customer $customer)
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Customer Sales
+    |--------------------------------------------------------------------------
+    */
+
+    $sales = $customer->sales()
+        ->where('sale_status', '!=', 'voided')
+        ->latest()
+        ->get()
+        ->map(function ($sale) {
+
+            return [
+
+                'type' => 'sale',
+
+                'date' => $sale->created_at,
+
+                'reference' => $sale->invoice_number,
+
+                'amount' => $sale->total_amount,
+
+               'status' => $sale->payment_status ?? 'unpaid',
+            ];
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Customer Payments
+    |--------------------------------------------------------------------------
+    */
+
+    $payments = $customer->payments()
+        ->latest()
+        ->get()
+        ->map(function ($payment) {
+
+            return [
+
+                'type' => 'payment',
+
+                'date' => $payment->payment_date,
+
+                'reference' => $payment->reference,
+
+                'amount' => $payment->amount,
+
+                'status' => $payment->payment_method,
+
+            ];
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Merge Transactions
+    |--------------------------------------------------------------------------
+    */
+
+    $transactions = $sales
+        ->concat($payments)
+        ->sortByDesc('date')
+        ->values();
+
+    return response()->json([
+
+        'customer_id' => $customer->id,
+
+        'customer_name' => $customer->name,
+
+        'transactions' => $transactions,
+
+    ]);
+}
+
+    /*
+    |--------------------------------------------------------------------------
+    | Customer Outstanding Invoices
+    |--------------------------------------------------------------------------
+    */
+
+    public function outstandingInvoices(Customer $customer)
+    {
+        $invoices = $customer->sales()
+            ->where('sale_status', '!=', 'voided')
+            ->oldest()
+            ->get()
+            ->map(function ($sale) {
+
+                $paidAmount = (float) $sale
+                    ->paymentAllocations()
+                    ->sum('amount');
+
+                $totalAmount = (float) $sale->total_amount;
+
+                $outstandingAmount =
+                    $totalAmount - $paidAmount;
+
+                return [
+                    'id' => $sale->id,
+                    'invoice_number' => $sale->invoice_number,
+                    'date' => $sale->created_at,
+                    'total_amount' => round($totalAmount, 2),
+                    'paid_amount' => round($paidAmount, 2),
+                    'outstanding_amount' => round($outstandingAmount, 2),
+                    'payment_status' => $sale->payment_status,
+                ];
+            })
+            ->filter(function ($invoice) {
+                return $invoice['outstanding_amount'] > 0;
+            })
+            ->values();
+
+        return response()->json([
+            'customer_id' => $customer->id,
+            'customer_name' => $customer->name,
+            'invoices' => $invoices,
+        ]);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Update Customer

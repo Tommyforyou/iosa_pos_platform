@@ -11,17 +11,7 @@ use App\Http\Controllers\Api\QuickSaleVoidController;
 use App\Http\Controllers\Api\BusinessSettingController;
 use App\Http\Controllers\Api\MraTestController;
 use App\Http\Controllers\Api\MraSaleController;
-
-/*
-|--------------------------------------------------------------------------
-| Submit Real Sale To MRA
-|--------------------------------------------------------------------------
-*/
-
-Route::post(
-    'sales/{sale}/submit-mra',
-    [ MraSaleController::class, 'submit' ]
-);
+use App\Http\Controllers\Api\CustomerPaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -585,6 +575,48 @@ use App\Http\Controllers\Api\PurchaseController;
                 [ MraSaleController::class, 'retry' ]
             );
 
+            /*
+            |--------------------------------------------------------------------------
+            | Customer Payments
+            |--------------------------------------------------------------------------
+            */
+
+            Route::post(
+                'customers/{customer}/payments',
+                [ CustomerPaymentController::class, 'store' ]
+            );
+
+            Route::get(
+                'customers/{customer}/balance',
+                [ CustomerController::class, 'balance' ]
+            );
+
+            Route::get(
+                'customers/{customer}/transactions',
+                [ CustomerController::class, 'transactions' ]
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Customer OS Balance
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                'customers/{customer}/outstanding-invoices',
+                [ CustomerController::class, 'outstandingInvoices' ]
+            );
+
+            Route::get(
+                'customers/{customer}/statement',
+                [ CustomerController::class, 'statement' ]
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Authenticated User
+            |--------------------------------------------------------------------------
+            */
             Route::get( '/user', function ( Request $request ) {
                 return $request->user();
             }
