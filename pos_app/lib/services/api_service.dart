@@ -332,6 +332,22 @@ class ApiService {
 
   /*
 |--------------------------------------------------------------------------
+| Customer Aging Analysis
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getCustomerAging(int customerId) async {
+    final response = await http.get(Uri.parse('$baseUrl/customers/$customerId/aging'), headers: {'Accept': 'application/json'});
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load customer aging');
+  }
+
+  /*
+|--------------------------------------------------------------------------
 | Customer Statement
 |--------------------------------------------------------------------------
 */
@@ -410,11 +426,17 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
-  Future<Map<String, dynamic>> convertPurchaseReceiptToPurchase({required int receiptId}) async {
-    final response = await http.post(Uri.parse('$baseUrl/purchase-receipts/$receiptId/convert-to-purchase'), headers: {'Accept': 'application/json'});
+  Future<Map<String, dynamic>> convertPurchaseReceiptToPurchase({required int receiptId, required String paymentStatus}) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/purchase-receipts/$receiptId/convert-to-purchase'),
+
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+
+      body: jsonEncode({'payment_status': paymentStatus}),
+    );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return Map<String, dynamic>.from(jsonDecode(response.body));
     }
 
     throw Exception('Failed to convert receipt: ${response.body}');

@@ -123,19 +123,13 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$uploadedCount receipt(s) uploaded successfully'),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$uploadedCount receipt(s) uploaded successfully')));
     } catch (e) {
       debugPrint(e.toString());
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
     } finally {
       if (!mounted) return;
 
@@ -159,17 +153,13 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('OCR processing completed')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OCR processing completed')));
     } catch (e) {
       debugPrint(e.toString());
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
     }
   }
 
@@ -185,9 +175,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
       builder: (_) {
         return AlertDialog(
           title: const Text('Delete purchase receipt?'),
-          content: const Text(
-            'This will remove the uploaded document and purchase receipt record.',
-          ),
+          content: const Text('This will remove the uploaded document and purchase receipt record.'),
           actions: [
             TextButton(
               onPressed: () {
@@ -196,10 +184,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
               child: const Text('Cancel'),
             ),
             ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
               onPressed: () {
                 Navigator.pop(context, true);
               },
@@ -222,17 +207,13 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Purchase receipt deleted')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Purchase receipt deleted')));
     } catch (e) {
       debugPrint(e.toString());
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
     }
   }
 
@@ -243,12 +224,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
   */
 
   Future<void> openReview(dynamic receipt) async {
-    final updated = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PurchaseReceiptReviewScreen(receipt: receipt),
-      ),
-    );
+    final updated = await Navigator.push(context, MaterialPageRoute(builder: (_) => PurchaseReceiptReviewScreen(receipt: receipt)));
 
     if (updated == true) {
       loadReceipts();
@@ -317,12 +293,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
   |--------------------------------------------------------------------------
   */
 
-  Widget statCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
+  Widget statCard({required String title, required String value, required IconData icon, required Color color}) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(18),
@@ -330,36 +301,21 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
         ),
         child: Row(
           children: [
             Container(
               width: 46,
               height: 46,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(16),
-              ),
+              decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
               child: Icon(icon, color: color),
             ),
             const SizedBox(width: 14),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                 Text(title, style: TextStyle(color: Colors.grey.shade700)),
               ],
             ),
@@ -375,27 +331,108 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
   |--------------------------------------------------------------------------
   */
 
-  Widget infoItem({
-    required String label,
-    required String value,
-    IconData? icon,
-  }) {
+  Widget infoItem({required String label, required String value, IconData? icon}) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (icon != null) ...[
-          Icon(icon, size: 16, color: Colors.grey.shade600),
-          const SizedBox(width: 5),
-        ],
-        Text(
-          '$label: ',
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-        ),
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-        ),
+        if (icon != null) ...[Icon(icon, size: 16, color: Colors.grey.shade600), const SizedBox(width: 5)],
+        Text('$label: ', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
       ],
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Convert Receipt To Purchase
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> showConvertPurchaseDialog(Map<String, dynamic> receipt) async {
+    String paymentStatus = 'paid';
+
+    await showDialog(
+      context: context,
+
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Convert To Purchase'),
+
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+
+                children: [
+                  const Text('Payment Type'),
+
+                  const SizedBox(height: 12),
+
+                  RadioListTile<String>(
+                    title: const Text('Paid Purchase'),
+
+                    value: 'paid',
+
+                    groupValue: paymentStatus,
+
+                    onChanged: (value) {
+                      setDialogState(() {
+                        paymentStatus = value!;
+                      });
+                    },
+                  ),
+
+                  RadioListTile<String>(
+                    title: const Text('Credit Purchase'),
+
+                    value: 'unpaid',
+
+                    groupValue: paymentStatus,
+
+                    onChanged: (value) {
+                      setDialogState(() {
+                        paymentStatus = value!;
+                      });
+                    },
+                  ),
+                ],
+              ),
+
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+
+                  child: const Text('Cancel'),
+                ),
+
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    try {
+                      await apiService.convertPurchaseReceiptToPurchase(receiptId: receipt['id'], paymentStatus: paymentStatus);
+
+                      if (!mounted) return;
+
+                      Navigator.pop(context);
+
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Purchase converted successfully.')));
+
+                      loadReceipts();
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                    }
+                  },
+
+                  icon: const Icon(Icons.check),
+
+                  label: const Text('Convert'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -431,13 +468,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.035),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.035), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Row(
         children: [
@@ -449,15 +480,8 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
           Container(
             width: 54,
             height: 54,
-            decoration: BoxDecoration(
-              color: statusColor(status).withOpacity(0.12),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Icon(
-              Icons.receipt_long,
-              color: statusColor(status),
-              size: 28,
-            ),
+            decoration: BoxDecoration(color: statusColor(status).withOpacity(0.12), borderRadius: BorderRadius.circular(18)),
+            child: Icon(Icons.receipt_long, color: statusColor(status), size: 28),
           ),
 
           const SizedBox(width: 14),
@@ -482,28 +506,15 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                       child: Text(
                         supplier,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor(status).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(color: statusColor(status).withOpacity(0.12), borderRadius: BorderRadius.circular(20)),
                       child: Text(
                         statusLabel(status),
-                        style: TextStyle(
-                          color: statusColor(status),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: statusColor(status), fontWeight: FontWeight.bold, fontSize: 12),
                       ),
                     ),
                   ],
@@ -520,22 +531,10 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                   spacing: 14,
                   runSpacing: 6,
                   children: [
-                    infoItem(
-                      label: 'Invoice',
-                      value: invoiceNumber,
-                      icon: Icons.tag,
-                    ),
-                    infoItem(
-                      label: 'Date',
-                      value: invoiceDate,
-                      icon: Icons.calendar_month,
-                    ),
+                    infoItem(label: 'Invoice', value: invoiceNumber, icon: Icons.tag),
+                    infoItem(label: 'Date', value: invoiceDate, icon: Icons.calendar_month),
                     infoItem(label: 'BRN', value: brn, icon: Icons.badge),
-                    infoItem(
-                      label: 'VAT No',
-                      value: vatNumber,
-                      icon: Icons.confirmation_number,
-                    ),
+                    infoItem(label: 'VAT No', value: vatNumber, icon: Icons.confirmation_number),
                   ],
                 ),
 
@@ -548,18 +547,11 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                 */
                 Row(
                   children: [
-                    _AmountChip(
-                      label: 'Subtotal',
-                      value: formatMoney(subtotal),
-                    ),
+                    _AmountChip(label: 'Subtotal', value: formatMoney(subtotal)),
                     const SizedBox(width: 8),
                     _AmountChip(label: 'VAT', value: formatMoney(vatAmount)),
                     const SizedBox(width: 8),
-                    _AmountChip(
-                      label: 'Total',
-                      value: formatMoney(total),
-                      isStrong: true,
-                    ),
+                    _AmountChip(label: 'Total', value: formatMoney(total), isStrong: true),
                   ],
                 ),
               ],
@@ -586,62 +578,28 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
 
               if (status == 'pending_review' || status == 'reviewed')
                 /*
-|--------------------------------------------------------------------------
-| Convert To Purchase
-|--------------------------------------------------------------------------
-*/
-                if (status == 'reviewed' &&
-                    receipt['converted_purchase_id'] == null)
+                |--------------------------------------------------------------------------
+                | Convert To Purchase
+                |--------------------------------------------------------------------------
+                */
+                if (status == 'reviewed' && receipt['converted_purchase_id'] == null)
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
-
                     child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                      ),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
 
-                      onPressed: () async {
-                        try {
-                          await apiService.convertPurchaseReceiptToPurchase(
-                            receiptId: receipt['id'],
-                          );
-
-                          await loadReceipts();
-
-                          if (!mounted) return;
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Purchase created successfully'),
-                            ),
-                          );
-                        } catch (e) {
-                          debugPrint(e.toString());
-
-                          if (!mounted) return;
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(e.toString()),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
+                      onPressed: () {
+                        showConvertPurchaseDialog(receipt);
                       },
-
-                      icon: const Icon(Icons.shopping_cart_checkout),
-
-                      label: const Text('Convert'),
+                      icon: const Icon(Icons.check),
+                      label: const Text('Convert To Purchase'),
                     ),
                   ),
               ElevatedButton.icon(
                 onPressed: () {
                   openReview(receipt);
                 },
-                icon: Icon(
-                  status == 'reviewed' ? Icons.edit : Icons.fact_check,
-                ),
+                icon: Icon(status == 'reviewed' ? Icons.edit : Icons.fact_check),
                 label: Text(status == 'reviewed' ? 'Edit' : 'Review'),
               ),
 
@@ -652,10 +610,7 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                   deleteReceipt(receipt);
                 },
                 icon: const Icon(Icons.delete_outline, color: Colors.red),
-                label: const Text(
-                  'Delete',
-                  style: TextStyle(color: Colors.red),
-                ),
+                label: const Text('Delete', style: TextStyle(color: Colors.red)),
               ),
             ],
           ),
@@ -702,52 +657,26 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                     icon: const Icon(Icons.arrow_back),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(
-                    Icons.document_scanner,
-                    size: 32,
-                    color: Colors.blue,
-                  ),
+                  const Icon(Icons.document_scanner, size: 32, color: Colors.blue),
                   const SizedBox(width: 14),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Purchase Receipt OCR',
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        Text('Purchase Receipt OCR', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                         SizedBox(height: 3),
-                        Text(
-                          'Upload, OCR, review and manage supplier purchase receipts.',
-                          style: TextStyle(color: Colors.grey),
-                        ),
+                        Text('Upload, OCR, review and manage supplier purchase receipts.', style: TextStyle(color: Colors.grey)),
                       ],
                     ),
                   ),
-                  OutlinedButton.icon(
-                    onPressed: loadReceipts,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Refresh'),
-                  ),
+                  OutlinedButton.icon(onPressed: loadReceipts, icon: const Icon(Icons.refresh), label: const Text('Refresh')),
                   const SizedBox(width: 12),
                   ElevatedButton.icon(
                     onPressed: isUploading ? null : uploadReceipt,
                     icon: isUploading
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
+                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.upload_file),
-                    label: Text(
-                      isUploading ? 'Uploading...' : 'Upload Receipts',
-                    ),
+                    label: Text(isUploading ? 'Uploading...' : 'Upload Receipts'),
                   ),
                 ],
               ),
@@ -772,33 +701,13 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                           */
                           Row(
                             children: [
-                              statCard(
-                                title: 'Total Receipts',
-                                value: totalCount,
-                                icon: Icons.receipt_long,
-                                color: Colors.blue,
-                              ),
+                              statCard(title: 'Total Receipts', value: totalCount, icon: Icons.receipt_long, color: Colors.blue),
                               const SizedBox(width: 14),
-                              statCard(
-                                title: 'Pending OCR',
-                                value: pendingOcrCount,
-                                icon: Icons.document_scanner,
-                                color: Colors.orange,
-                              ),
+                              statCard(title: 'Pending OCR', value: pendingOcrCount, icon: Icons.document_scanner, color: Colors.orange),
                               const SizedBox(width: 14),
-                              statCard(
-                                title: 'Pending Review',
-                                value: pendingReviewCount,
-                                icon: Icons.fact_check,
-                                color: Colors.purple,
-                              ),
+                              statCard(title: 'Pending Review', value: pendingReviewCount, icon: Icons.fact_check, color: Colors.purple),
                               const SizedBox(width: 14),
-                              statCard(
-                                title: 'Reviewed',
-                                value: reviewedCount,
-                                icon: Icons.verified,
-                                color: Colors.green,
-                              ),
+                              statCard(title: 'Reviewed', value: reviewedCount, icon: Icons.verified, color: Colors.green),
                             ],
                           ),
 
@@ -814,33 +723,15 @@ class _PurchaseReceiptScreenState extends State<PurchaseReceiptScreen> {
                                 ? Center(
                                     child: Container(
                                       padding: const EdgeInsets.all(30),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(24),
-                                      ),
+                                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
                                       child: const Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(
-                                            Icons.upload_file,
-                                            size: 54,
-                                            color: Colors.grey,
-                                          ),
+                                          Icon(Icons.upload_file, size: 54, color: Colors.grey),
                                           SizedBox(height: 12),
-                                          Text(
-                                            'No purchase receipts uploaded yet',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
+                                          Text('No purchase receipts uploaded yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                                           SizedBox(height: 6),
-                                          Text(
-                                            'Click Upload Receipts to start scanning supplier invoices.',
-                                            style: TextStyle(
-                                              color: Colors.grey,
-                                            ),
-                                          ),
+                                          Text('Click Upload Receipts to start scanning supplier invoices.', style: TextStyle(color: Colors.grey)),
                                         ],
                                       ),
                                     ),
@@ -876,11 +767,7 @@ class _AmountChip extends StatelessWidget {
   final String value;
   final bool isStrong;
 
-  const _AmountChip({
-    required this.label,
-    required this.value,
-    this.isStrong = false,
-  });
+  const _AmountChip({required this.label, required this.value, this.isStrong = false});
 
   @override
   Widget build(BuildContext context) {
@@ -888,31 +775,19 @@ class _AmountChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: isStrong
-              ? Colors.green.withOpacity(0.10)
-              : Colors.grey.shade100,
+          color: isStrong ? Colors.green.withOpacity(0.10) : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isStrong
-                ? Colors.green.withOpacity(0.25)
-                : Colors.grey.shade200,
-          ),
+          border: Border.all(color: isStrong ? Colors.green.withOpacity(0.25) : Colors.grey.shade200),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              label,
-              style: TextStyle(color: Colors.grey.shade700, fontSize: 11),
-            ),
+            Text(label, style: TextStyle(color: Colors.grey.shade700, fontSize: 11)),
             const SizedBox(height: 3),
             Text(
               value,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isStrong ? Colors.green.shade700 : Colors.black87,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, color: isStrong ? Colors.green.shade700 : Colors.black87),
             ),
           ],
         ),

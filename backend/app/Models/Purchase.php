@@ -4,8 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Purchase extends Model
-{
+class Purchase extends Model {
     /*
     |--------------------------------------------------------------------------
     | Fillable
@@ -22,6 +21,11 @@ class Purchase extends Model
         'vat_amount',
         'total_incl_vat',
         'status',
+        'payment_status',
+        'paid_amount',
+        'balance_amount',
+        'paid_at',
+
     ];
 
     /*
@@ -32,6 +36,9 @@ class Purchase extends Model
 
     protected $casts = [
         'invoice_date' => 'date',
+        'paid_amount' => 'decimal:2',
+        'balance_amount' => 'decimal:2',
+        'paid_at' => 'datetime',
     ];
 
     /*
@@ -40,23 +47,20 @@ class Purchase extends Model
     |--------------------------------------------------------------------------
     */
 
-    public function supplier()
-    {
+    public function supplier() {
         return $this->belongsTo(
             Supplier::class
         );
     }
 
-    public function receipt()
-    {
+    public function receipt() {
         return $this->belongsTo(
             PurchaseReceipt::class,
             'purchase_receipt_id'
         );
     }
 
-    public function items()
-    {
+    public function items() {
         return $this->hasMany(
             PurchaseItem::class
         );

@@ -611,7 +611,10 @@ use App\Http\Controllers\Api\PurchaseController;
                 'customers/{customer}/statement',
                 [ CustomerController::class, 'statement' ]
             );
-
+            Route::get(
+                'customers/{customer}/aging',
+                [ CustomerController::class, 'aging' ]
+            );
             /*
             |--------------------------------------------------------------------------
             | Authenticated User

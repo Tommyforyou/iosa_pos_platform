@@ -10,6 +10,7 @@ use App\Models\Supplier;
 use App\Models\Purchase;
 use Illuminate\Support\Facades\DB;
 
+
 class PurchaseReceiptController extends Controller {
     /*
     |--------------------------------------------------------------------------
@@ -75,13 +76,23 @@ class PurchaseReceiptController extends Controller {
 
    
    /*
-|--------------------------------------------------------------------------
-| Convert Reviewed Receipt To Purchase
-|--------------------------------------------------------------------------
-*/
+    |--------------------------------------------------------------------------
+    | Convert Reviewed Receipt To Purchase
+    |--------------------------------------------------------------------------
+    */
 
-public function convertToPurchase(PurchaseReceipt $purchaseReceipt)
+public function convertToPurchase(Request $request, PurchaseReceipt $purchaseReceipt)
 {
+   
+    // Validate Payment Status
+    $validated = $request->validate([
+        'payment_status' => [
+            'required',
+            'in:paid,unpaid',
+        ],
+    ]);
+
+
     if ($purchaseReceipt->status !== 'reviewed') {
         return response()->json([
             'success' => false,
@@ -102,7 +113,9 @@ public function convertToPurchase(PurchaseReceipt $purchaseReceipt)
         ], 422);
     }
 
-    return DB::transaction(function () use ($purchaseReceipt) {
+    return DB::transaction(function () use ($purchaseReceipt,  $validated ) {
+       
+    
         $supplier = Supplier::firstOrCreate(
             [
                 'brn' => $purchaseReceipt->supplier_brn,
@@ -115,6 +128,14 @@ public function convertToPurchase(PurchaseReceipt $purchaseReceipt)
             ]
         );
 
+
+        $totalAmount =
+            (float) $purchaseReceipt->total_incl_vat;
+
+        $isPaid =
+            $validated['payment_status'] === 'paid';
+
+
         $purchase = Purchase::create([
             'business_id' => $purchaseReceipt->business_id ?? 1,
             'supplier_id' => $supplier->id,
@@ -125,6 +146,10 @@ public function convertToPurchase(PurchaseReceipt $purchaseReceipt)
             'vat_amount' => $purchaseReceipt->vat_amount,
             'total_incl_vat' => $purchaseReceipt->total_incl_vat,
             'status' => 'posted',
+            'payment_status' => $isPaid ? 'paid' : 'unpaid',
+            'paid_amount' => $isPaid ? $totalAmount : 0,
+            'balance_amount' => $isPaid ? 0 : $totalAmount,
+            'paid_at' => $isPaid ? now() : null,
         ]);
 
         $purchase->items()->create([
