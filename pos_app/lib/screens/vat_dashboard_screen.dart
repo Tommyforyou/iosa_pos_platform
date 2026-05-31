@@ -13,6 +13,7 @@ class VatDashboardScreen extends StatefulWidget {
 class _VatDashboardScreenState extends State<VatDashboardScreen> {
   final ApiService apiService = ApiService();
   final money = NumberFormat('#,##0.00');
+  String selectedPeriod = 'monthly';
 
   bool isLoading = false;
   Map<String, dynamic>? report;
@@ -83,6 +84,8 @@ class _VatDashboardScreenState extends State<VatDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final netVat = value('net_vat_payable');
+    final salesTransactions = report?['sales_transactions'] ?? [];
+    final purchaseTransactions = report?['purchase_transactions'] ?? [];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6FA),
@@ -99,6 +102,37 @@ class _VatDashboardScreenState extends State<VatDashboardScreen> {
               title: 'VAT Period',
               child: Row(
                 children: [
+                  DropdownButton<String>(
+                    value: selectedPeriod,
+                    items: const [
+                      DropdownMenuItem(value: 'monthly', child: Text('Monthly')),
+                      DropdownMenuItem(value: 'quarterly', child: Text('Quarterly')),
+                      DropdownMenuItem(value: 'custom', child: Text('Custom')),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        selectedPeriod = value ?? 'monthly';
+
+                        final now = DateTime.now();
+
+                        if (selectedPeriod == 'monthly') {
+                          fromDate = DateTime(now.year, now.month, 1);
+                          toDate = now;
+                        }
+
+                        if (selectedPeriod == 'quarterly') {
+                          final quarterStartMonth = (((now.month - 1) ~/ 3) * 3) + 1;
+                          fromDate = DateTime(now.year, quarterStartMonth, 1);
+                          toDate = now;
+                        }
+                      });
+
+                      loadReport();
+                    },
+                  ),
+
+                  const SizedBox(width: 24),
+
                   OutlinedButton.icon(
                     onPressed: () => pickDate(isFrom: true),
                     icon: const Icon(Icons.date_range),
@@ -187,6 +221,11 @@ class _VatDashboardScreenState extends State<VatDashboardScreen> {
 
               const SizedBox(height: 22),
 
+              _TransactionTable(title: 'Sales Transactions', rows: report?['sales_transactions'] ?? [], partyLabel: 'Customer'),
+              _TransactionTable(title: 'Purchase Transactions', rows: report?['purchase_transactions'] ?? [], partyLabel: 'Supplier'),
+
+              const SizedBox(height: 22),
+
               _SectionCard(
                 title: 'VAT Formula',
                 child: const Text('Net VAT Payable = VAT Collected on Sales - VAT Paid on Purchases', style: TextStyle(fontSize: 16)),
@@ -194,6 +233,95 @@ class _VatDashboardScreenState extends State<VatDashboardScreen> {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Transaction Table
+|--------------------------------------------------------------------------
+*/
+
+class _TransactionTable extends StatelessWidget {
+  final String title;
+  final List rows;
+  final String partyLabel;
+
+  const _TransactionTable({required this.title, required this.rows, required this.partyLabel});
+
+  @override
+  Widget build(BuildContext context) {
+    final money = NumberFormat('#,##0.00');
+
+    return Container(
+      margin: const EdgeInsets.only(top: 22),
+      padding: const EdgeInsets.all(22),
+
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 14, offset: const Offset(0, 6))],
+      ),
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+
+        children: [
+          Text(title, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold)),
+
+          const SizedBox(height: 16),
+
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+
+            child: DataTable(
+              columns: [
+                const DataColumn(label: Text('Date')),
+
+                const DataColumn(label: Text('Invoice')),
+
+                DataColumn(label: Text(partyLabel)),
+
+                const DataColumn(numeric: true, label: Text('Excl VAT')),
+
+                const DataColumn(numeric: true, label: Text('VAT')),
+
+                const DataColumn(numeric: true, label: Text('Total')),
+              ],
+
+              rows: rows.map<DataRow>((row) {
+                final subtotal = double.tryParse(row['subtotal'].toString()) ?? 0;
+
+                final vat = double.tryParse(row['vat_amount'].toString()) ?? 0;
+
+                final total = double.tryParse(row['total_amount'].toString()) ?? 0;
+
+                return DataRow(
+                  cells: [
+                    DataCell(Text(row['date']?.toString().substring(0, 10) ?? '-')),
+
+                    DataCell(Text(row['invoice_number'] ?? '-')),
+
+                    DataCell(Text(row['customer'] ?? row['supplier'] ?? '-')),
+
+                    DataCell(Align(alignment: Alignment.centerRight, child: Text(money.format(subtotal)))),
+
+                    DataCell(Align(alignment: Alignment.centerRight, child: Text(money.format(vat)))),
+
+                    DataCell(
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(money.format(total), style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        ],
       ),
     );
   }

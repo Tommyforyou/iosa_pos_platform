@@ -44,6 +44,9 @@ dependencies:
   esc_pos_utils_plus: ^2.0.4
   esc_pos_printer_plus: ^0.1.1
   image_picker: ^1.2.2
+  window_manager: ^0.5.1
+
+
 
 dev_dependencies:
   flutter_test:
