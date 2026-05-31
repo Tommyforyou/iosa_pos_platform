@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\MraTestController;
 use App\Http\Controllers\Api\MraSaleController;
 use App\Http\Controllers\Api\CustomerPaymentController;
 use App\Http\Controllers\Api\VatReportController;
+use App\Http\Controllers\Api\AccountsReceivableDashboardController;
+use App\Http\Controllers\Api\ProfitLossReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -665,9 +667,30 @@ use App\Http\Controllers\Api\AccountsPayableDashboardController;
                 [ AccountsPayableDashboardController::class, 'index' ]
             );
 
+            /*
+            |--------------------------------------------------------------------------
+            | VAT Report
+            |--------------------------------------------------------------------------
+            */
+
             Route::get(
                 'reports/vat-summary',
                 [ VatReportController::class, 'summary' ]
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Accounts Receivable Dashboard
+            |--------------------------------------------------------------------------
+            */
+            Route::get(
+                'accounts-receivable/dashboard',
+                [ AccountsReceivableDashboardController::class, 'index' ]
+            );
+
+            Route::get(
+                'reports/profit-loss',
+                [ ProfitLossReportController::class, 'summary' ]
             );
 
             /*

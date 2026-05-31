@@ -1497,4 +1497,36 @@ class ApiService {
 
     throw Exception('Failed to load VAT summary: ${response.body}');
   }
+
+  /*
+|--------------------------------------------------------------------------
+| Accounts Receivable Dashboard
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getAccountsReceivableDashboard() async {
+    final response = await http.get(Uri.parse('$baseUrl/accounts-receivable/dashboard'), headers: {'Accept': 'application/json'});
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load accounts receivable dashboard');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Profit & Loss Report
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getProfitLoss({required String from, required String to}) async {
+    final response = await http.get(Uri.parse('$baseUrl/reports/profit-loss?from=$from&to=$to'), headers: {'Accept': 'application/json'});
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load Profit & Loss report');
+  }
 }

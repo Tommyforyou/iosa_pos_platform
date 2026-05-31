@@ -19,7 +19,9 @@ import 'quick_sale_history_screen.dart';
 import 'business_settings_screen.dart';
 import 'customer_management_screen.dart';
 import 'accounts_payable_dashboard_screen.dart';
+import 'accounts_receivable_dashboard_screen.dart';
 import 'vat_dashboard_screen.dart';
+import 'profit_loss_dashboard_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -70,169 +72,7 @@ class HomeScreen extends StatelessWidget {
               children: [
                 /*
             |--------------------------------------------------------------------------
-            | Restaurant Tables
-            |--------------------------------------------------------------------------
-            */
-                _HomeCard(
-                  title: 'Tables',
-                  subtitle: 'Dine-in orders',
-                  icon: Icons.table_restaurant,
-                  onTap: () => openScreen(context, const TableScreen()),
-                ),
-
-                /*
-            |--------------------------------------------------------------------------
-            | Kitchen Display
-            |--------------------------------------------------------------------------
-            */
-                _HomeCard(
-                  title: 'Kitchen Display',
-                  subtitle: 'Pending / preparing / ready',
-                  icon: Icons.soup_kitchen,
-                  onTap: () => openScreen(context, const KitchenScreen()),
-                ),
-
-                /*
-            |--------------------------------------------------------------------------
-            | Takeaway Orders
-            |--------------------------------------------------------------------------
-            | We will connect this to OrderScreen in the next step.
-            */
-                _HomeCard(
-                  title: 'Takeaway',
-                  subtitle: 'Coming next',
-                  icon: Icons.shopping_bag,
-                  onTap: () => openScreen(context, const OrderScreen(orderType: 'takeaway')),
-                ),
-
-                /*
-            |--------------------------------------------------------------------------
-            | Delivery Orders
-            |--------------------------------------------------------------------------
-            | We will connect this to OrderScreen in the next step.
-            */
-                _HomeCard(
-                  title: 'Delivery',
-                  subtitle: 'Coming next',
-                  icon: Icons.delivery_dining,
-                  onTap: () => openScreen(context, const OrderScreen(orderType: 'delivery')),
-                ),
-                /*
-            |--------------------------------------------------------------------------
-            | Billing / Cashier
-            |--------------------------------------------------------------------------
-            | Opens active orders that are ready for payment.
-            */
-                _HomeCard(
-                  title: 'Billing',
-                  subtitle: 'Cashier payment screen',
-                  icon: Icons.point_of_sale,
-                  onTap: () => openScreen(context, const BillingScreen()),
-                ),
-
-                /*
-            |--------------------------------------------------------------------------
-            | Dashboard
-            |--------------------------------------------------------------------------
-            | Operational POS dashboard and statistics.
-            */
-                _HomeCard(
-                  title: 'Dashboard',
-                  subtitle: 'Sales and operations overview',
-                  icon: Icons.dashboard,
-                  onTap: () => openScreen(context, const DashboardScreen()),
-                ),
-
-                /*
-            |--------------------------------------------------------------------------
-            | Daily Sales Report
-            |--------------------------------------------------------------------------
-            | Financial and operational daily POS report.
-            */
-                _HomeCard(
-                  title: 'Daily Report',
-                  subtitle: 'Sales and payment report',
-                  icon: Icons.bar_chart,
-                  onTap: () => openScreen(context, const DailySalesReportScreen()),
-                ),
-                /*
-            |--------------------------------------------------------------------------
-            | Counter Pos
-            |--------------------------------------------------------------------------
-            | Sales Express
-            */
-                _HomeCard(
-                  title: 'Counter POS',
-                  subtitle: 'Fast order and payment',
-                  icon: Icons.fastfood,
-                  onTap: () => openScreen(context, const CounterPosScreen()),
-                ),
-                /*
-            |--------------------------------------------------------------------------
-            | Show Sales History
-            |--------------------------------------------------------------------------
-            | Allow to view / reprint Sales receipt
-            */
-                _HomeCard(
-                  title: 'Sales History',
-                  subtitle: 'View sales and reprint receipts',
-                  icon: Icons.receipt_long,
-                  onTap: () => openScreen(context, const SalesHistoryScreen()),
-                ),
-                /*
-            |--------------------------------------------------------------------------
-            | Manage Categories
-            |--------------------------------------------------------------------------
-            | edit/delete/update/deactivate categories
-            */
-                _HomeCard(
-                  title: 'Categories',
-                  subtitle: 'Manage product categories',
-                  icon: Icons.category,
-                  onTap: () => openScreen(context, const CategoryManagementScreen()),
-                ),
-                /*
-            |--------------------------------------------------------------------------
-            | CRUD Products
-            |--------------------------------------------------------------------------
-            | Manage Product and Prices
-            */
-                _HomeCard(
-                  title: 'Products',
-                  subtitle: 'Manage products and prices',
-                  icon: Icons.inventory_2,
-                  onTap: () => openScreen(context, const ProductManagementScreen()),
-                ),
-
-                /*
-            |--------------------------------------------------------------------------
-            | Z report
-            |--------------------------------------------------------------------------
-            | Show Daily Sales
-            */
-                _HomeCard(
-                  title: 'Z-Report',
-                  subtitle: 'Daily sales closing and cash reconciliation',
-                  icon: Icons.summarize,
-                  onTap: () => openScreen(context, const ZReportScreen()),
-                ),
-
-                /*
-            |--------------------------------------------------------------------------
-            | Show Stock Movement
-            |--------------------------------------------------------------------------
-            | 
-            */
-                _HomeCard(
-                  title: 'Stock Movements',
-                  subtitle: 'Audit inventory in/out history',
-                  icon: Icons.timeline,
-                  onTap: () => openScreen(context, const StockMovementScreen()),
-                ),
-
-                /*
-            |--------------------------------------------------------------------------
-            | Show Stock Movement
+            | Settings
             |--------------------------------------------------------------------------
             */
                 _HomeCard(
@@ -240,6 +80,336 @@ class HomeScreen extends StatelessWidget {
                   subtitle: 'Company, VAT and MRA setup',
                   icon: Icons.settings,
                   onTap: () => openScreen(context, const BusinessSettingsScreen()),
+                ),
+
+                /*
+            |--------------------------------------------------------------------------
+            | Restaurant Dashboard
+            |--------------------------------------------------------------------------
+            */
+                Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+
+                  padding: const EdgeInsets.all(20),
+
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+
+                    borderRadius: BorderRadius.circular(28),
+
+                    border: Border.all(color: Colors.grey.shade200),
+
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+                  ),
+
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+
+                      children: [
+                        /*
+                  |--------------------------------------------------------------------------
+                  | Section Header
+                  |--------------------------------------------------------------------------
+                  */
+                        Row(
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+
+                              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
+
+                              child: const Icon(Icons.restaurant_sharp, color: Colors.orange, size: 28),
+                            ),
+
+                            const SizedBox(width: 14),
+
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+
+                                children: [
+                                  Text('Restaurant Dashboard', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+
+                                  SizedBox(height: 3),
+
+                                  Text('Dashboard, Sales History, DailyReport', style: TextStyle(color: Colors.grey)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        /*
+                      |--------------------------------------------------------------------------
+                      | Nested Cards
+                      |--------------------------------------------------------------------------
+                      */
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 1.1,
+                          children: [
+                            _MiniHomeCard(
+                              title: 'Counter POS',
+                              subtitle: 'Fast order and payment',
+                              icon: Icons.fastfood,
+                              onTap: () => openScreen(context, const CounterPosScreen()),
+                            ),
+
+                            _MiniHomeCard(
+                              title: 'Dashboard',
+                              subtitle: 'Sales and operations overview',
+                              icon: Icons.dashboard,
+                              onTap: () => openScreen(context, const DashboardScreen()),
+                            ),
+
+                            _MiniHomeCard(
+                              title: 'Sales History',
+                              subtitle: 'View sales and reprint receipts',
+                              icon: Icons.receipt_long,
+                              onTap: () => openScreen(context, const SalesHistoryScreen()),
+                            ),
+
+                            _MiniHomeCard(
+                              title: 'Daily Report',
+                              subtitle: 'Sales and payment report',
+                              icon: Icons.bar_chart,
+                              onTap: () => openScreen(context, const DailySalesReportScreen()),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                /*
+            |--------------------------------------------------------------------------
+            | Product Group
+            |--------------------------------------------------------------------------
+            */
+                Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+
+                  padding: const EdgeInsets.all(20),
+
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+
+                    borderRadius: BorderRadius.circular(28),
+
+                    border: Border.all(color: Colors.grey.shade200),
+
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+                  ),
+
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+
+                      children: [
+                        /*
+                  |--------------------------------------------------------------------------
+                  | Section Header
+                  |--------------------------------------------------------------------------
+                  */
+                        Row(
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+
+                              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
+
+                              child: const Icon(Icons.category, color: Colors.orange, size: 28),
+                            ),
+
+                            const SizedBox(width: 14),
+
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+
+                                children: [
+                                  Text('Products', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+
+                                  SizedBox(height: 3),
+
+                                  Text('Categories, Products, Stock Movements', style: TextStyle(color: Colors.grey)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        /*
+                      |--------------------------------------------------------------------------
+                      | Nested Cards
+                      |--------------------------------------------------------------------------
+                      */
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 1.1,
+                          children: [
+                            _MiniHomeCard(
+                              title: 'Categories',
+                              subtitle: 'Manage product categories',
+                              icon: Icons.category,
+                              onTap: () => openScreen(context, const CategoryManagementScreen()),
+                            ),
+
+                            _MiniHomeCard(
+                              title: 'Products',
+                              subtitle: 'Manage products and prices',
+                              icon: Icons.inventory_2,
+                              onTap: () => openScreen(context, const ProductManagementScreen()),
+                            ),
+
+                            _MiniHomeCard(
+                              title: 'Stock Movements',
+                              subtitle: 'Audit inventory in/out history',
+                              icon: Icons.timeline,
+                              onTap: () => openScreen(context, const StockMovementScreen()),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                /*
+            |--------------------------------------------------------------------------
+            | Restaurant Group
+            |--------------------------------------------------------------------------
+            */
+                Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+
+                  padding: const EdgeInsets.all(20),
+
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+
+                    borderRadius: BorderRadius.circular(28),
+
+                    border: Border.all(color: Colors.grey.shade200),
+
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+                  ),
+
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+
+                      children: [
+                        /*
+                  |--------------------------------------------------------------------------
+                  | Section Header
+                  |--------------------------------------------------------------------------
+                  */
+                        Row(
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+
+                              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
+
+                              child: const Icon(Icons.restaurant, color: Colors.orange, size: 28),
+                            ),
+
+                            const SizedBox(width: 14),
+
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+
+                                children: [
+                                  Text('Restaurant Orders', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+
+                                  SizedBox(height: 3),
+
+                                  Text('Table Orders, Take Awaysm Deliveries, Billings, Kitchen Display', style: TextStyle(color: Colors.grey)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        /*
+                      |--------------------------------------------------------------------------
+                      | Nested Cards
+                      |--------------------------------------------------------------------------
+                      */
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 1.1,
+                          children: [
+                            _MiniHomeCard(
+                              title: 'Tables',
+                              subtitle: 'Dine-in orders',
+                              icon: Icons.table_restaurant,
+                              onTap: () => openScreen(context, const TableScreen()),
+                            ),
+
+                            _MiniHomeCard(
+                              title: 'Takeaway',
+                              subtitle: 'Coming next',
+                              icon: Icons.shopping_bag,
+                              onTap: () => openScreen(context, const OrderScreen(orderType: 'takeaway')),
+                            ),
+                            _MiniHomeCard(
+                              title: 'Delivery',
+                              subtitle: 'Coming next',
+                              icon: Icons.delivery_dining,
+                              onTap: () => openScreen(context, const OrderScreen(orderType: 'delivery')),
+                            ),
+
+                            _MiniHomeCard(
+                              title: 'Billing',
+                              subtitle: 'Cashier payment screen',
+                              icon: Icons.point_of_sale,
+                              onTap: () => openScreen(context, const BillingScreen()),
+                            ),
+
+                            _MiniHomeCard(
+                              title: 'Kitchen Display',
+                              subtitle: 'Pending / preparing / ready',
+                              icon: Icons.soup_kitchen,
+                              onTap: () => openScreen(context, const KitchenScreen()),
+                            ),
+
+                            _MiniHomeCard(
+                              title: 'Z-Report',
+                              subtitle: 'Daily sales closing and cash reconciliation',
+                              icon: Icons.summarize,
+                              onTap: () => openScreen(context, const ZReportScreen()),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
 
                 /*
@@ -280,7 +450,7 @@ class HomeScreen extends StatelessWidget {
 
                               decoration: BoxDecoration(color: Colors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
 
-                              child: const Icon(Icons.shopping_cart_checkout, color: Colors.orange, size: 28),
+                              child: const Icon(Icons.shop, color: Colors.orange, size: 28),
                             ),
 
                             const SizedBox(width: 14),
@@ -337,7 +507,7 @@ class HomeScreen extends StatelessWidget {
                             ),
 
                             _MiniHomeCard(
-                              title: 'Payable',
+                              title: 'Accounts Payable',
                               subtitle: 'AP dashboard',
                               icon: Icons.account_balance,
                               onTap: () => openScreen(context, const AccountsPayableDashboardScreen()),
@@ -387,7 +557,7 @@ class HomeScreen extends StatelessWidget {
 
                               decoration: BoxDecoration(color: Colors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
 
-                              child: const Icon(Icons.shopping_cart_checkout, color: Colors.orange, size: 28),
+                              child: const Icon(Icons.shop_2, color: Colors.orange, size: 28),
                             ),
 
                             const SizedBox(width: 14),
@@ -448,6 +618,19 @@ class HomeScreen extends StatelessWidget {
                               subtitle: 'Vat Collected and Paid',
                               icon: Icons.people,
                               onTap: () => openScreen(context, const VatDashboardScreen()),
+                            ),
+                            _MiniHomeCard(
+                              title: 'Accounts Receivable',
+                              subtitle: 'Customer balances',
+                              icon: Icons.account_balance_wallet,
+                              onTap: () => openScreen(context, const AccountsReceivableDashboardScreen()),
+                            ),
+
+                            _MiniHomeCard(
+                              title: 'Profit & Loss',
+                              subtitle: 'Financial performance',
+                              icon: Icons.trending_up,
+                              onTap: () => openScreen(context, const ProfitLossDashboardScreen()),
                             ),
                           ],
                         ),
