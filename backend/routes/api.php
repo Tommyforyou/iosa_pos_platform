@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\BusinessSettingController;
 use App\Http\Controllers\Api\MraTestController;
 use App\Http\Controllers\Api\MraSaleController;
 use App\Http\Controllers\Api\CustomerPaymentController;
+use App\Http\Controllers\Api\VatReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +29,7 @@ use App\Http\Controllers\Api\RestaurantOrderController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\PurchaseReceiptController;
 use App\Http\Controllers\Api\PurchaseController;
+use App\Http\Controllers\Api\AccountsPayableDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -615,6 +617,59 @@ use App\Http\Controllers\Api\PurchaseController;
                 'customers/{customer}/aging',
                 [ CustomerController::class, 'aging' ]
             );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Supplier OS Balance
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                'suppliers/{supplier}/balance',
+                [ SupplierController::class, 'balance' ]
+            );
+
+            Route::get(
+                'suppliers/{supplier}/transactions',
+                [ SupplierController::class, 'transactions' ]
+            );
+
+            Route::get(
+                'suppliers/{supplier}/outstanding-purchases',
+                [ SupplierController::class, 'outstandingPurchases' ]
+            );
+
+            Route::get(
+                'suppliers/{supplier}/aging',
+                [ SupplierController::class, 'aging' ]
+            );
+
+            Route::get(
+                'suppliers/{supplier}/statement',
+                [ SupplierController::class, 'statement' ]
+            );
+
+            Route::post(
+                'suppliers/{supplier}/payments',
+                [ SupplierController::class, 'recordPayment' ]
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Accounts Payable Dashboard
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                'accounts-payable/dashboard',
+                [ AccountsPayableDashboardController::class, 'index' ]
+            );
+
+            Route::get(
+                'reports/vat-summary',
+                [ VatReportController::class, 'summary' ]
+            );
+
             /*
             |--------------------------------------------------------------------------
             | Authenticated User

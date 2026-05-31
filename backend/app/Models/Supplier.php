@@ -4,8 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Supplier extends Model
-{
+class Supplier extends Model {
     /*
     |--------------------------------------------------------------------------
     | Fillable
@@ -29,10 +28,16 @@ class Supplier extends Model
     |--------------------------------------------------------------------------
     */
 
-    public function purchases()
-    {
+    public function purchases() {
         return $this->hasMany(
             Purchase::class
         );
     }
+
+    public function payments() {
+        return $this->hasMany(
+            SupplierPayment::class
+        );
+    }
+
 }

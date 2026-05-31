@@ -65,4 +65,10 @@ class Purchase extends Model {
             PurchaseItem::class
         );
     }
+
+    public function supplierPaymentAllocations() {
+        return $this->hasMany(
+            SupplierPaymentAllocation::class
+        );
+    }
 }

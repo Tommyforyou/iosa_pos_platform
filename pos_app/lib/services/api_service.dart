@@ -1465,4 +1465,36 @@ class ApiService {
       throw Exception('Failed to upload category image');
     }
   }
+
+  /*
+|--------------------------------------------------------------------------
+| Accounts Payable Dashboard
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getAccountsPayableDashboard() async {
+    final response = await http.get(Uri.parse('$baseUrl/accounts-payable/dashboard'), headers: {'Accept': 'application/json'});
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load accounts payable dashboard');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| VAT Summary Report
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getVatSummary({required String from, required String to}) async {
+    final response = await http.get(Uri.parse('$baseUrl/reports/vat-summary?from=$from&to=$to'), headers: {'Accept': 'application/json'});
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load VAT summary: ${response.body}');
+  }
 }

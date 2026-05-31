@@ -18,6 +18,8 @@ import 'quick_sale_screen.dart';
 import 'quick_sale_history_screen.dart';
 import 'business_settings_screen.dart';
 import 'customer_management_screen.dart';
+import 'accounts_payable_dashboard_screen.dart';
+import 'vat_dashboard_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -301,33 +303,52 @@ class HomeScreen extends StatelessWidget {
                   | Nested Cards
                   |--------------------------------------------------------------------------
                   */
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.2,
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
                     children: [
-                      _MiniHomeCard(
-                        title: 'Purchase OCR',
-                        subtitle: 'Scan receipts',
-                        icon: Icons.document_scanner,
-                        onTap: () => openScreen(context, const PurchaseReceiptScreen()),
+                      SizedBox(
+                        width: 200,
+                        height: 140,
+                        child: _MiniHomeCard(
+                          title: 'Purchase OCR',
+                          subtitle: 'Scan receipts',
+                          icon: Icons.document_scanner,
+                          onTap: () => openScreen(context, const PurchaseReceiptScreen()),
+                        ),
                       ),
 
-                      _MiniHomeCard(
-                        title: 'Purchases',
-                        subtitle: 'Purchase list',
-                        icon: Icons.shopping_cart_checkout,
-                        onTap: () => openScreen(context, const PurchaseScreen()),
+                      SizedBox(
+                        width: 200,
+                        height: 140,
+                        child: _MiniHomeCard(
+                          title: 'Purchases',
+                          subtitle: 'Purchase list',
+                          icon: Icons.shopping_cart_checkout,
+                          onTap: () => openScreen(context, const PurchaseScreen()),
+                        ),
                       ),
 
-                      _MiniHomeCard(
-                        title: 'Suppliers',
-                        subtitle: 'Supplier records',
-                        icon: Icons.business,
-                        onTap: () => openScreen(context, const SupplierScreen()),
+                      SizedBox(
+                        width: 200,
+                        height: 140,
+                        child: _MiniHomeCard(
+                          title: 'Suppliers',
+                          subtitle: 'Supplier records',
+                          icon: Icons.business,
+                          onTap: () => openScreen(context, const SupplierScreen()),
+                        ),
+                      ),
+
+                      SizedBox(
+                        width: 200,
+                        height: 140,
+                        child: _MiniHomeCard(
+                          title: 'Payable',
+                          subtitle: 'AP dashboard',
+                          icon: Icons.account_balance,
+                          onTap: () => openScreen(context, const AccountsPayableDashboardScreen()),
+                        ),
                       ),
                     ],
                   ),
@@ -427,6 +448,13 @@ class HomeScreen extends StatelessWidget {
                           subtitle: 'Manage customers and repayments',
                           icon: Icons.people,
                           onTap: () => openScreen(context, const CustomerManagementScreen()),
+                        ),
+
+                        _MiniHomeCard(
+                          title: 'VAT Dashboard',
+                          subtitle: 'Vat Collected and Paid',
+                          icon: Icons.people,
+                          onTap: () => openScreen(context, const VatDashboardScreen()),
                         ),
                       ],
                     ),
