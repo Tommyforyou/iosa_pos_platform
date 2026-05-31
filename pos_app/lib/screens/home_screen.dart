@@ -428,12 +428,6 @@ class HomeScreen extends StatelessWidget {
                           icon: Icons.people,
                           onTap: () => openScreen(context, const CustomerManagementScreen()),
                         ),
-                        _MiniHomeCard(
-                          title: 'Suppliers',
-                          subtitle: 'Supplier records',
-                          icon: Icons.business,
-                          onTap: () => openScreen(context, const SupplierScreen()),
-                        ),
                       ],
                     ),
                   ],

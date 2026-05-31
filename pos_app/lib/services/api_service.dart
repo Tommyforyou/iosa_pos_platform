@@ -100,6 +100,86 @@ class ApiService {
 
   /*
 |--------------------------------------------------------------------------
+| Supplier Balance
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getSupplierBalance(int supplierId) async {
+    final response = await http.get(Uri.parse('$baseUrl/suppliers/$supplierId/balance'), headers: {'Accept': 'application/json'});
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load supplier balance');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Supplier Transactions
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getSupplierTransactions(int supplierId) async {
+    final response = await http.get(Uri.parse('$baseUrl/suppliers/$supplierId/transactions'), headers: {'Accept': 'application/json'});
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load supplier transactions');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Supplier Outstanding Purchases
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getSupplierOutstandingPurchases(int supplierId) async {
+    final response = await http.get(Uri.parse('$baseUrl/suppliers/$supplierId/outstanding-purchases'), headers: {'Accept': 'application/json'});
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load outstanding purchases');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Supplier Aging
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getSupplierAging(int supplierId) async {
+    final response = await http.get(Uri.parse('$baseUrl/suppliers/$supplierId/aging'), headers: {'Accept': 'application/json'});
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load supplier aging');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Supplier Statement
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getSupplierStatement(int supplierId) async {
+    final response = await http.get(Uri.parse('$baseUrl/suppliers/$supplierId/statement'), headers: {'Accept': 'application/json'});
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load supplier statement');
+  }
+
+  /*
+|--------------------------------------------------------------------------
 | Customer Balance
 |--------------------------------------------------------------------------
 */
@@ -156,6 +236,34 @@ class ApiService {
 
     throw Exception('Failed to record customer payment: ${response.body}');
   }
+
+  /*
+|--------------------------------------------------------------------------
+| Record Customer Payment
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> recordSupplierPayment({
+    required int supplierId,
+    required double amount,
+    required String paymentMethod,
+    String? reference,
+    String? notes,
+    required String paymentDate,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/suppliers/$supplierId/payments'),
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: jsonEncode({'amount': amount, 'payment_method': paymentMethod, 'reference': reference, 'notes': notes, 'payment_date': paymentDate}),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to record supplier payment: ${response.body}');
+  }
+
   /*
   |--------------------------------------------------------------------------
   | Retry MRA Submission
@@ -376,6 +484,22 @@ class ApiService {
     }
 
     throw Exception('Failed to load outstanding invoices');
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Get Outstanding Purchases
+  |--------------------------------------------------------------------------
+  */
+
+  Future<Map<String, dynamic>> getOutstandingPurchases(int supplierId) async {
+    final response = await http.get(Uri.parse('$baseUrl/suppliers/$supplierId/outstanding-purchases'), headers: {'Accept': 'application/json'});
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load outstanding purchases');
   }
 
   /*

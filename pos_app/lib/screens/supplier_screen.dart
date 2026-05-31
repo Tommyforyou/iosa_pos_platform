@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
+import 'supplier_detail_screen.dart';
 import 'supplier_form_screen.dart';
 
 /*
@@ -64,9 +65,7 @@ class _SupplierScreenState extends State<SupplierScreen> {
         isLoading = true;
       });
 
-      final data = await apiService.getSuppliers(
-        search: searchController.text.trim(),
-      );
+      final data = await apiService.getSuppliers(search: searchController.text.trim());
 
       if (!mounted) return;
 
@@ -103,12 +102,7 @@ class _SupplierScreenState extends State<SupplierScreen> {
   |--------------------------------------------------------------------------
   */
 
-  Widget kpiCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
+  Widget kpiCard({required String title, required String value, required IconData icon, required Color color}) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(18),
@@ -120,15 +114,7 @@ class _SupplierScreenState extends State<SupplierScreen> {
 
           border: Border.all(color: Colors.grey.shade200),
 
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-
-              blurRadius: 12,
-
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
         ),
 
         child: Row(
@@ -137,11 +123,7 @@ class _SupplierScreenState extends State<SupplierScreen> {
               width: 48,
               height: 48,
 
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
-
-                borderRadius: BorderRadius.circular(16),
-              ),
+              decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
 
               child: Icon(icon, color: color),
             ),
@@ -158,10 +140,7 @@ class _SupplierScreenState extends State<SupplierScreen> {
 
                     overflow: TextOverflow.ellipsis,
 
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
 
                   const SizedBox(height: 3),
@@ -182,11 +161,7 @@ class _SupplierScreenState extends State<SupplierScreen> {
   |--------------------------------------------------------------------------
   */
 
-  Widget infoText({
-    required String label,
-    required String value,
-    required IconData icon,
-  }) {
+  Widget infoText({required String label, required String value, required IconData icon}) {
     return Row(
       mainAxisSize: MainAxisSize.min,
 
@@ -195,17 +170,9 @@ class _SupplierScreenState extends State<SupplierScreen> {
 
         const SizedBox(width: 5),
 
-        Text(
-          '$label: ',
+        Text('$label: ', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
 
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-        ),
-
-        Text(
-          value,
-
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-        ),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
       ],
     );
   }
@@ -239,15 +206,7 @@ class _SupplierScreenState extends State<SupplierScreen> {
 
         border: Border.all(color: Colors.grey.shade200),
 
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-
-            blurRadius: 10,
-
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
       ),
 
       child: Row(
@@ -261,11 +220,7 @@ class _SupplierScreenState extends State<SupplierScreen> {
             width: 54,
             height: 54,
 
-            decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.12),
-
-              borderRadius: BorderRadius.circular(18),
-            ),
+            decoration: BoxDecoration(color: Colors.blue.withOpacity(0.12), borderRadius: BorderRadius.circular(18)),
 
             child: const Icon(Icons.business, color: Colors.blue, size: 28),
           ),
@@ -290,25 +245,15 @@ class _SupplierScreenState extends State<SupplierScreen> {
 
                         overflow: TextOverflow.ellipsis,
 
-                        style: const TextStyle(
-                          fontSize: 18,
-
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
 
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-
-                        vertical: 5,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
 
                       decoration: BoxDecoration(
-                        color: active
-                            ? Colors.green.withOpacity(0.12)
-                            : Colors.red.withOpacity(0.12),
+                        color: active ? Colors.green.withOpacity(0.12) : Colors.red.withOpacity(0.12),
 
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -316,13 +261,7 @@ class _SupplierScreenState extends State<SupplierScreen> {
                       child: Text(
                         active ? 'ACTIVE' : 'INACTIVE',
 
-                        style: TextStyle(
-                          color: active ? Colors.green : Colors.red,
-
-                          fontWeight: FontWeight.bold,
-
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: active ? Colors.green : Colors.red, fontWeight: FontWeight.bold, fontSize: 12),
                       ),
                     ),
                   ],
@@ -337,17 +276,9 @@ class _SupplierScreenState extends State<SupplierScreen> {
                   children: [
                     infoText(label: 'BRN', value: brn, icon: Icons.badge),
 
-                    infoText(
-                      label: 'VAT',
-                      value: vat,
-                      icon: Icons.confirmation_number,
-                    ),
+                    infoText(label: 'VAT', value: vat, icon: Icons.confirmation_number),
 
-                    infoText(
-                      label: 'Purchases',
-                      value: purchases,
-                      icon: Icons.shopping_cart_checkout,
-                    ),
+                    infoText(label: 'Purchases', value: purchases, icon: Icons.shopping_cart_checkout),
                   ],
                 ),
               ],
@@ -360,17 +291,8 @@ class _SupplierScreenState extends State<SupplierScreen> {
           |--------------------------------------------------------------------------
           */
           ElevatedButton.icon(
-            onPressed: () async {
-              final updated = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => SupplierFormScreen(supplier: supplier),
-                ),
-              );
-
-              if (updated == true) {
-                loadSuppliers();
-              }
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => SupplierDetailScreen(supplier: Map<String, dynamic>.from(supplier))));
             },
 
             icon: const Icon(Icons.visibility),
@@ -431,23 +353,11 @@ class _SupplierScreenState extends State<SupplierScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
 
                       children: [
-                        Text(
-                          'Suppliers',
-
-                          style: TextStyle(
-                            fontSize: 26,
-
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        Text('Suppliers', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
 
                         SizedBox(height: 3),
 
-                        Text(
-                          'Manage suppliers and purchasing relationships.',
-
-                          style: TextStyle(color: Colors.grey),
-                        ),
+                        Text('Manage suppliers and purchasing relationships.', style: TextStyle(color: Colors.grey)),
                       ],
                     ),
                   ),
@@ -456,24 +366,13 @@ class _SupplierScreenState extends State<SupplierScreen> {
                     mainAxisSize: MainAxisSize.min,
 
                     children: [
-                      OutlinedButton.icon(
-                        onPressed: loadSuppliers,
-
-                        icon: const Icon(Icons.refresh),
-
-                        label: const Text('Refresh'),
-                      ),
+                      OutlinedButton.icon(onPressed: loadSuppliers, icon: const Icon(Icons.refresh), label: const Text('Refresh')),
 
                       const SizedBox(width: 12),
 
                       ElevatedButton.icon(
                         onPressed: () async {
-                          final created = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const SupplierFormScreen(),
-                            ),
-                          );
+                          final created = await Navigator.push(context, MaterialPageRoute(builder: (_) => const SupplierFormScreen()));
 
                           if (created == true) {
                             loadSuppliers();
@@ -508,27 +407,11 @@ class _SupplierScreenState extends State<SupplierScreen> {
                     */
                     Row(
                       children: [
-                        kpiCard(
-                          title: 'Total Suppliers',
-
-                          value: suppliers.length.toString(),
-
-                          icon: Icons.business,
-
-                          color: Colors.blue,
-                        ),
+                        kpiCard(title: 'Total Suppliers', value: suppliers.length.toString(), icon: Icons.business, color: Colors.blue),
 
                         const SizedBox(width: 14),
 
-                        kpiCard(
-                          title: 'Active Suppliers',
-
-                          value: activeSuppliers().toString(),
-
-                          icon: Icons.verified,
-
-                          color: Colors.green,
-                        ),
+                        kpiCard(title: 'Active Suppliers', value: activeSuppliers().toString(), icon: Icons.verified, color: Colors.green),
                       ],
                     ),
 
@@ -549,15 +432,7 @@ class _SupplierScreenState extends State<SupplierScreen> {
 
                         border: Border.all(color: Colors.grey.shade200),
 
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
-
-                            blurRadius: 10,
-
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
                       ),
 
                       child: Row(
@@ -575,22 +450,14 @@ class _SupplierScreenState extends State<SupplierScreen> {
 
                                 prefixIcon: const Icon(Icons.search),
 
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                               ),
                             ),
                           ),
 
                           const SizedBox(width: 12),
 
-                          ElevatedButton.icon(
-                            onPressed: loadSuppliers,
-
-                            icon: const Icon(Icons.search),
-
-                            label: const Text('Search'),
-                          ),
+                          ElevatedButton.icon(onPressed: loadSuppliers, icon: const Icon(Icons.search), label: const Text('Search')),
                         ],
                       ),
                     ),

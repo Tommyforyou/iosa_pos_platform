@@ -9,23 +9,23 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import '../utils/money.dart';
 
-class CustomerDetailScreen extends StatefulWidget {
-  final Map<String, dynamic> customer;
+class SupplierDetailScreen extends StatefulWidget {
+  final Map<String, dynamic> supplier;
 
-  const CustomerDetailScreen({super.key, required this.customer});
+  const SupplierDetailScreen({super.key, required this.supplier});
 
   @override
-  State<CustomerDetailScreen> createState() => _CustomerDetailScreenState();
+  State<SupplierDetailScreen> createState() => _SupplierDetailScreenState();
 }
 
-class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
+class _SupplierDetailScreenState extends State<SupplierDetailScreen> {
   final ApiService apiService = ApiService();
   final money = NumberFormat('#,##0.00');
 
   bool isLoading = true;
   Map<String, dynamic>? balance;
   List<dynamic> transactions = [];
-  List<dynamic> outstandingInvoices = [];
+  List<dynamic> outstandingPurchases = [];
 
   Map<String, dynamic>? businessSettings;
   String printFormat = 'thermal';
@@ -35,24 +35,22 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
   @override
   void initState() {
     super.initState();
-    loadCustomerData();
+    loadsupplierData();
     loadBusinessSettings();
   }
 
-  Future<void> loadCustomerData() async {
+  Future<void> loadsupplierData() async {
     try {
-      final balanceData = await apiService.getCustomerBalance(widget.customer['id']);
-
-      final transactionData = await apiService.getCustomerTransactions(widget.customer['id']);
-
-      final outstandingData = await apiService.getOutstandingInvoices(widget.customer['id']);
-      final agingResponse = await apiService.getCustomerAging(widget.customer['id']);
+      final balanceData = await apiService.getSupplierBalance(widget.supplier['id']);
+      final transactionData = await apiService.getSupplierTransactions(widget.supplier['id']);
+      final outstandingData = await apiService.getOutstandingPurchases(widget.supplier['id']);
+      final agingResponse = await apiService.getSupplierAging(widget.supplier['id']);
 
       setState(() {
         balance = balanceData;
         transactions = transactionData['transactions'] ?? [];
         isLoading = false;
-        outstandingInvoices = outstandingData['invoices'] ?? [];
+        outstandingPurchases = outstandingData['purchases'] ?? [];
         agingData = agingResponse['aging'];
       });
     } catch (e) {
@@ -85,18 +83,18 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
   /*
 |--------------------------------------------------------------------------
-| Print Customer Statement
+| Print supplier Statement
 |--------------------------------------------------------------------------
 */
 
-  Future<void> printCustomerStatement(Map<String, dynamic> statement) async {
+  Future<void> printsupplierStatement(Map<String, dynamic> statement) async {
     final pdf = pw.Document();
 
-    final customer = statement['customer'];
+    final supplier = statement['supplier'];
     final transactions = statement['transactions'] ?? [];
-    final outstandingInvoices = statement['outstanding_invoices'] ?? [];
+    final outstandingPurchases = statement['outstanding_purchases'] ?? [];
 
-    final totalSales = double.tryParse(statement['total_sales'].toString()) ?? 0;
+    final totalPurchases = double.tryParse(statement['total_purchases'].toString()) ?? 0;
 
     final totalPayments = double.tryParse(statement['total_payments'].toString()) ?? 0;
 
@@ -139,7 +137,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     ],
                   ),
                   pw.Text(
-                    'CUSTOMER\nSTATEMENT',
+                    'Supplier\nSTATEMENT',
                     textAlign: pw.TextAlign.right,
                     style: pw.TextStyle(color: PdfColors.white, fontSize: 15, fontWeight: pw.FontWeight.bold),
                   ),
@@ -163,14 +161,14 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text(
-                          'CUSTOMER DETAILS',
+                          'Supplier DETAILS',
                           style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800),
                         ),
                         pw.SizedBox(height: 6),
-                        pw.Text('Name: ${customer['name'] ?? '-'}', style: const pw.TextStyle(fontSize: 8)),
-                        pw.Text('Phone: ${customer['phone'] ?? '-'}', style: const pw.TextStyle(fontSize: 8)),
-                        pw.Text('BRN: ${customer['brn'] ?? '-'}', style: const pw.TextStyle(fontSize: 8)),
-                        pw.Text('VAT: ${customer['vat_number'] ?? '-'}', style: const pw.TextStyle(fontSize: 8)),
+                        pw.Text('Name: ${supplier['name'] ?? '-'}', style: const pw.TextStyle(fontSize: 8)),
+                        pw.Text('Phone: ${supplier['phone'] ?? '-'}', style: const pw.TextStyle(fontSize: 8)),
+                        pw.Text('BRN: ${supplier['brn'] ?? '-'}', style: const pw.TextStyle(fontSize: 8)),
+                        pw.Text('VAT: ${supplier['vat_number'] ?? '-'}', style: const pw.TextStyle(fontSize: 8)),
                       ],
                     ),
                   ),
@@ -191,7 +189,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                           style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey800),
                         ),
                         pw.SizedBox(height: 6),
-                        _statementSummaryRow('Total Sales', amount(totalSales)),
+                        _statementSummaryRow('Total Purchases', amount(totalPurchases)),
                         _statementSummaryRow('Total Payments', amount(totalPayments)),
                         _statementSummaryRow('Balance Due', amount(closingBalance), bold: true),
                         _statementSummaryRow('Statement Date', DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())),
@@ -206,7 +204,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
             pw.Row(
               children: [
-                _statementKpiCard('SALES', amount(totalSales)),
+                _statementKpiCard('PURCHASES', amount(totalPurchases)),
                 pw.SizedBox(width: 8),
                 _statementKpiCard('PAYMENTS', amount(totalPayments)),
                 pw.SizedBox(width: 8),
@@ -217,17 +215,17 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             pw.SizedBox(height: 14),
 
             pw.Text(
-              'OUTSTANDING INVOICES',
+              'OUTSTANDING PURCHASES',
               style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey900),
             ),
             pw.SizedBox(height: 6),
 
-            if (outstandingInvoices.isEmpty)
+            if (outstandingPurchases.isEmpty)
               pw.Container(
                 width: double.infinity,
                 padding: const pw.EdgeInsets.all(8),
                 decoration: pw.BoxDecoration(color: PdfColors.grey100, borderRadius: pw.BorderRadius.circular(6)),
-                child: pw.Text('No outstanding invoices.', style: const pw.TextStyle(fontSize: 8)),
+                child: pw.Text('No outstanding purchases.', style: const pw.TextStyle(fontSize: 8)),
               )
             else
               pw.TableHelper.fromTextArray(
@@ -238,7 +236,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 cellPadding: const pw.EdgeInsets.all(3),
                 cellAlignments: {2: pw.Alignment.centerRight, 3: pw.Alignment.centerRight, 4: pw.Alignment.centerRight},
                 headers: const ['Invoice', 'Date', 'Total', 'Paid', 'Balance'],
-                data: outstandingInvoices.map<List<String>>((invoice) {
+                data: outstandingPurchases.map<List<String>>((invoice) {
                   return [
                     invoice['invoice_number']?.toString() ?? '-',
                     DateHelper.formatDateTime(invoice['date']?.toString()),
@@ -252,7 +250,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             pw.SizedBox(height: 14),
 
             pw.Text(
-              'CUSTOMER LEDGER',
+              'Supplier LEDGER',
               style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.blueGrey900),
             ),
             pw.SizedBox(height: 6),
@@ -311,16 +309,22 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
       ),
     );
 
-    await Printing.layoutPdf(name: 'Customer-Statement-${customer['name'] ?? 'customer'}', onLayout: (_) async => pdf.save());
+    await Printing.layoutPdf(name: 'supplier-Statement-${supplier['name'] ?? 'supplier'}', onLayout: (_) async => pdf.save());
   }
+
+  /*
+|--------------------------------------------------------------------------
+| supplier details
+|--------------------------------------------------------------------------
+*/
 
   @override
   Widget build(BuildContext context) {
-    final customer = widget.customer;
+    final supplier = widget.supplier;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6FA),
-      appBar: AppBar(title: Text(customer['name'] ?? 'Customer')),
+      appBar: AppBar(title: Text(supplier['name'] ?? 'supplier')),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -330,7 +334,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                 children: [
                   /*
             |--------------------------------------------------------------------------
-            | Customer Profile Header
+            | supplier Profile Header
             |--------------------------------------------------------------------------
             */
                   Container(
@@ -347,7 +351,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                           radius: 34,
                           backgroundColor: Colors.blue.shade50,
                           child: Text(
-                            (customer['name'] ?? 'C').toString().substring(0, 1).toUpperCase(),
+                            (supplier['name'] ?? 'C').toString().substring(0, 1).toUpperCase(),
                             style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.blue),
                           ),
                         ),
@@ -358,22 +362,22 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(customer['name'] ?? '-', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                              Text(supplier['name'] ?? '-', style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 6),
                               Wrap(
                                 spacing: 18,
                                 runSpacing: 6,
                                 children: [
-                                  Text('Phone: ${customer['phone'] ?? '-'}'),
-                                  Text('BRN: ${customer['brn'] ?? '-'}'),
-                                  Text('VAT: ${customer['vat_number'] ?? '-'}'),
+                                  Text('Phone: ${supplier['phone'] ?? '-'}'),
+                                  Text('BRN: ${supplier['brn'] ?? '-'}'),
+                                  Text('VAT: ${supplier['vat_number'] ?? '-'}'),
                                 ],
                               ),
                             ],
                           ),
                         ),
 
-                        ElevatedButton.icon(onPressed: showEditCustomerDialog, icon: const Icon(Icons.edit), label: const Text('Edit Customer')),
+                        ElevatedButton.icon(onPressed: showEditsupplierDialog, icon: const Icon(Icons.edit), label: const Text('Edit supplier')),
 
                         const SizedBox(width: 10),
 
@@ -386,8 +390,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                         ElevatedButton.icon(
                           onPressed: () async {
                             try {
-                              final statement = await apiService.getCustomerStatement(widget.customer['id']);
-                              await printCustomerStatement(statement);
+                              final statement = await apiService.getSupplierStatement(widget.supplier['id']);
+                              await printsupplierStatement(statement);
                             } catch (e) {
                               SnackbarHelper.error(context, e.toString());
                             }
@@ -409,15 +413,15 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   Row(
                     children: [
                       _KpiCard(
-                        title: 'Total Sales',
-                        value: 'Rs ${money.format(double.tryParse(balance?['total_sales'].toString() ?? '0') ?? 0)}',
+                        title: 'Total Purchases',
+                        value: 'Rs ${money.format(double.tryParse(balance?['total_purchases'].toString() ?? '0') ?? 0)}',
                         icon: Icons.receipt_long,
                         color: Colors.blue,
                       ),
                       const SizedBox(width: 14),
                       _KpiCard(
                         title: 'Total Payments',
-                        value: 'Rs ${money.format(double.tryParse(balance?['total_payments'].toString() ?? '0') ?? 0)}',
+                        value: 'Rs ${money.format(double.tryParse(balance?['total_paid'].toString() ?? '0') ?? 0)}',
                         icon: Icons.payments,
                         color: Colors.green,
                       ),
@@ -432,10 +436,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                   ),
 
                   /*
-|--------------------------------------------------------------------------
-| Aging Analysis
-|--------------------------------------------------------------------------
-*/
+                  |--------------------------------------------------------------------------
+                  | Aging Analysis
+                  |--------------------------------------------------------------------------
+                  */
                   const SizedBox(height: 24),
 
                   Container(
@@ -504,10 +508,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
                         const SizedBox(height: 16),
 
-                        if (outstandingInvoices.isEmpty)
+                        if (outstandingPurchases.isEmpty)
                           const Padding(
                             padding: EdgeInsets.all(24),
-                            child: Center(child: Text('No outstanding invoices')),
+                            child: Center(child: Text('No outstanding purchases')),
                           )
                         else
                           DataTable(
@@ -525,7 +529,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                               DataColumn(label: Text('Status')),
                             ],
 
-                            rows: outstandingInvoices.map((invoice) {
+                            rows: outstandingPurchases.map((invoice) {
                               return DataRow(
                                 cells: [
                                   DataCell(Text(invoice['invoice_number'] ?? '-')),
@@ -584,7 +588,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Customer Ledger', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                        const Text('Supplier Ledger', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
 
                         const SizedBox(height: 16),
 
@@ -599,27 +603,51 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                               DataColumn(label: Text('Date')),
                               DataColumn(label: Text('Type')),
                               DataColumn(label: Text('Reference')),
-                              DataColumn(label: Text('Status')),
-                              DataColumn(label: Text('Amount')),
+                              DataColumn(label: Text('Debit')),
+                              DataColumn(label: Text('Credit')),
+                              DataColumn(label: Text('Balance')),
                             ],
                             rows: transactions.map((tx) {
                               final isPayment = tx['type'] == 'payment';
 
+                              final amount = double.tryParse(tx['amount'].toString()) ?? 0;
+
+                              final balance = double.tryParse(tx['balance']?.toString() ?? '0') ?? 0;
+
                               return DataRow(
                                 cells: [
                                   DataCell(Text(DateHelper.formatDateTime(tx['date']?.toString()))),
+
                                   DataCell(
                                     Chip(
-                                      label: Text(isPayment ? 'PAYMENT' : 'SALE'),
+                                      label: Text(tx['type'].toString().toUpperCase()),
                                       backgroundColor: isPayment ? Colors.green.shade50 : Colors.blue.shade50,
                                     ),
                                   ),
+
                                   DataCell(Text(tx['reference'] ?? '-')),
-                                  DataCell(Text(tx['status'] ?? '-')),
+
                                   DataCell(
                                     Text(
-                                      'Rs ${money.format(double.tryParse(tx['amount'].toString()) ?? 0)}',
-                                      style: TextStyle(fontWeight: FontWeight.bold, color: isPayment ? Colors.green : Colors.red),
+                                      isPayment ? '' : 'Rs ${money.format(amount)}',
+                                      textAlign: TextAlign.right,
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+
+                                  DataCell(
+                                    Text(
+                                      isPayment ? 'Rs ${money.format(amount)}' : '',
+                                      textAlign: TextAlign.right,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                                    ),
+                                  ),
+
+                                  DataCell(
+                                    Text(
+                                      'Rs ${money.format(balance)}',
+                                      textAlign: TextAlign.right,
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
                                     ),
                                   ),
                                 ],
@@ -637,7 +665,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
   /*
 |--------------------------------------------------------------------------
-| Record Customer Payment Dialog
+| Record supplier Payment Dialog
 |--------------------------------------------------------------------------
 */
 
@@ -715,8 +743,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
                         return;
                       }
 
-                      final result = await apiService.recordCustomerPayment(
-                        customerId: widget.customer['id'],
+                      final result = await apiService.recordSupplierPayment(
+                        supplierId: widget.supplier['id'],
                         amount: amount,
                         paymentMethod: paymentMethod,
                         reference: referenceController.text.trim(),
@@ -728,11 +756,11 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
                       Navigator.pop(context);
 
-                      await printPaymentReceipt(Map<String, dynamic>.from(result['payment']));
+                      //await printPaymentReceipt(Map<String, dynamic>.from(result['payment']));
 
-                      SnackbarHelper.success(context, 'Payment recorded successfully.');
+                      SnackbarHelper.success(context, 'Supplier Payment recorded successfully.');
 
-                      loadCustomerData();
+                      loadsupplierData();
                     } catch (e) {
                       SnackbarHelper.error(context, e.toString());
                     }
@@ -750,7 +778,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
   /*
 |--------------------------------------------------------------------------
-| Print Customer Payment Receipt
+| Print supplier Payment Receipt
 |--------------------------------------------------------------------------
 */
 
@@ -767,7 +795,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
               pw.SizedBox(height: 14),
 
-              pw.Text('Customer: ${widget.customer['name'] ?? '-'}'),
+              pw.Text('supplier: ${widget.supplier['name'] ?? '-'}'),
               pw.Text('Receipt No: PAY-${payment['id'] ?? '-'}'),
               pw.Text('Date: ${DateHelper.formatDateTime(payment['payment_date']?.toString())}'),
               pw.Text('Method: ${payment['payment_method'] ?? '-'}'),
@@ -837,28 +865,28 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
   /*
 |--------------------------------------------------------------------------
-| Edit Customer Dialog
+| Edit supplier Dialog
 |--------------------------------------------------------------------------
 */
 
-  Future<void> showEditCustomerDialog() async {
-    final nameController = TextEditingController(text: widget.customer['name'] ?? '');
+  Future<void> showEditsupplierDialog() async {
+    final nameController = TextEditingController(text: widget.supplier['name'] ?? '');
 
-    final phoneController = TextEditingController(text: widget.customer['phone'] ?? '');
+    final phoneController = TextEditingController(text: widget.supplier['phone'] ?? '');
 
-    final emailController = TextEditingController(text: widget.customer['email'] ?? '');
+    final emailController = TextEditingController(text: widget.supplier['email'] ?? '');
 
-    final addressController = TextEditingController(text: widget.customer['address'] ?? '');
+    final addressController = TextEditingController(text: widget.supplier['address'] ?? '');
 
-    final brnController = TextEditingController(text: widget.customer['brn'] ?? '');
+    final brnController = TextEditingController(text: widget.supplier['brn'] ?? '');
 
-    final vatController = TextEditingController(text: widget.customer['vat_number'] ?? '');
+    final vatController = TextEditingController(text: widget.supplier['vat_number'] ?? '');
 
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Edit Customer'),
+          title: const Text('Edit supplier'),
 
           content: SizedBox(
             width: 500,
@@ -911,8 +939,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
             ElevatedButton.icon(
               onPressed: () async {
                 try {
-                  await apiService.updateCustomer(
-                    customerId: widget.customer['id'],
+                  await apiService.updateSupplier(
+                    supplierId: widget.supplier['id'],
 
                     name: nameController.text.trim(),
 
@@ -931,9 +959,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen> {
 
                   Navigator.pop(context);
 
-                  SnackbarHelper.success(context, 'Customer updated successfully');
+                  SnackbarHelper.success(context, 'supplier updated successfully');
 
-                  loadCustomerData();
+                  loadsupplierData();
                 } catch (e) {
                   SnackbarHelper.error(context, e.toString());
                 }
