@@ -303,10 +303,10 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   /*
-  |--------------------------------------------------------------------------
-  | Add Product To Cart
-  |--------------------------------------------------------------------------
-  */
+|--------------------------------------------------------------------------
+| Add Product To Cart
+|--------------------------------------------------------------------------
+*/
 
   void addToCart(dynamic product) {
     final price = toMoneyDouble(product['selling_price'] ?? product['price']);
@@ -317,7 +317,7 @@ class _OrderScreenState extends State<OrderScreen> {
       if (existingIndex >= 0) {
         cart[existingIndex]['quantity'] += 1;
       } else {
-        cart.add({'id': product['id'], 'name': product['name'], 'price': price, 'quantity': 1, 'kitchen_status': 'draft'});
+        cart.add({'id': product['id'], 'name': product['name'], 'price': price, 'quantity': 1, 'kitchen_status': 'draft', 'notes': ''});
       }
 
       final newIndex = newItems.indexWhere((item) => item['id'] == product['id']);
@@ -821,7 +821,21 @@ class _OrderScreenState extends State<OrderScreen> {
                                             if (result != null) {
                                               setState(() {
                                                 item['notes'] = result;
+
+                                                /*
+                                                |--------------------------------------------------------------------------
+                                                | Sync Notes To New Items
+                                                |--------------------------------------------------------------------------
+                                                */
+
+                                                final newItemIndex = newItems.indexWhere((newItem) => newItem['id'] == item['id']);
+
+                                                if (newItemIndex >= 0) {
+                                                  newItems[newItemIndex]['notes'] = result;
+                                                }
                                               });
+
+                                              saveDraft();
                                             }
                                           },
                                           icon: const Icon(Icons.edit_note),

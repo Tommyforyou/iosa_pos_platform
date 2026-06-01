@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Product;
 use App\Models\StockMovement;
 
+
 class RestaurantOrderController extends Controller
 {
     /*
@@ -91,7 +92,7 @@ class RestaurantOrderController extends Controller
                     'order_type' => $validated['order_type'],
                     'status' => 'sent_to_kitchen',
                     'notes' => $validated['notes'] ?? null,
-                    'waiter_id' => $validated['waiter_id'] ?? null,
+                    'waiter_id' => $request->user()?->id,
                 ]);
             } else {
                 /*
@@ -120,7 +121,7 @@ class RestaurantOrderController extends Controller
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['price'],
                     'kitchen_status' => 'pending',
-                    'waiter_id' => $validated['waiter_id'] ?? null,
+                    'waiter_id' => $request->user()?->id,
                     'notes' => $item['notes'] ?? null,
                 ]);
             }
@@ -914,7 +915,7 @@ class RestaurantOrderController extends Controller
                     'status' => 'open',
                     'notes' => $validated['notes'] ?? null,
                     'customer_id' => $validated['customer_id'] ?? null,
-                    'waiter_id' => $validated['waiter_id'] ?? null,
+                    'waiter_id' => $request->user()?->id,
                     'notes' => $item['notes'] ?? null,
                 ]);
             }
@@ -1313,11 +1314,13 @@ private function olddeductStockForOrder(RestaurantOrder $order): void
  * Called by waiter mobile application when customer requests the bill.
  * Records the request timestamp and the waiter responsible.
  */
-public function requestBill($orderId)
+
+
+public function requestBill(Request $request, $orderId)
 {
     /*
     |--------------------------------------------------------------------------
-    | Retrieve Order
+    | Find Order
     |--------------------------------------------------------------------------
     */
 
@@ -1325,27 +1328,26 @@ public function requestBill($orderId)
 
     /*
     |--------------------------------------------------------------------------
-    | Mark Bill As Requested
+    | Mark Bill Requested
     |--------------------------------------------------------------------------
     */
 
     $order->update([
         'bill_requested_at' => now(),
-        'bill_requested_by' => auth()->id(), // Future mobile login
+        'bill_requested_by' => $request->user()?->id,
     ]);
 
     /*
     |--------------------------------------------------------------------------
-    | Return Success Response
+    | Return Response
     |--------------------------------------------------------------------------
     */
 
     return response()->json([
         'success' => true,
-        'message' => 'Bill request submitted successfully.',
+        'message' => 'Bill requested successfully.',
     ]);
 }
-
 /**
  * --------------------------------------------------------------------------
  * Waiter Active Orders
@@ -1359,41 +1361,28 @@ public function requestBill($orderId)
  * - Product Details
  * - Assigned Waiter
  */
-public function waiterOrders()
+public function waiterOrders(Request $request)
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Retrieve Waiter's Active Orders
-    |--------------------------------------------------------------------------
-    */
-
     $orders = RestaurantOrder::with([
         'table',
         'items.product',
-        'waiter'
+        'waiter',
     ])
-    //->where('waiter_id', auth()->id())
     ->whereNotNull('restaurant_table_id')
     ->whereIn('status', [
         'open',
+        'sent_to_kitchen',
         'preparing',
         'ready',
     ])
     ->latest()
     ->get();
 
-    /*
-    |--------------------------------------------------------------------------
-    | Return JSON Response
-    |--------------------------------------------------------------------------
-    */
-
     return response()->json([
         'success' => true,
         'data' => $orders,
     ]);
 }
-
 
 /**
  * --------------------------------------------------------------------------

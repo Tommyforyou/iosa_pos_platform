@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\CustomerPaymentController;
 use App\Http\Controllers\Api\VatReportController;
 use App\Http\Controllers\Api\AccountsReceivableDashboardController;
 use App\Http\Controllers\Api\ProfitLossReportController;
+use App\Http\Controllers\Api\MobileAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -206,9 +207,15 @@ use App\Http\Controllers\Api\AccountsPayableDashboardController;
                 [ RestaurantOrderController::class, 'requestBill' ]
             );
 
+            /*
+            |--------------------------------------------------------------------------
+            | Waiter Orders
+            |--------------------------------------------------------------------------
+            */
+
             Route::get(
                 'waiter-orders',
-                [ RestaurantOrderController::class, 'waiterOrders' ]
+                [RestaurantOrderController::class, 'waiterOrders']
             );
             /*
             |--------------------------------------------------------------------------
@@ -714,10 +721,68 @@ use App\Http\Controllers\Api\AccountsPayableDashboardController;
 
             /*
             |--------------------------------------------------------------------------
-            | Authenticated User
+            | Mobile Waiter Authentication
             |--------------------------------------------------------------------------
             */
-            Route::get( '/user', function ( Request $request ) {
-                return $request->user();
+
+            Route::post(
+                'mobile/login',
+                [ MobileAuthController::class, 'login' ]
+            );
+
+            Route::middleware( 'auth:sanctum' )->group( function () {
+                Route::post(
+                    'mobile/logout',
+                    [ MobileAuthController::class, 'logout' ]
+                );
             }
-        )->middleware( 'auth:sanctum' );
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Mobile Auth Test
+        |--------------------------------------------------------------------------
+        */
+
+        Route::middleware( 'auth:sanctum' )->get(
+            '/mobile/me',
+
+            function ( Illuminate\Http\Request $request ) {
+
+                return response()->json( [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                ] );
+            }
+        );
+
+
+        Route::middleware('auth:sanctum')->group(function () {
+
+            Route::get(
+                'waiter-orders',
+                [RestaurantOrderController::class, 'waiterOrders']
+            );
+
+        });
+
+        Route::middleware( 'auth:sanctum' )->group( function () {
+
+            Route::post(
+                '/restaurant-orders/{order}/request-bill',
+                [ RestaurantOrderController::class, 'requestBill' ]
+            );
+
+        }
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Authenticated User
+    |--------------------------------------------------------------------------
+    */
+    Route::get( '/user', function ( Request $request ) {
+        return $request->user();
+    }
+)->middleware( 'auth:sanctum' );

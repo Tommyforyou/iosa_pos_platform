@@ -106,6 +106,8 @@ class _WaiterOrdersScreenState extends State<WaiterOrdersScreen> {
                   final table = order['table'];
                   final items = order['items'] ?? [];
 
+                  //debugPrint(order.toString());
+
                   return Card(
                     elevation: 3,
                     margin: const EdgeInsets.only(bottom: 12),
@@ -122,10 +124,7 @@ class _WaiterOrdersScreenState extends State<WaiterOrdersScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                table != null ? 'Table ${table['name'] ?? table['number'] ?? ''}' : 'Order #${order['id']}',
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
+                              Text(order['table']?['table_name'] ?? 'No Table', style: const TextStyle(fontWeight: FontWeight.bold)),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                 decoration: BoxDecoration(color: statusColor(order['status']), borderRadius: BorderRadius.circular(20)),
@@ -161,30 +160,38 @@ class _WaiterOrdersScreenState extends State<WaiterOrdersScreen> {
                           const SizedBox(height: 10),
 
                           /*
-                              |--------------------------------------------------------------------------
-                              | Request Bill Button
-                              |--------------------------------------------------------------------------
-                              */
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () async {
-                                try {
-                                  await apiService.requestBill(orderId: order['id']);
+                          |--------------------------------------------------------------------------
+                          | Bill Request Action
+                          |--------------------------------------------------------------------------
+                          */
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              ),
+                              onPressed: order['bill_requested_at'] != null
+                                  ? null
+                                  : () async {
+                                      try {
+                                        await apiService.requestBill(orderId: order['id']);
 
-                                  if (!mounted) return;
+                                        if (!mounted) return;
 
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bill requested successfully')));
+                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bill requested successfully')));
 
-                                  loadOrders();
-                                } catch (e) {
-                                  if (!mounted) return;
+                                        loadOrders();
+                                      } catch (e) {
+                                        if (!mounted) return;
 
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
-                                }
-                              },
-                              icon: const Icon(Icons.receipt_long),
-                              label: const Text('Request Bill'),
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                                      }
+                                    },
+                              icon: Icon(order['bill_requested_at'] != null ? Icons.check_circle : Icons.receipt_long, size: 18),
+                              label: Text(order['bill_requested_at'] != null ? 'Bill Requested' : 'Request Bill'),
                             ),
                           ),
                         ],

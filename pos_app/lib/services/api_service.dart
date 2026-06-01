@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:http_parser/http_parser.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -277,10 +278,10 @@ class ApiService {
   }
 
   /*
-  |--------------------------------------------------------------------------
-  | Get Products
-  |--------------------------------------------------------------------------
-  */
+|--------------------------------------------------------------------------
+| Get Products
+|--------------------------------------------------------------------------
+*/
 
   Future<List<dynamic>> getProducts({String? search}) async {
     final uri = Uri.parse('$baseUrl/products').replace(queryParameters: {if (search != null && search.isNotEmpty) 'search': search});
@@ -291,7 +292,11 @@ class ApiService {
       return jsonDecode(response.body);
     }
 
-    throw Exception('Failed to load products');
+    throw Exception(
+      'Failed to load products. '
+      'Status: ${response.statusCode}. '
+      'Body: ${response.body}',
+    );
   }
 
   /*
@@ -1127,7 +1132,7 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/restaurant-orders/draft'),
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: await authHeaders(),
       body: jsonEncode({
         'restaurant_table_id': restaurantTableId,
         'customer_id': customerId,
@@ -1151,10 +1156,7 @@ class ApiService {
   | Converts saved draft items into pending kitchen items.
   */
   Future<Map<String, dynamic>> sendDraftItemsToKitchen({required int orderId}) async {
-    final response = await http.patch(
-      Uri.parse('$baseUrl/restaurant-orders/$orderId/send-to-kitchen'),
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-    );
+    final response = await http.patch(Uri.parse('$baseUrl/restaurant-orders/$orderId/send-to-kitchen'), headers: await authHeaders());
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -1544,7 +1546,7 @@ class ApiService {
   */
 
   Future<List<dynamic>> getWaiterOrders() async {
-    final response = await http.get(Uri.parse('$baseUrl/waiter-orders'), headers: {'Accept': 'application/json'});
+    final response = await http.get(Uri.parse('$baseUrl/waiter-orders'), headers: await authHeaders());
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -1552,9 +1554,12 @@ class ApiService {
       return List<dynamic>.from(data['data']);
     }
 
-    throw Exception('Failed to load waiter orders');
+    throw Exception(
+      'Failed to load waiter orders. '
+      'Status: ${response.statusCode}. '
+      'Body: ${response.body}',
+    );
   }
-
   /*
   |--------------------------------------------------------------------------
   | Request Bill
@@ -1562,10 +1567,7 @@ class ApiService {
   */
 
   Future<Map<String, dynamic>> requestBill({required int orderId}) async {
-    final response = await http.patch(
-      Uri.parse('$baseUrl/restaurant-orders/$orderId/request-bill'),
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-    );
+    final response = await http.patch(Uri.parse('$baseUrl/restaurant-orders/$orderId/request-bill'), headers: await authHeaders());
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -1592,5 +1594,40 @@ class ApiService {
     }
 
     throw Exception('Login failed');
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Authenticated Headers
+  |--------------------------------------------------------------------------
+  | Builds standard JSON headers and attaches the Sanctum token when available.
+  */
+
+  Future<Map<String, String>> authHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final token = prefs.getString('auth_token');
+
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Get Current User
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getCurrentUser() async {
+    final response = await http.get(Uri.parse('$baseUrl/mobile/me'), headers: await authHeaders());
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to retrieve current user');
   }
 }

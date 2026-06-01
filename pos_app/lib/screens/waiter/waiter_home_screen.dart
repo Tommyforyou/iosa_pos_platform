@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../table_screen.dart';
 import 'waiter_orders_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../auth/login_screen.dart';
+import '../../services/api_service.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -15,9 +18,14 @@ import 'waiter_orders_screen.dart';
 |
 */
 
-class WaiterHomeScreen extends StatelessWidget {
+class WaiterHomeScreen extends StatefulWidget {
   const WaiterHomeScreen({super.key});
 
+  @override
+  State<WaiterHomeScreen> createState() => _WaiterHomeScreenState();
+}
+
+class _WaiterHomeScreenState extends State<WaiterHomeScreen> {
   /*
   |--------------------------------------------------------------------------
   | Navigation Helper
@@ -31,7 +39,23 @@ class WaiterHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Waiter Terminal')),
+      appBar: AppBar(
+        title: const Text('Waiter Terminal'),
+
+        actions: [
+          /*
+          |--------------------------------------------------------------------------
+          | Logout
+          |--------------------------------------------------------------------------
+          */
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await logout(context);
+            },
+          ),
+        ],
+      ),
 
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -69,6 +93,38 @@ class WaiterHomeScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Logout
+|--------------------------------------------------------------------------
+| Clears locally stored authentication information.
+*/
+
+  Future<void> logout(BuildContext context) async {
+    /*
+  |--------------------------------------------------------------------------
+  | Clear Stored Credentials
+  |--------------------------------------------------------------------------
+  */
+
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.remove('auth_token');
+    await prefs.remove('user_id');
+    await prefs.remove('user_name');
+    await prefs.remove('user_email');
+
+    /*
+  |--------------------------------------------------------------------------
+  | Redirect To Login Screen
+  |--------------------------------------------------------------------------
+  */
+
+    if (!context.mounted) return;
+
+    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
   }
 }
 

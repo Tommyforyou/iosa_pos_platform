@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'package:window_manager/window_manager.dart';
 import 'screens/waiter/waiter_home_screen.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/auth/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,8 +29,10 @@ class IOSAPOSApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(colorSchemeSeed: Colors.blueGrey, useMaterial3: true),
-      home: const HomeScreen(),
+      //home: const HomeScreen(),
       //home: const WaiterHomeScreen(),
+      //home: const LoginScreen(),
+      home: const SplashScreen(),
     );
   }
 }
