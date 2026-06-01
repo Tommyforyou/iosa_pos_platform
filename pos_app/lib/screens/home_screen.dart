@@ -22,6 +22,7 @@ import 'accounts_payable_dashboard_screen.dart';
 import 'accounts_receivable_dashboard_screen.dart';
 import 'vat_dashboard_screen.dart';
 import 'profit_loss_dashboard_screen.dart';
+import 'settings/server_qr_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -80,6 +81,18 @@ class HomeScreen extends StatelessWidget {
                   subtitle: 'Company, VAT and MRA setup',
                   icon: Icons.settings,
                   onTap: () => openScreen(context, const BusinessSettingsScreen()),
+                ),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Server QR Code
+                |--------------------------------------------------------------------------
+                */
+                _HomeCard(
+                  title: 'Server QR',
+                  subtitle: 'Connect waiter phones',
+                  icon: Icons.qr_code_2,
+                  onTap: () => openScreen(context, const ServerQrScreen(serverUrl: 'http://192.168.100.3:8000')),
                 ),
 
                 /*

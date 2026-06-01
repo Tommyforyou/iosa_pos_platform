@@ -78,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
     | Prevent Duplicate Submission
     |--------------------------------------------------------------------------
     */
-
+    debugPrint('STEP 1 - Login button pressed');
     if (isLoading) return;
 
     setState(() {
@@ -91,9 +91,11 @@ class _LoginScreenState extends State<LoginScreen> {
       | Call Login API
       |--------------------------------------------------------------------------
       */
-
+      debugPrint('STEP 2 - Calling API');
       final result = await apiService.waiterLogin(email: emailController.text.trim(), password: passwordController.text.trim());
 
+      debugPrint('STEP 3 - API returned');
+      debugPrint(result.toString());
       /*
       |--------------------------------------------------------------------------
       | Save Token Locally
@@ -117,6 +119,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const WaiterHomeScreen()));
     } catch (e) {
+      debugPrint('STEP 4 - ERROR');
+      debugPrint(e.toString());
       /*
       |--------------------------------------------------------------------------
       | Login Failed

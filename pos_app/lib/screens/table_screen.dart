@@ -120,10 +120,7 @@ class _TableScreenState extends State<TableScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => OrderScreen(
-          table: table,
-          orderType: 'dine_in',
-        ),
+        builder: (_) => OrderScreen(table: table, orderType: 'dine_in'),
       ),
     ).then((_) {
       /*
@@ -184,144 +181,112 @@ class _TableScreenState extends State<TableScreen> {
       |--------------------------------------------------------------------------
       */
       body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : tables.isEmpty
-              ? const Center(
-                  child: Text(
-                    'No restaurant tables found',
-                    style: TextStyle(fontSize: 22),
-                  ),
-                )
-              : GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: tables.length,
+          ? const Center(child: Text('No restaurant tables found', style: TextStyle(fontSize: 22)))
+          : GridView.builder(
+              padding: const EdgeInsets.all(12),
+              itemCount: tables.length,
 
-                  /*
+              /*
                   |--------------------------------------------------------------------------
                   | Table Grid Layout
                   |--------------------------------------------------------------------------
                   | Each card represents one restaurant table.
                   */
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.1,
-                  ),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: MediaQuery.of(context).size.width > 700 ? 4 : 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: MediaQuery.of(context).size.width > 700 ? 1.1 : 1.25,
+              ),
 
-                  itemBuilder: (context, index) {
-                    final table = tables[index];
+              itemBuilder: (context, index) {
+                final table = tables[index];
 
-                    final status =
-                        table['status']?.toString() ?? 'available';
+                final status = table['status']?.toString() ?? 'available';
 
-                    return Card(
-                      elevation: 5,
+                return Card(
+                  elevation: 5,
 
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
 
-                        /*
+                    /*
                         |--------------------------------------------------------------------------
                         | Open Table Order
                         |--------------------------------------------------------------------------
                         */
-                        onTap: () => openTableOrder(table),
+                    onTap: () => openTableOrder(table),
 
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            color: tableColor(status),
-                          ),
+                    child: Container(
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: tableColor(status)),
 
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
 
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
 
-                              children: [
-                                /*
+                          children: [
+                            /*
                                 |--------------------------------------------------------------------------
                                 | Table Icon
                                 |--------------------------------------------------------------------------
                                 */
-                                const Icon(
-                                  Icons.table_restaurant,
-                                  size: 52,
-                                  color: Colors.white,
-                                ),
+                            const Icon(Icons.table_restaurant, size: 34, color: Colors.white),
 
-                                const SizedBox(height: 16),
+                            const SizedBox(height: 8),
 
-                                /*
+                            /*
                                 |--------------------------------------------------------------------------
                                 | Table Name
                                 |--------------------------------------------------------------------------
                                 */
-                                Text(
-                                  table['table_name'] ?? 'Table',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                            Text(
+                              table['table_name'] ?? 'Table',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
 
-                                const SizedBox(height: 10),
+                            const SizedBox(height: 6),
 
-                                /*
+                            /*
                                 |--------------------------------------------------------------------------
                                 | Table Status Badge
                                 |--------------------------------------------------------------------------
                                 */
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
 
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
+                              decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
 
-                                  child: Text(
-                                    status.toUpperCase(),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
+                              child: Text(
+                                status.toUpperCase(),
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              ),
+                            ),
 
-                                const SizedBox(height: 10),
+                            const SizedBox(height: 10),
 
-                                /*
+                            /*
                                 |--------------------------------------------------------------------------
                                 | Seating Capacity
                                 |--------------------------------------------------------------------------
                                 */
-                                if (table['capacity'] != null)
-                                  Text(
-                                    'Capacity: ${table['capacity']}',
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
+                            if (table['capacity'] != null)
+                              Text(
+                                'Capacity: ${table['capacity']}',
+                                style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600),
+                              ),
+                          ],
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 }

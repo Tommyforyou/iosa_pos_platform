@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -37,11 +38,26 @@ class ApiService {
   static const String publicBaseUrl = 'http://127.0.0.1:8000';
 
   static const String baseUrl = '$publicBaseUrl/api';
+
   /*
-|--------------------------------------------------------------------------
-| Get Business Settings
-|--------------------------------------------------------------------------
-*/
+  |--------------------------------------------------------------------------
+  | Get Base URL
+  |--------------------------------------------------------------------------
+  */
+
+  Future<String> getBaseUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final serverUrl = prefs.getString('server_url') ?? '';
+
+    return '$serverUrl/api';
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Get Business Settings
+  |--------------------------------------------------------------------------
+  */
 
   Future<Map<String, dynamic>> getBusinessSettings() async {
     final response = await http.get(Uri.parse('$baseUrl/business-settings'), headers: {'Accept': 'application/json'});
@@ -284,9 +300,13 @@ class ApiService {
 */
 
   Future<List<dynamic>> getProducts({String? search}) async {
-    final uri = Uri.parse('$baseUrl/products').replace(queryParameters: {if (search != null && search.isNotEmpty) 'search': search});
+    //final baseUrl = await getBaseUrl();
+    //final response = await http.get(Uri.parse('$baseUrl/products'), headers: {'Accept': 'application/json'});
 
-    final response = await http.get(uri, headers: {'Accept': 'application/json'});
+    final response = await http.get(Uri.parse(await apiUrl('products')));
+    //final uri = Uri.parse('$baseUrl/products').replace(queryParameters: {if (search != null && search.isNotEmpty) 'search': search});
+
+    //final response = await http.get(uri, headers: {'Accept': 'application/json'});
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -769,7 +789,10 @@ class ApiService {
   | Gets dine-in table list and statuses.
   */
   Future<List<dynamic>> getRestaurantTables() async {
-    final response = await http.get(Uri.parse('$baseUrl/restaurant-tables'));
+    final baseUrl = await getBaseUrl();
+    final response = await http.get(Uri.parse('$baseUrl/restaurant-tables'), headers: {'Accept': 'application/json'});
+
+    //final response = await http.get(Uri.parse('$baseUrl/restaurant-tables'));
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -1309,7 +1332,9 @@ class ApiService {
   | Back Office uses getCategories() to show all categories.
   */
   Future<List<dynamic>> getActiveCategories() async {
-    final response = await http.get(Uri.parse('$baseUrl/active-categories'));
+    final baseUrl = await getBaseUrl();
+    final response = await http.get(Uri.parse('$baseUrl/active-categories'), headers: {'Accept': 'application/json'});
+    //final response = await http.get(Uri.parse('$baseUrl/active-categories'));
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -1546,7 +1571,11 @@ class ApiService {
   */
 
   Future<List<dynamic>> getWaiterOrders() async {
-    final response = await http.get(Uri.parse('$baseUrl/waiter-orders'), headers: await authHeaders());
+    final url = await apiUrl('waiter-orders');
+
+    debugPrint('WAITER ORDERS URL: $url');
+
+    final response = await http.get(Uri.parse(url), headers: await authHeaders());
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -1583,17 +1612,27 @@ class ApiService {
   */
 
   Future<Map<String, dynamic>> waiterLogin({required String email, required String password}) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/mobile/login'),
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    );
+    try {
+      final response = await http
+          .post(
+            Uri.parse(await apiUrl('mobile/login')),
+            headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+            body: jsonEncode({'email': email, 'password': password}),
+          )
+          .timeout(const Duration(seconds: 10));
 
-    if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(jsonDecode(response.body));
+      debugPrint('LOGIN STATUS: ${response.statusCode}');
+      debugPrint('LOGIN BODY: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(response.body));
+      }
+
+      throw Exception('Login failed. Status: ${response.statusCode}. Body: ${response.body}');
+    } catch (e) {
+      debugPrint('LOGIN ERROR: $e');
+      rethrow;
     }
-
-    throw Exception('Login failed');
   }
 
   /*
@@ -1629,5 +1668,31 @@ class ApiService {
     }
 
     throw Exception('Failed to retrieve current user');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| API URL Helper
+|--------------------------------------------------------------------------
+*/
+
+  Future<String> apiUrl(String endpoint) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final serverUrl = prefs.getString('server_url');
+
+    if (serverUrl == null || serverUrl.isEmpty) {
+      throw Exception('Server URL not configured');
+    }
+
+    final cleanServerUrl = serverUrl.endsWith('/') ? serverUrl.substring(0, serverUrl.length - 1) : serverUrl;
+
+    final cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+
+    final url = '$cleanServerUrl/api/$cleanEndpoint';
+
+    debugPrint('API URL: $url');
+
+    return url;
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import 'dart:async';
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +21,7 @@ class _WaiterOrdersScreenState extends State<WaiterOrdersScreen> {
 
   bool isLoading = true;
   List<dynamic> orders = [];
+  Timer? refreshTimer;
 
   /*
   |--------------------------------------------------------------------------
@@ -31,6 +33,14 @@ class _WaiterOrdersScreenState extends State<WaiterOrdersScreen> {
   void initState() {
     super.initState();
     loadOrders();
+
+    refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) => loadOrders());
+  }
+
+  @override
+  void dispose() {
+    refreshTimer?.cancel();
+    super.dispose();
   }
 
   /*
@@ -105,6 +115,17 @@ class _WaiterOrdersScreenState extends State<WaiterOrdersScreen> {
                   final order = orders[index];
                   final table = order['table'];
                   final items = order['items'] ?? [];
+                  /*
+                  |--------------------------------------------------------------------------
+                  | Calculate Order Total
+                  |--------------------------------------------------------------------------
+                  */
+                  double total = 0.0;
+                  for (final item in items) {
+                    final qty = double.tryParse(item['quantity'].toString()) ?? 0.0;
+                    final price = double.tryParse(item['unit_price'].toString()) ?? 0.0;
+                    total += qty * price;
+                  }
 
                   //debugPrint(order.toString());
 
@@ -117,24 +138,43 @@ class _WaiterOrdersScreenState extends State<WaiterOrdersScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           /*
-                              |--------------------------------------------------------------------------
-                              | Order Header
-                              |--------------------------------------------------------------------------
-                              */
+                          |--------------------------------------------------------------------------
+                          | Order Header
+                          |--------------------------------------------------------------------------
+                          */
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(order['table']?['table_name'] ?? 'No Table', style: const TextStyle(fontWeight: FontWeight.bold)),
+                              const Icon(Icons.table_restaurant, size: 20),
+
+                              const SizedBox(width: 8),
+
+                              Expanded(
+                                child: Text(
+                                  order['table']?['table_name'] ?? 'No Table',
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                 decoration: BoxDecoration(color: statusColor(order['status']), borderRadius: BorderRadius.circular(20)),
                                 child: Text(
-                                  '${order['status'] ?? 'unknown'}'.toUpperCase(),
-                                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                                  '${order['status']}'.toUpperCase(),
+                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ],
                           ),
+
+                          if (order['bill_requested_at'] != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(20)),
+                              child: const Text(
+                                'BILL REQUESTED',
+                                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ),
 
                           const SizedBox(height: 10),
 
@@ -158,6 +198,9 @@ class _WaiterOrdersScreenState extends State<WaiterOrdersScreen> {
                           }).toList(),
 
                           const SizedBox(height: 10),
+
+                          //Display Total
+                          Text('Total: Rs ${total.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
 
                           /*
                           |--------------------------------------------------------------------------

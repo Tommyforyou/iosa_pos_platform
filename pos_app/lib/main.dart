@@ -4,19 +4,21 @@ import 'package:window_manager/window_manager.dart';
 import 'screens/waiter/waiter_home_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/splash_screen.dart';
+import 'dart:io';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await windowManager.ensureInitialized();
+  if (Platform.isWindows) {
+    await windowManager.ensureInitialized();
 
-  const windowOptions = WindowOptions(size: Size(1600, 950), minimumSize: Size(1200, 800), center: true, title: 'IOSA POS 2026 V1.0');
+    const windowOptions = WindowOptions(size: Size(1600, 950), minimumSize: Size(1200, 800), center: true, title: 'IOSA POS 2026 V1.0');
 
-  windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    //await windowManager.maximize();
-    await windowManager.focus();
-  });
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  }
 
   runApp(const IOSAPOSApp());
 }

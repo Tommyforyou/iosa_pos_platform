@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'login_screen.dart';
 import '../waiter/waiter_home_screen.dart';
+import 'server_setup_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -33,21 +34,36 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   /*
-  |--------------------------------------------------------------------------
-  | Check Authentication
-  |--------------------------------------------------------------------------
-  */
+|--------------------------------------------------------------------------
+| Check Authentication
+|--------------------------------------------------------------------------
+*/
 
   Future<void> checkAuthentication() async {
     final prefs = await SharedPreferences.getInstance();
 
+    final serverUrl = prefs.getString('server_url');
     final token = prefs.getString('auth_token');
 
     /*
-    |--------------------------------------------------------------------------
-    | Token Found
-    |--------------------------------------------------------------------------
-    */
+  |--------------------------------------------------------------------------
+  | No Server Configured
+  |--------------------------------------------------------------------------
+  */
+
+    if (serverUrl == null || serverUrl.isEmpty) {
+      if (!mounted) return;
+
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ServerSetupScreen()));
+
+      return;
+    }
+
+    /*
+  |--------------------------------------------------------------------------
+  | Token Found
+  |--------------------------------------------------------------------------
+  */
 
     if (token != null && token.isNotEmpty) {
       if (!mounted) return;
@@ -58,10 +74,10 @@ class _SplashScreenState extends State<SplashScreen> {
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | No Token Found
-    |--------------------------------------------------------------------------
-    */
+  |--------------------------------------------------------------------------
+  | No Token Found
+  |--------------------------------------------------------------------------
+  */
 
     if (!mounted) return;
 
