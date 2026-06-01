@@ -201,6 +201,25 @@ use App\Http\Controllers\Api\AccountsPayableDashboardController;
                 [ RestaurantOrderController::class, 'processPayment' ]
             );
 
+            Route::patch(
+                'restaurant-orders/{orderId}/request-bill',
+                [ RestaurantOrderController::class, 'requestBill' ]
+            );
+
+            Route::get(
+                'waiter-orders',
+                [ RestaurantOrderController::class, 'waiterOrders' ]
+            );
+            /*
+            |--------------------------------------------------------------------------
+            | Waiter Request Bill
+            |--------------------------------------------------------------------------
+            */
+
+            Route::patch(
+                'restaurant-orders/{orderId}/request-bill',
+                [ RestaurantOrderController::class, 'requestBill' ]
+            );
             /*
             |--------------------------------------------------------------------------
             | POS Dashboard Statistics

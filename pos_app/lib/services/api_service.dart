@@ -1529,4 +1529,68 @@ class ApiService {
 
     throw Exception('Failed to load Profit & Loss report');
   }
+  /*
+  |--------------------------------------------------------------------------
+  | Waiter Mobile Module
+  |--------------------------------------------------------------------------
+  | Functions used by Android waiter devices.
+  | Uses the existing restaurant order infrastructure.
+  */
+
+  /*
+  |--------------------------------------------------------------------------
+  | Get Waiter Orders
+  |--------------------------------------------------------------------------
+  */
+
+  Future<List<dynamic>> getWaiterOrders() async {
+    final response = await http.get(Uri.parse('$baseUrl/waiter-orders'), headers: {'Accept': 'application/json'});
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      return List<dynamic>.from(data['data']);
+    }
+
+    throw Exception('Failed to load waiter orders');
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Request Bill
+  |--------------------------------------------------------------------------
+  */
+
+  Future<Map<String, dynamic>> requestBill({required int orderId}) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/restaurant-orders/$orderId/request-bill'),
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to request bill');
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Waiter Login
+  |--------------------------------------------------------------------------
+  */
+
+  Future<Map<String, dynamic>> waiterLogin({required String email, required String password}) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/mobile/login'),
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
+    );
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Login failed');
+  }
 }

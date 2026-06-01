@@ -35,11 +35,7 @@ class OrderScreen extends StatefulWidget {
   final Map<String, dynamic>? table;
   final String orderType;
 
-  const OrderScreen({
-    super.key,
-    this.table,
-    required this.orderType,
-  });
+  const OrderScreen({super.key, this.table, required this.orderType});
 
   @override
   State<OrderScreen> createState() => _OrderScreenState();
@@ -99,8 +95,7 @@ class _OrderScreenState extends State<OrderScreen> {
   Map<String, dynamic>? selectedCustomer;
 
   final TextEditingController phoneController = TextEditingController();
-  final TextEditingController customerNameController =
-      TextEditingController();
+  final TextEditingController customerNameController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
 
   @override
@@ -164,10 +159,7 @@ class _OrderScreenState extends State<OrderScreen> {
       final categoryData = await apiService.getActiveCategories();
       final productData = await apiService.getProducts();
 
-      Map<String, dynamic> activeOrderData = {
-        'success': false,
-        'order': null,
-      };
+      Map<String, dynamic> activeOrderData = {'success': false, 'order': null};
 
       /*
       |--------------------------------------------------------------------------
@@ -176,16 +168,12 @@ class _OrderScreenState extends State<OrderScreen> {
       */
 
       if (widget.orderType == 'dine_in' && widget.table != null) {
-        activeOrderData = await apiService.getActiveOrderByTable(
-          widget.table!['id'],
-        );
+        activeOrderData = await apiService.getActiveOrderByTable(widget.table!['id']);
       }
 
       final List<Map<String, dynamic>> existingCart = [];
 
-      if (activeOrderData['success'] == true &&
-          activeOrderData['order'] != null &&
-          activeOrderData['order']['items'] != null) {
+      if (activeOrderData['success'] == true && activeOrderData['order'] != null && activeOrderData['order']['items'] != null) {
         activeOrderId = activeOrderData['order']['id'];
 
         /*
@@ -217,10 +205,9 @@ class _OrderScreenState extends State<OrderScreen> {
             'id': item['product_id'],
             'name': item['product_name'],
             'price': toMoneyDouble(item['unit_price']),
-            'quantity': int.parse(
-              item['quantity'].toString().split('.').first,
-            ),
+            'quantity': int.parse(item['quantity'].toString().split('.').first),
             'kitchen_status': item['kitchen_status'],
+            'notes': item['notes'] ?? '',
           });
         }
       }
@@ -252,9 +239,7 @@ class _OrderScreenState extends State<OrderScreen> {
     }
 
     try {
-      final customer = await apiService.searchCustomerByPhone(
-        phoneController.text.trim(),
-      );
+      final customer = await apiService.searchCustomerByPhone(phoneController.text.trim());
 
       if (customer != null) {
         setState(() {
@@ -266,11 +251,7 @@ class _OrderScreenState extends State<OrderScreen> {
 
         if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Existing customer found'),
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Existing customer found')));
       } else {
         setState(() {
           selectedCustomer = null;
@@ -280,11 +261,7 @@ class _OrderScreenState extends State<OrderScreen> {
 
         if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No customer found. Enter details to create new.'),
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No customer found. Enter details to create new.')));
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -306,8 +283,7 @@ class _OrderScreenState extends State<OrderScreen> {
       return selectedCustomer!['id'];
     }
 
-    if (phoneController.text.trim().isEmpty ||
-        customerNameController.text.trim().isEmpty) {
+    if (phoneController.text.trim().isEmpty || customerNameController.text.trim().isEmpty) {
       return null;
     }
 
@@ -333,40 +309,23 @@ class _OrderScreenState extends State<OrderScreen> {
   */
 
   void addToCart(dynamic product) {
-    final price = toMoneyDouble(
-      product['selling_price'] ?? product['price'],
-    );
+    final price = toMoneyDouble(product['selling_price'] ?? product['price']);
 
     setState(() {
-      final existingIndex = cart.indexWhere(
-        (item) => item['id'] == product['id'],
-      );
+      final existingIndex = cart.indexWhere((item) => item['id'] == product['id']);
 
       if (existingIndex >= 0) {
         cart[existingIndex]['quantity'] += 1;
       } else {
-        cart.add({
-          'id': product['id'],
-          'name': product['name'],
-          'price': price,
-          'quantity': 1,
-          'kitchen_status': 'draft',
-        });
+        cart.add({'id': product['id'], 'name': product['name'], 'price': price, 'quantity': 1, 'kitchen_status': 'draft'});
       }
 
-      final newIndex = newItems.indexWhere(
-        (item) => item['id'] == product['id'],
-      );
+      final newIndex = newItems.indexWhere((item) => item['id'] == product['id']);
 
       if (newIndex >= 0) {
         newItems[newIndex]['quantity'] += 1;
       } else {
-        newItems.add({
-          'id': product['id'],
-          'name': product['name'],
-          'price': price,
-          'quantity': 1,
-        });
+        newItems.add({'id': product['id'], 'name': product['name'], 'price': price, 'quantity': 1, 'notes': ''});
       }
     });
 
@@ -381,9 +340,7 @@ class _OrderScreenState extends State<OrderScreen> {
 
   void removeFromCart(int productId) {
     setState(() {
-      final cartIndex = cart.indexWhere(
-        (item) => item['id'] == productId,
-      );
+      final cartIndex = cart.indexWhere((item) => item['id'] == productId);
 
       if (cartIndex >= 0) {
         if (cart[cartIndex]['quantity'] > 1) {
@@ -393,9 +350,7 @@ class _OrderScreenState extends State<OrderScreen> {
         }
       }
 
-      final newItemIndex = newItems.indexWhere(
-        (item) => item['id'] == productId,
-      );
+      final newItemIndex = newItems.indexWhere((item) => item['id'] == productId);
 
       if (newItemIndex >= 0) {
         if (newItems[newItemIndex]['quantity'] > 1) {
@@ -442,24 +397,20 @@ class _OrderScreenState extends State<OrderScreen> {
       final result = await apiService.saveDraftRestaurantOrder(
         restaurantTableId: widget.table?['id'],
         customerId: customerId,
+        //waiterId: currentWaiterId,
         orderType: widget.orderType,
         items: cart,
         notes: null,
       );
 
       activeOrderId = result['order_id'];
-      } catch (e) {
-        debugPrint(e.toString());
+    } catch (e) {
+      debugPrint(e.toString());
 
-        if (!mounted) return;
+      if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+    }
   }
 
   /*
@@ -476,32 +427,19 @@ class _OrderScreenState extends State<OrderScreen> {
         throw Exception('No active order found to send to kitchen.');
       }
 
-      final result = await apiService.sendDraftItemsToKitchen(
-        orderId: activeOrderId!,
-      );
+      final result = await apiService.sendDraftItemsToKitchen(orderId: activeOrderId!);
 
       newItems.clear();
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            result['message'] ?? 'Order sent to kitchen',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Order sent to kitchen')));
 
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
     }
   }
 
@@ -528,10 +466,7 @@ class _OrderScreenState extends State<OrderScreen> {
         decoration: BoxDecoration(
           color: selected ? Colors.orange.shade100 : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected ? Colors.orange : Colors.grey.shade300,
-            width: 1.5,
-          ),
+          border: Border.all(color: selected ? Colors.orange : Colors.grey.shade300, width: 1.5),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -540,24 +475,15 @@ class _OrderScreenState extends State<OrderScreen> {
               height: 45,
               width: 70,
               color: Colors.grey.shade200,
-              child: category['image_url'] != null &&
-                      category['image_url'].toString().isNotEmpty
+              child: category['image_url'] != null && category['image_url'].toString().isNotEmpty
                   ? Image.network(
                       category['image_url'],
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.broken_image,
-                          color: Colors.red,
-                          size: 36,
-                        );
+                        return const Icon(Icons.broken_image, color: Colors.red, size: 36);
                       },
                     )
-                  : const Icon(
-                      Icons.fastfood,
-                      size: 36,
-                      color: Colors.orange,
-                    ),
+                  : const Icon(Icons.fastfood, size: 36, color: Colors.orange),
             ),
             const SizedBox(height: 4),
             Text(
@@ -565,10 +491,7 @@ class _OrderScreenState extends State<OrderScreen> {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ],
         ),
@@ -595,8 +518,7 @@ class _OrderScreenState extends State<OrderScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (product['image_url'] != null &&
-                  product['image_url'].toString().isNotEmpty)
+              if (product['image_url'] != null && product['image_url'].toString().isNotEmpty)
                 SizedBox(
                   height: 90,
                   child: ClipRRect(
@@ -606,39 +528,25 @@ class _OrderScreenState extends State<OrderScreen> {
                       width: double.infinity,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.broken_image,
-                          size: 42,
-                          color: Colors.red,
-                        );
+                        return const Icon(Icons.broken_image, size: 42, color: Colors.red);
                       },
                     ),
                   ),
                 )
               else
-                const Icon(
-                  Icons.fastfood,
-                  size: 42,
-                  color: Colors.blueGrey,
-                ),
+                const Icon(Icons.fastfood, size: 42, color: Colors.blueGrey),
               const SizedBox(height: 12),
               Text(
                 product['name'],
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
                 formatMoney(price),
-                style: const TextStyle(
-                  fontSize: 18,
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontSize: 18, color: Colors.green, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -664,9 +572,7 @@ class _OrderScreenState extends State<OrderScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: Colors.grey.shade300,
-        ),
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
         children: [
@@ -675,37 +581,24 @@ class _OrderScreenState extends State<OrderScreen> {
               Expanded(
                 child: TextField(
                   controller: phoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'Customer Phone',
-                    border: OutlineInputBorder(),
-                  ),
+                  decoration: const InputDecoration(labelText: 'Customer Phone', border: OutlineInputBorder()),
                 ),
               ),
               const SizedBox(width: 10),
-              ElevatedButton.icon(
-                onPressed: searchCustomer,
-                icon: const Icon(Icons.search),
-                label: const Text('Search'),
-              ),
+              ElevatedButton.icon(onPressed: searchCustomer, icon: const Icon(Icons.search), label: const Text('Search')),
             ],
           ),
           const SizedBox(height: 12),
           TextField(
             controller: customerNameController,
-            decoration: const InputDecoration(
-              labelText: 'Customer Name',
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(labelText: 'Customer Name', border: OutlineInputBorder()),
           ),
           if (widget.orderType == 'delivery') ...[
             const SizedBox(height: 12),
             TextField(
               controller: addressController,
               maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: 'Delivery Address',
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(labelText: 'Delivery Address', border: OutlineInputBorder()),
             ),
           ],
         ],
@@ -723,9 +616,7 @@ class _OrderScreenState extends State<OrderScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: Text(screenTitle()),
-      ),
+      appBar: AppBar(title: Text(screenTitle())),
       body: Row(
         children: [
           /*
@@ -733,13 +624,10 @@ class _OrderScreenState extends State<OrderScreen> {
           | Product Area
           |--------------------------------------------------------------------------
           */
-
           Expanded(
             flex: 2,
             child: isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
+                ? const Center(child: CircularProgressIndicator())
                 : Column(
                     children: [
                       customerPanel(),
@@ -749,7 +637,6 @@ class _OrderScreenState extends State<OrderScreen> {
                       | Category Bar
                       |--------------------------------------------------------------------------
                       */
-
                       SizedBox(
                         height: 135,
                         child: ListView(
@@ -761,7 +648,6 @@ class _OrderScreenState extends State<OrderScreen> {
                             | All Categories
                             |--------------------------------------------------------------------------
                             */
-
                             GestureDetector(
                               onTap: () {
                                 setState(() {
@@ -773,33 +659,16 @@ class _OrderScreenState extends State<OrderScreen> {
                                 width: 115,
                                 margin: const EdgeInsets.only(right: 10),
                                 decoration: BoxDecoration(
-                                  color: selectedCategoryId == null
-                                      ? Colors.orange.shade100
-                                      : Colors.white,
+                                  color: selectedCategoryId == null ? Colors.orange.shade100 : Colors.white,
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: selectedCategoryId == null
-                                        ? Colors.orange
-                                        : Colors.grey.shade300,
-                                    width: 1.5,
-                                  ),
+                                  border: Border.all(color: selectedCategoryId == null ? Colors.orange : Colors.grey.shade300, width: 1.5),
                                 ),
                                 child: const Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
-                                      Icons.restaurant_menu,
-                                      size: 38,
-                                      color: Colors.orange,
-                                    ),
+                                    Icon(Icons.restaurant_menu, size: 38, color: Colors.orange),
                                     SizedBox(height: 4),
-                                    Text(
-                                      'All',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
-                                      ),
-                                    ),
+                                    Text('All', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                                   ],
                                 ),
                               ),
@@ -815,13 +684,11 @@ class _OrderScreenState extends State<OrderScreen> {
                       | Product Grid
                       |--------------------------------------------------------------------------
                       */
-
                       Expanded(
                         child: GridView.builder(
                           padding: const EdgeInsets.all(12),
                           itemCount: filteredProducts.length,
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
@@ -843,7 +710,6 @@ class _OrderScreenState extends State<OrderScreen> {
           | Cart Panel
           |--------------------------------------------------------------------------
           */
-
           Container(
             width: 330,
             color: Colors.grey.shade100,
@@ -855,10 +721,7 @@ class _OrderScreenState extends State<OrderScreen> {
                   color: Colors.blueGrey,
                   child: Text(
                     'Current Order',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
 
@@ -867,55 +730,123 @@ class _OrderScreenState extends State<OrderScreen> {
                 | Cart Items
                 |--------------------------------------------------------------------------
                 */
-
                 Expanded(
                   child: cart.isEmpty
-                      ? const Center(
-                          child: Text('No items added'),
-                        )
+                      ? const Center(child: Text('No items added'))
                       : ListView.builder(
                           itemCount: cart.length,
                           itemBuilder: (context, index) {
                             final item = cart[index];
 
-                            final isNewItem = newItems.any(
-                              (newItem) => newItem['id'] == item['id'],
-                            );
+                            final isNewItem = newItems.any((newItem) => newItem['id'] == item['id']);
 
-                            final lineTotal = toMoneyDouble(item['quantity']) *
-                                toMoneyDouble(item['price']);
+                            final lineTotal = toMoneyDouble(item['quantity']) * toMoneyDouble(item['price']);
 
-                            return ListTile(
-                              title: Text(item['name']),
-                              subtitle: Text(
-                                '${item['quantity']} × ${formatMoney(item['price'])}',
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    formatMoney(lineTotal),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  if (isNewItem)
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.remove_circle,
-                                        color: Colors.red,
+                            return Card(
+                              margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                              child: Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    /*
+                                    |--------------------------------------------------------------------------
+                                    | Item Name
+                                    |--------------------------------------------------------------------------
+                                    */
+                                    Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+
+                                    const SizedBox(height: 4),
+
+                                    /*
+                                    |--------------------------------------------------------------------------
+                                    | Quantity And Price
+                                    |--------------------------------------------------------------------------
+                                    */
+                                    Text('${item['quantity']} × ${formatMoney(item['price'])}'),
+
+                                    /*
+                                    |--------------------------------------------------------------------------
+                                    | Kitchen Notes
+                                    |--------------------------------------------------------------------------
+                                    */
+                                    if ((item['notes'] ?? '').toString().isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Text(
+                                          'Note: ${item['notes']}',
+                                          style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.orange),
+                                        ),
                                       ),
-                                      onPressed: () {
-                                        removeFromCart(item['id']);
-                                      },
-                                    )
-                                  else
-                                    const Icon(
-                                      Icons.lock,
-                                      color: Colors.grey,
+
+                                    const SizedBox(height: 8),
+
+                                    /*
+                                    |--------------------------------------------------------------------------
+                                    | Actions
+                                    |--------------------------------------------------------------------------
+                                    */
+                                    Row(
+                                      children: [
+                                        /*
+                                        |--------------------------------------------------------------------------
+                                        | Notes Button
+                                        |--------------------------------------------------------------------------
+                                        */
+                                        TextButton.icon(
+                                          onPressed: () async {
+                                            final controller = TextEditingController(text: item['notes'] ?? '');
+
+                                            final result = await showDialog<String>(
+                                              context: context,
+                                              builder: (_) => AlertDialog(
+                                                title: const Text('Kitchen Instructions'),
+                                                content: TextField(
+                                                  controller: controller,
+                                                  maxLines: 3,
+                                                  decoration: const InputDecoration(hintText: 'No chilli, extra cheese, less salt...'),
+                                                ),
+                                                actions: [
+                                                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                                                  ElevatedButton(
+                                                    onPressed: () {
+                                                      Navigator.pop(context, controller.text);
+                                                    },
+                                                    child: const Text('Save'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+
+                                            if (result != null) {
+                                              setState(() {
+                                                item['notes'] = result;
+                                              });
+                                            }
+                                          },
+                                          icon: const Icon(Icons.edit_note),
+                                          label: const Text('Notes'),
+                                        ),
+
+                                        const Spacer(),
+
+                                        Text(formatMoney(lineTotal), style: const TextStyle(fontWeight: FontWeight.bold)),
+
+                                        const SizedBox(width: 8),
+
+                                        if (isNewItem)
+                                          IconButton(
+                                            icon: const Icon(Icons.remove_circle, color: Colors.red),
+                                            onPressed: () {
+                                              removeFromCart(item['id']);
+                                            },
+                                          )
+                                        else
+                                          const Icon(Icons.lock, color: Colors.grey),
+                                      ],
                                     ),
-                                ],
+                                  ],
+                                ),
                               ),
                             );
                           },
@@ -927,7 +858,6 @@ class _OrderScreenState extends State<OrderScreen> {
                 | Total And Send Button
                 |--------------------------------------------------------------------------
                 */
-
                 Container(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -935,20 +865,10 @@ class _OrderScreenState extends State<OrderScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Total',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          const Text('Total', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                           Text(
                             formatMoney(totalAmount),
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
+                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green),
                           ),
                         ],
                       ),
@@ -960,6 +880,38 @@ class _OrderScreenState extends State<OrderScreen> {
                           onPressed: cart.isEmpty ? null : sendOrderToKitchen,
                           icon: const Icon(Icons.send),
                           label: const Text('Send to Kitchen'),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      /*
+                      |--------------------------------------------------------------------------
+                      | Request Bill Button
+                      |--------------------------------------------------------------------------
+                      | Allows the waiter to notify the cashier that the customer wants the bill.
+                      | Enabled only when an active order already exists.
+                      */
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: OutlinedButton.icon(
+                          onPressed: activeOrderId == null
+                              ? null
+                              : () async {
+                                  try {
+                                    await apiService.requestBill(orderId: activeOrderId!);
+
+                                    if (!mounted) return;
+
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bill requested successfully')));
+                                  } catch (e) {
+                                    if (!mounted) return;
+
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                                  }
+                                },
+                          icon: const Icon(Icons.receipt_long),
+                          label: const Text('Request Bill'),
                         ),
                       ),
                     ],

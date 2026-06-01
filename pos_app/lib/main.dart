@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'package:window_manager/window_manager.dart';
+import 'screens/waiter/waiter_home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +28,7 @@ class IOSAPOSApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(colorSchemeSeed: Colors.blueGrey, useMaterial3: true),
       home: const HomeScreen(),
+      //home: const WaiterHomeScreen(),
     );
   }
 }

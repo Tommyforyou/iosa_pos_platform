@@ -46,6 +46,7 @@ class RestaurantOrderController extends Controller
             'items.*.quantity' => ['required', 'numeric', 'min:1'],
             'items.*.price' => ['required', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string'],
+            'waiter_id' => ['nullable', 'exists:users,id'],
         ]);
 
         /*
@@ -90,6 +91,7 @@ class RestaurantOrderController extends Controller
                     'order_type' => $validated['order_type'],
                     'status' => 'sent_to_kitchen',
                     'notes' => $validated['notes'] ?? null,
+                    'waiter_id' => $validated['waiter_id'] ?? null,
                 ]);
             } else {
                 /*
@@ -100,6 +102,7 @@ class RestaurantOrderController extends Controller
                 */
                 $order->update([
                     'status' => 'sent_to_kitchen',
+                    'waiter_id' => $validated['waiter_id'] ?? $order->waiter_id,
                 ]);
             }
 
@@ -117,6 +120,8 @@ class RestaurantOrderController extends Controller
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['price'],
                     'kitchen_status' => 'pending',
+                    'waiter_id' => $validated['waiter_id'] ?? null,
+                    'notes' => $item['notes'] ?? null,
                 ]);
             }
 
@@ -858,10 +863,19 @@ class RestaurantOrderController extends Controller
             'items.*.name' => ['required', 'string'],
             'items.*.quantity' => ['required', 'numeric', 'min:1'],
             'items.*.price' => ['required', 'numeric', 'min:0'],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Kitchen Item Notes
+            |--------------------------------------------------------------------------
+            */
+
+            'items.*.notes' => ['nullable', 'string'],
+
             'notes' => ['nullable', 'string'],
             'customer_id' => ['nullable', 'exists:customers,id'],
+            'waiter_id' => ['nullable', 'exists:users,id'],
         ]);
-
         DB::beginTransaction();
 
         try {
@@ -900,6 +914,8 @@ class RestaurantOrderController extends Controller
                     'status' => 'open',
                     'notes' => $validated['notes'] ?? null,
                     'customer_id' => $validated['customer_id'] ?? null,
+                    'waiter_id' => $validated['waiter_id'] ?? null,
+                    'notes' => $item['notes'] ?? null,
                 ]);
             }
 
@@ -927,6 +943,7 @@ class RestaurantOrderController extends Controller
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['price'],
                     'kitchen_status' => 'draft',
+                    'notes' => $item['notes'] ?? null,
                 ]);
             }
 
@@ -1107,6 +1124,7 @@ class RestaurantOrderController extends Controller
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['price'],
                     'kitchen_status' => 'pending',
+                    'notes' => $item['notes'] ?? null,
                 ]);
             }
             /*
@@ -1281,10 +1299,122 @@ private function olddeductStockForOrder(RestaurantOrder $order): void
                 'before_quantity' => $beforeQuantity,
                 'after_quantity' => $afterQuantity,
                 'remarks' =>
-                    'Stock deducted from restaurant order ' .
-                    $order->order_number,
+                'Stock deducted from restaurant order ' .
+                $order->order_number,
             ]);
         }
     }
-}    
+}  
+
+/**
+ * --------------------------------------------------------------------------
+ * Request Bill
+ * --------------------------------------------------------------------------
+ * Called by waiter mobile application when customer requests the bill.
+ * Records the request timestamp and the waiter responsible.
+ */
+public function requestBill($orderId)
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Retrieve Order
+    |--------------------------------------------------------------------------
+    */
+
+    $order = RestaurantOrder::findOrFail($orderId);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mark Bill As Requested
+    |--------------------------------------------------------------------------
+    */
+
+    $order->update([
+        'bill_requested_at' => now(),
+        'bill_requested_by' => auth()->id(), // Future mobile login
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Return Success Response
+    |--------------------------------------------------------------------------
+    */
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Bill request submitted successfully.',
+    ]);
+}
+
+/**
+ * --------------------------------------------------------------------------
+ * Waiter Active Orders
+ * --------------------------------------------------------------------------
+ * Returns all active restaurant orders that are still being processed.
+ * Used by the waiter mobile application to monitor order progress.
+ *
+ * Included Relationships:
+ * - Table Information
+ * - Order Items
+ * - Product Details
+ * - Assigned Waiter
+ */
+public function waiterOrders()
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Retrieve Waiter's Active Orders
+    |--------------------------------------------------------------------------
+    */
+
+    $orders = RestaurantOrder::with([
+        'table',
+        'items.product',
+        'waiter'
+    ])
+    //->where('waiter_id', auth()->id())
+    ->whereNotNull('restaurant_table_id')
+    ->whereIn('status', [
+        'open',
+        'preparing',
+        'ready',
+    ])
+    ->latest()
+    ->get();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Return JSON Response
+    |--------------------------------------------------------------------------
+    */
+
+    return response()->json([
+        'success' => true,
+        'data' => $orders,
+    ]);
+}
+
+
+/**
+ * --------------------------------------------------------------------------
+ * Get Pending Bill Requests
+ * --------------------------------------------------------------------------
+ */
+public function pendingBillRequests()
+{
+    $orders = RestaurantOrder::with([
+        'table',
+        'waiter'
+    ])
+    ->whereNotNull('bill_requested_at')
+    ->where('status', 'open')
+    ->latest('bill_requested_at')
+    ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => $orders,
+    ]);
+}
+
 }
