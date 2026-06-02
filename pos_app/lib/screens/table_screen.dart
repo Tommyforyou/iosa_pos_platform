@@ -185,7 +185,7 @@ class _TableScreenState extends State<TableScreen> {
           : tables.isEmpty
           ? const Center(child: Text('No restaurant tables found', style: TextStyle(fontSize: 22)))
           : GridView.builder(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(6),
               itemCount: tables.length,
 
               /*
@@ -198,7 +198,7 @@ class _TableScreenState extends State<TableScreen> {
                 crossAxisCount: MediaQuery.of(context).size.width > 700 ? 4 : 2,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                childAspectRatio: MediaQuery.of(context).size.width > 700 ? 1.1 : 1.25,
+                childAspectRatio: MediaQuery.of(context).size.width > 700 ? 1.1 : 2.1,
               ),
 
               itemBuilder: (context, index) {
@@ -223,7 +223,7 @@ class _TableScreenState extends State<TableScreen> {
                       decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: tableColor(status)),
 
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(6),
 
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -234,7 +234,7 @@ class _TableScreenState extends State<TableScreen> {
                                 | Table Icon
                                 |--------------------------------------------------------------------------
                                 */
-                            const Icon(Icons.table_restaurant, size: 34, color: Colors.white),
+                            const Icon(Icons.table_restaurant, size: 28, color: Colors.white),
 
                             const SizedBox(height: 8),
 
@@ -246,10 +246,10 @@ class _TableScreenState extends State<TableScreen> {
                             Text(
                               table['table_name'] ?? 'Table',
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                             ),
 
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 4),
 
                             /*
                                 |--------------------------------------------------------------------------
@@ -257,7 +257,7 @@ class _TableScreenState extends State<TableScreen> {
                                 |--------------------------------------------------------------------------
                                 */
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
 
                               decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
 
@@ -267,7 +267,7 @@ class _TableScreenState extends State<TableScreen> {
                               ),
                             ),
 
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 4),
 
                             /*
                                 |--------------------------------------------------------------------------

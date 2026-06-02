@@ -92,7 +92,7 @@ class HomeScreen extends StatelessWidget {
                   title: 'Server QR',
                   subtitle: 'Connect waiter phones',
                   icon: Icons.qr_code_2,
-                  onTap: () => openScreen(context, const ServerQrScreen(serverUrl: 'http://192.168.100.3:8000')),
+                  onTap: () => openScreen(context, const ServerQrScreen()),
                 ),
 
                 /*

@@ -300,23 +300,17 @@ class ApiService {
 */
 
   Future<List<dynamic>> getProducts({String? search}) async {
-    //final baseUrl = await getBaseUrl();
-    //final response = await http.get(Uri.parse('$baseUrl/products'), headers: {'Accept': 'application/json'});
+    final url = await apiUrl(search != null && search.isNotEmpty ? 'products?search=$search' : 'products');
 
-    final response = await http.get(Uri.parse(await apiUrl('products')));
-    //final uri = Uri.parse('$baseUrl/products').replace(queryParameters: {if (search != null && search.isNotEmpty) 'search': search});
+    debugPrint('PRODUCTS URL: $url');
 
-    //final response = await http.get(uri, headers: {'Accept': 'application/json'});
+    final response = await http.get(Uri.parse(url), headers: {'Accept': 'application/json'});
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
 
-    throw Exception(
-      'Failed to load products. '
-      'Status: ${response.statusCode}. '
-      'Body: ${response.body}',
-    );
+    throw Exception('Failed to load products. Status: ${response.statusCode}. Body: ${response.body}');
   }
 
   /*
@@ -931,19 +925,27 @@ class ApiService {
   }
 
   /*
-  |--------------------------------------------------------------------------
-  | Load Active Order By Table
-  |--------------------------------------------------------------------------
-  | Used when a waiter reopens an occupied table.
-  */
+|--------------------------------------------------------------------------
+| Get Active Order By Table
+|--------------------------------------------------------------------------
+*/
+
   Future<Map<String, dynamic>> getActiveOrderByTable(int tableId) async {
-    final response = await http.get(Uri.parse('$baseUrl/restaurant-tables/$tableId/active-order'));
+    final url = await apiUrl('restaurant-tables/$tableId/active-order');
+
+    debugPrint('ACTIVE ORDER URL: $url');
+
+    final response = await http.get(Uri.parse(url), headers: await authHeaders());
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return Map<String, dynamic>.from(jsonDecode(response.body));
     }
 
-    throw Exception('Failed to load active order');
+    throw Exception(
+      'Failed to load active order. '
+      'Status: ${response.statusCode}. '
+      'Body: ${response.body}',
+    );
   }
 
   /*
@@ -1140,12 +1142,13 @@ class ApiService {
   }
 
   /*
-  |--------------------------------------------------------------------------
-  | Save Draft Restaurant Order
-  |--------------------------------------------------------------------------
-  | Saves current cart as draft so items do not disappear if user leaves
-  | before sending to kitchen.
-  */
+|--------------------------------------------------------------------------
+| Save Draft Restaurant Order
+|--------------------------------------------------------------------------
+| Saves current cart as draft so items do not disappear if user leaves
+| before sending to kitchen.
+*/
+
   Future<Map<String, dynamic>> saveDraftRestaurantOrder({
     int? customerId,
     int? restaurantTableId,
@@ -1153,8 +1156,12 @@ class ApiService {
     required List<Map<String, dynamic>> items,
     String? notes,
   }) async {
+    final url = await apiUrl('restaurant-orders/draft');
+
+    debugPrint('SAVE DRAFT URL: $url');
+
     final response = await http.post(
-      Uri.parse('$baseUrl/restaurant-orders/draft'),
+      Uri.parse(url),
       headers: await authHeaders(),
       body: jsonEncode({
         'restaurant_table_id': restaurantTableId,
@@ -1166,26 +1173,39 @@ class ApiService {
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return jsonDecode(response.body);
+      return Map<String, dynamic>.from(jsonDecode(response.body));
     }
 
-    throw Exception('Failed to save draft order: ${response.body}');
+    throw Exception(
+      'Failed to save draft order. '
+      'Status: ${response.statusCode}. '
+      'Body: ${response.body}',
+    );
   }
 
   /*
-  |--------------------------------------------------------------------------
-  | Send Draft Items To Kitchen
-  |--------------------------------------------------------------------------
-  | Converts saved draft items into pending kitchen items.
-  */
+|--------------------------------------------------------------------------
+| Send Draft Items To Kitchen
+|--------------------------------------------------------------------------
+| Converts saved draft items into pending kitchen items.
+*/
+
   Future<Map<String, dynamic>> sendDraftItemsToKitchen({required int orderId}) async {
-    final response = await http.patch(Uri.parse('$baseUrl/restaurant-orders/$orderId/send-to-kitchen'), headers: await authHeaders());
+    final url = await apiUrl('restaurant-orders/$orderId/send-to-kitchen');
+
+    debugPrint('SEND TO KITCHEN URL: $url');
+
+    final response = await http.patch(Uri.parse(url), headers: await authHeaders());
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return Map<String, dynamic>.from(jsonDecode(response.body));
     }
 
-    throw Exception('Failed to send draft items to kitchen: ${response.body}');
+    throw Exception(
+      'Failed to send draft items to kitchen. '
+      'Status: ${response.statusCode}. '
+      'Body: ${response.body}',
+    );
   }
 
   /*
@@ -1325,22 +1345,23 @@ class ApiService {
   }
 
   /*
-  |--------------------------------------------------------------------------
-  | Load Active Categories
-  |--------------------------------------------------------------------------
-  | Used by POS ordering screens.
-  | Back Office uses getCategories() to show all categories.
-  */
+|--------------------------------------------------------------------------
+| Get Active Categories
+|--------------------------------------------------------------------------
+*/
+
   Future<List<dynamic>> getActiveCategories() async {
-    final baseUrl = await getBaseUrl();
-    final response = await http.get(Uri.parse('$baseUrl/active-categories'), headers: {'Accept': 'application/json'});
-    //final response = await http.get(Uri.parse('$baseUrl/active-categories'));
+    final url = await apiUrl('categories');
+
+    debugPrint('CATEGORIES URL: $url');
+
+    final response = await http.get(Uri.parse(url), headers: {'Accept': 'application/json'});
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
 
-    throw Exception('Failed to load active categories');
+    throw Exception('Failed to load categories. Status: ${response.statusCode}. Body: ${response.body}');
   }
 
   /*
@@ -1590,19 +1611,27 @@ class ApiService {
     );
   }
   /*
-  |--------------------------------------------------------------------------
-  | Request Bill
-  |--------------------------------------------------------------------------
-  */
+|--------------------------------------------------------------------------
+| Request Bill
+|--------------------------------------------------------------------------
+*/
 
   Future<Map<String, dynamic>> requestBill({required int orderId}) async {
-    final response = await http.patch(Uri.parse('$baseUrl/restaurant-orders/$orderId/request-bill'), headers: await authHeaders());
+    final url = await apiUrl('restaurant-orders/$orderId/request-bill');
+
+    debugPrint('REQUEST BILL URL: $url');
+
+    final response = await http.patch(Uri.parse(url), headers: await authHeaders());
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
     }
 
-    throw Exception('Failed to request bill');
+    throw Exception(
+      'Failed to request bill. '
+      'Status: ${response.statusCode}. '
+      'Body: ${response.body}',
+    );
   }
 
   /*

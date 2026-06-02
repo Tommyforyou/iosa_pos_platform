@@ -62,6 +62,7 @@ class _WaiterHomeScreenState extends State<WaiterHomeScreen> {
 
         child: GridView.count(
           crossAxisCount: 2,
+          childAspectRatio: 1.25,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
 
@@ -73,7 +74,7 @@ class _WaiterHomeScreenState extends State<WaiterHomeScreen> {
             */
             _WaiterCard(
               title: 'Tables',
-              subtitle: 'Take customer orders',
+              subtitle: 'Take orders',
               icon: Icons.table_restaurant,
               onTap: () => openScreen(context, const TableScreen()),
             ),
@@ -153,21 +154,21 @@ class _WaiterCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
 
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(10),
 
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
 
             children: [
-              Icon(icon, size: 60),
+              Icon(icon, size: 36),
 
               const SizedBox(height: 12),
 
-              Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
 
               const SizedBox(height: 8),
 
-              Text(subtitle, textAlign: TextAlign.center),
+              Text(subtitle, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12)),
             ],
           ),
         ),

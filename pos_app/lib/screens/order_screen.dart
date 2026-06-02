@@ -1,117 +1,55 @@
 import 'package:flutter/material.dart';
-
 import '../services/api_service.dart';
-import '../utils/money.dart';
 
 /*
 |--------------------------------------------------------------------------
-| Order Screen
+| Restaurant Order Screen
 |--------------------------------------------------------------------------
-| Used for:
-| - dine-in table orders
-| - takeaway orders
-| - delivery orders
+| Responsive waiter/cashier order screen.
 |
-| Responsibilities:
-| - load active categories
-| - load products
-| - show visual category cards
-| - show product image cards
-| - manage order cart
-| - save draft orders
-| - reopen existing table draft/order
-| - send draft items to kitchen
-| - capture customer details for takeaway/delivery
+| Desktop:
+| - Products on left
+| - Cart on right
+|
+| Mobile:
+| - Products on top
+| - Compact cart at bottom
 */
 
 class OrderScreen extends StatefulWidget {
-  /*
-  |--------------------------------------------------------------------------
-  | Order Context
-  |--------------------------------------------------------------------------
-  | table is used only for dine-in orders.
-  */
-
   final Map<String, dynamic>? table;
   final String orderType;
 
-  const OrderScreen({super.key, this.table, required this.orderType});
+  const OrderScreen({super.key, this.table, this.orderType = 'dine_in'});
 
   @override
   State<OrderScreen> createState() => _OrderScreenState();
 }
 
 class _OrderScreenState extends State<OrderScreen> {
-  /*
-  |--------------------------------------------------------------------------
-  | API Service
-  |--------------------------------------------------------------------------
-  */
-
   final ApiService apiService = ApiService();
 
-  /*
-  |--------------------------------------------------------------------------
-  | Data Collections
-  |--------------------------------------------------------------------------
-  */
+  bool isLoading = true;
+
+  int? activeOrderId;
+  int? selectedCategoryId;
 
   List<dynamic> categories = [];
   List<dynamic> products = [];
-
-  /*
-  |--------------------------------------------------------------------------
-  | Cart State
-  |--------------------------------------------------------------------------
-  */
 
   List<Map<String, dynamic>> cart = [];
   List<Map<String, dynamic>> newItems = [];
 
   /*
   |--------------------------------------------------------------------------
-  | Active Order
+  | Initial Load
   |--------------------------------------------------------------------------
   */
-
-  int? activeOrderId;
-
-  /*
-  |--------------------------------------------------------------------------
-  | UI State
-  |--------------------------------------------------------------------------
-  */
-
-  bool isLoading = true;
-  int? selectedCategoryId;
-
-  /*
-  |--------------------------------------------------------------------------
-  | Customer Information
-  |--------------------------------------------------------------------------
-  | Used for takeaway and delivery orders.
-  */
-
-  Map<String, dynamic>? selectedCustomer;
-
-  final TextEditingController phoneController = TextEditingController();
-  final TextEditingController customerNameController = TextEditingController();
-  final TextEditingController addressController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-
     loadInitialData();
-  }
-
-  @override
-  void dispose() {
-    phoneController.dispose();
-    customerNameController.dispose();
-    addressController.dispose();
-
-    super.dispose();
   }
 
   /*
@@ -121,15 +59,58 @@ class _OrderScreenState extends State<OrderScreen> {
   */
 
   String screenTitle() {
-    if (widget.orderType == 'dine_in') {
-      return 'Order - ${widget.table!['table_name']}';
+    if (widget.orderType == 'dine_in' && widget.table != null) {
+      return widget.table!['table_name'] ?? 'Table Order';
     }
 
     if (widget.orderType == 'takeaway') {
       return 'Takeaway Order';
     }
 
-    return 'Delivery Order';
+    if (widget.orderType == 'delivery') {
+      return 'Delivery Order';
+    }
+
+    return 'Restaurant Order';
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Money Helpers
+  |--------------------------------------------------------------------------
+  */
+
+  double toMoneyDouble(dynamic value) {
+    if (value == null) return 0.0;
+
+    if (value is int) return value.toDouble();
+
+    if (value is double) return value;
+
+    return double.tryParse(value.toString()) ?? 0.0;
+  }
+
+  String formatMoney(dynamic value) {
+    return 'Rs ${toMoneyDouble(value).toStringAsFixed(2)}';
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Total Amount
+  |--------------------------------------------------------------------------
+  */
+
+  double get totalAmount {
+    double total = 0.0;
+
+    for (final item in cart) {
+      final qty = toMoneyDouble(item['quantity']);
+      final price = toMoneyDouble(item['price']);
+
+      total += qty * price;
+    }
+
+    return total;
   }
 
   /*
@@ -163,7 +144,7 @@ class _OrderScreenState extends State<OrderScreen> {
 
       /*
       |--------------------------------------------------------------------------
-      | Load Existing Dine-In Order
+      | Load Existing Table Order
       |--------------------------------------------------------------------------
       */
 
@@ -175,26 +156,6 @@ class _OrderScreenState extends State<OrderScreen> {
 
       if (activeOrderData['success'] == true && activeOrderData['order'] != null && activeOrderData['order']['items'] != null) {
         activeOrderId = activeOrderData['order']['id'];
-
-        /*
-        |--------------------------------------------------------------------------
-        | Existing Customer
-        |--------------------------------------------------------------------------
-        */
-
-        if (activeOrderData['order']['customer'] != null) {
-          selectedCustomer = activeOrderData['order']['customer'];
-
-          phoneController.text = selectedCustomer?['phone'] ?? '';
-          customerNameController.text = selectedCustomer?['name'] ?? '';
-          addressController.text = selectedCustomer?['address'] ?? '';
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Existing Order Items
-        |--------------------------------------------------------------------------
-        */
 
         for (final item in activeOrderData['order']['items']) {
           if (item['is_voided'] == true) {
@@ -221,92 +182,21 @@ class _OrderScreenState extends State<OrderScreen> {
     } catch (e) {
       debugPrint(e.toString());
 
+      if (!mounted) return;
+
       setState(() {
         isLoading = false;
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
     }
   }
 
   /*
   |--------------------------------------------------------------------------
-  | Search Customer By Phone
+  | Add Product To Cart
   |--------------------------------------------------------------------------
   */
-
-  Future<void> searchCustomer() async {
-    if (phoneController.text.trim().isEmpty) {
-      return;
-    }
-
-    try {
-      final customer = await apiService.searchCustomerByPhone(phoneController.text.trim());
-
-      if (customer != null) {
-        setState(() {
-          selectedCustomer = customer;
-
-          customerNameController.text = customer['name'] ?? '';
-          addressController.text = customer['address'] ?? '';
-        });
-
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Existing customer found')));
-      } else {
-        setState(() {
-          selectedCustomer = null;
-          customerNameController.clear();
-          addressController.clear();
-        });
-
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No customer found. Enter details to create new.')));
-      }
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Create Customer If Needed
-  |--------------------------------------------------------------------------
-  */
-
-  Future<int?> ensureCustomerExists() async {
-    if (widget.orderType == 'dine_in') {
-      return null;
-    }
-
-    if (selectedCustomer != null) {
-      return selectedCustomer!['id'];
-    }
-
-    if (phoneController.text.trim().isEmpty || customerNameController.text.trim().isEmpty) {
-      return null;
-    }
-
-    final result = await apiService.createCustomer(
-      name: customerNameController.text.trim(),
-      phone: phoneController.text.trim(),
-      address: addressController.text.trim(),
-    );
-
-    final customer = result['customer'];
-
-    setState(() {
-      selectedCustomer = customer;
-    });
-
-    return customer['id'];
-  }
-
-  /*
-|--------------------------------------------------------------------------
-| Add Product To Cart
-|--------------------------------------------------------------------------
-*/
 
   void addToCart(dynamic product) {
     final price = toMoneyDouble(product['selling_price'] ?? product['price']);
@@ -334,50 +224,17 @@ class _OrderScreenState extends State<OrderScreen> {
 
   /*
   |--------------------------------------------------------------------------
-  | Remove Item From Cart
+  | Remove From Cart
   |--------------------------------------------------------------------------
   */
 
   void removeFromCart(int productId) {
     setState(() {
-      final cartIndex = cart.indexWhere((item) => item['id'] == productId);
-
-      if (cartIndex >= 0) {
-        if (cart[cartIndex]['quantity'] > 1) {
-          cart[cartIndex]['quantity'] -= 1;
-        } else {
-          cart.removeAt(cartIndex);
-        }
-      }
-
-      final newItemIndex = newItems.indexWhere((item) => item['id'] == productId);
-
-      if (newItemIndex >= 0) {
-        if (newItems[newItemIndex]['quantity'] > 1) {
-          newItems[newItemIndex]['quantity'] -= 1;
-        } else {
-          newItems.removeAt(newItemIndex);
-        }
-      }
+      cart.removeWhere((item) => item['id'] == productId);
+      newItems.removeWhere((item) => item['id'] == productId);
     });
 
     saveDraft();
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Total Amount
-  |--------------------------------------------------------------------------
-  */
-
-  double get totalAmount {
-    double total = 0;
-
-    for (final item in cart) {
-      total += toMoneyDouble(item['price']) * toMoneyDouble(item['quantity']);
-    }
-
-    return total;
   }
 
   /*
@@ -387,29 +244,21 @@ class _OrderScreenState extends State<OrderScreen> {
   */
 
   Future<void> saveDraft() async {
-    if (cart.isEmpty) {
-      return;
-    }
+    if (cart.isEmpty) return;
 
     try {
-      final customerId = await ensureCustomerExists();
-
       final result = await apiService.saveDraftRestaurantOrder(
         restaurantTableId: widget.table?['id'],
-        customerId: customerId,
-        //waiterId: currentWaiterId,
         orderType: widget.orderType,
         items: cart,
         notes: null,
       );
 
-      activeOrderId = result['order_id'];
+      if (result['success'] == true && result['order'] != null) {
+        activeOrderId = result['order']['id'];
+      }
     } catch (e) {
       debugPrint(e.toString());
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
     }
   }
 
@@ -420,22 +269,68 @@ class _OrderScreenState extends State<OrderScreen> {
   */
 
   Future<void> sendOrderToKitchen() async {
-    try {
+    if (activeOrderId == null) {
       await saveDraft();
+    }
 
-      if (activeOrderId == null) {
-        throw Exception('No active order found to send to kitchen.');
-      }
+    if (activeOrderId == null) {
+      return;
+    }
 
-      final result = await apiService.sendDraftItemsToKitchen(orderId: activeOrderId!);
+    try {
+      /*
+      |--------------------------------------------------------------------------
+      | Send Draft Items To Kitchen
+      |--------------------------------------------------------------------------
+      | If your ApiService method name is different, rename this call only.
+      */
 
-      newItems.clear();
+      await apiService.sendDraftItemsToKitchen(orderId: activeOrderId!);
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'] ?? 'Order sent to kitchen')));
+      await showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Order Sent'),
+          content: const Text('The order has been sent to the kitchen.'),
+          actions: [ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+        ),
+      );
 
-      Navigator.pop(context);
+      setState(() {
+        newItems.clear();
+
+        for (final item in cart) {
+          if (item['kitchen_status'] == 'draft') {
+            item['kitchen_status'] = 'pending';
+          }
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Request Bill
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> requestBill() async {
+    if (activeOrderId == null) {
+      return;
+    }
+
+    try {
+      await apiService.requestBill(orderId: activeOrderId!);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bill requested successfully')));
     } catch (e) {
       if (!mounted) return;
 
@@ -450,7 +345,7 @@ class _OrderScreenState extends State<OrderScreen> {
   */
 
   Widget categoryCard(dynamic category) {
-    final selected = selectedCategoryId == category['id'];
+    final isSelected = selectedCategoryId == category['id'];
 
     return GestureDetector(
       onTap: () {
@@ -459,39 +354,28 @@ class _OrderScreenState extends State<OrderScreen> {
         });
       },
       child: Container(
-        height: 120,
-        width: 125,
+        height: 60,
+        width: 70,
         margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: selected ? Colors.orange.shade100 : Colors.white,
+          color: isSelected ? Colors.orange.shade100 : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: selected ? Colors.orange : Colors.grey.shade300, width: 1.5),
+          border: Border.all(color: isSelected ? Colors.orange : Colors.grey.shade300, width: 1.5),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              height: 45,
-              width: 70,
-              color: Colors.grey.shade200,
-              child: category['image_url'] != null && category['image_url'].toString().isNotEmpty
-                  ? Image.network(
-                      category['image_url'],
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(Icons.broken_image, color: Colors.red, size: 36);
-                      },
-                    )
-                  : const Icon(Icons.fastfood, size: 36, color: Colors.orange),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              category['name'],
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            const Icon(Icons.fastfood, size: 18, color: Colors.orange),
+            const SizedBox(height: 5),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 5),
+              child: Text(
+                category['name'] ?? 'Category',
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
+              ),
             ),
           ],
         ),
@@ -511,42 +395,26 @@ class _OrderScreenState extends State<OrderScreen> {
     return Card(
       elevation: 3,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
         onTap: () => addToCart(product),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(10),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (product['image_url'] != null && product['image_url'].toString().isNotEmpty)
-                SizedBox(
-                  height: 90,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      product['image_url'],
-                      width: double.infinity,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(Icons.broken_image, size: 42, color: Colors.red);
-                      },
-                    ),
-                  ),
-                )
-              else
-                const Icon(Icons.fastfood, size: 42, color: Colors.blueGrey),
-              const SizedBox(height: 12),
+              const Icon(Icons.restaurant, size: 14, color: Colors.blueGrey),
+              const SizedBox(height: 4),
               Text(
-                product['name'],
+                product['name'] ?? 'Product',
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 2),
               Text(
                 formatMoney(price),
-                style: const TextStyle(fontSize: 18, color: Colors.green, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -557,50 +425,278 @@ class _OrderScreenState extends State<OrderScreen> {
 
   /*
   |--------------------------------------------------------------------------
-  | Customer Panel
+  | Product Area
   |--------------------------------------------------------------------------
   */
 
-  Widget customerPanel() {
-    if (widget.orderType == 'dine_in') {
-      return const SizedBox.shrink();
+  Widget productArea(bool isMobile) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    return Container(
-      margin: const EdgeInsets.all(12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Column(
-        children: [
-          Row(
+    return Column(
+      children: [
+        /*
+        |--------------------------------------------------------------------------
+        | Category Bar
+        |--------------------------------------------------------------------------
+        */
+        SizedBox(
+          height: isMobile ? 70 : 125,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.all(8),
             children: [
-              Expanded(
-                child: TextField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(labelText: 'Customer Phone', border: OutlineInputBorder()),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedCategoryId = null;
+                  });
+                },
+                child: Container(
+                  height: 100,
+                  width: 100,
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: selectedCategoryId == null ? Colors.orange.shade100 : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: selectedCategoryId == null ? Colors.orange : Colors.grey.shade300, width: 1.5),
+                  ),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.restaurant_menu, size: 30, color: Colors.orange),
+                      SizedBox(height: 5),
+                      Text('All', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(width: 10),
-              ElevatedButton.icon(onPressed: searchCustomer, icon: const Icon(Icons.search), label: const Text('Search')),
+              ...categories.map(categoryCard),
             ],
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: customerNameController,
-            decoration: const InputDecoration(labelText: 'Customer Name', border: OutlineInputBorder()),
+        ),
+
+        /*
+        |--------------------------------------------------------------------------
+        | Product Grid
+        |--------------------------------------------------------------------------
+        */
+        Expanded(
+          child: GridView.builder(
+            padding: const EdgeInsets.all(10),
+            itemCount: filteredProducts.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: isMobile ? 2 : 3,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: isMobile ? 1.25 : 1.2,
+            ),
+            itemBuilder: (context, index) {
+              return productCard(filteredProducts[index]);
+            },
           ),
-          if (widget.orderType == 'delivery') ...[
-            const SizedBox(height: 12),
-            TextField(
-              controller: addressController,
-              maxLines: 2,
-              decoration: const InputDecoration(labelText: 'Delivery Address', border: OutlineInputBorder()),
+        ),
+      ],
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Cart Item Card
+  |--------------------------------------------------------------------------
+  */
+
+  Widget cartItemCard(Map<String, dynamic> item) {
+    final isNewItem = newItems.any((newItem) => newItem['id'] == item['id']);
+
+    final lineTotal = toMoneyDouble(item['quantity']) * toMoneyDouble(item['price']);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /*
+            |--------------------------------------------------------------------------
+            | Item Name
+            |--------------------------------------------------------------------------
+            */
+            Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+
+            const SizedBox(height: 4),
+
+            Text('${item['quantity']} × ${formatMoney(item['price'])}'),
+
+            if ((item['notes'] ?? '').toString().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Note: ${item['notes']}',
+                  style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.orange),
+                ),
+              ),
+
+            const SizedBox(height: 6),
+
+            Row(
+              children: [
+                TextButton.icon(
+                  onPressed: () async {
+                    final controller = TextEditingController(text: item['notes'] ?? '');
+
+                    final result = await showDialog<String>(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: const Text('Kitchen Instructions'),
+                        content: TextField(
+                          controller: controller,
+                          maxLines: 3,
+                          decoration: const InputDecoration(hintText: 'No chilli, extra cheese, less salt...'),
+                        ),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context, controller.text);
+                            },
+                            child: const Text('Save'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (result != null) {
+                      setState(() {
+                        item['notes'] = result;
+
+                        final newItemIndex = newItems.indexWhere((newItem) => newItem['id'] == item['id']);
+
+                        if (newItemIndex >= 0) {
+                          newItems[newItemIndex]['notes'] = result;
+                        }
+                      });
+
+                      saveDraft();
+                    }
+                  },
+                  icon: const Icon(Icons.edit_note),
+                  label: const Text('Notes'),
+                ),
+
+                const Spacer(),
+
+                Text(formatMoney(lineTotal), style: const TextStyle(fontWeight: FontWeight.bold)),
+
+                const SizedBox(width: 8),
+
+                if (isNewItem)
+                  IconButton(
+                    icon: const Icon(Icons.remove_circle, color: Colors.red),
+                    onPressed: () {
+                      removeFromCart(item['id']);
+                    },
+                  )
+                else
+                  const Icon(Icons.lock, color: Colors.grey),
+              ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Cart Area
+  |--------------------------------------------------------------------------
+  */
+
+  Widget cartArea(bool isMobile) {
+    return Container(
+      color: Colors.grey.shade100,
+      child: Column(
+        children: [
+          /*
+          |--------------------------------------------------------------------------
+          | Cart Header
+          |--------------------------------------------------------------------------
+          */
+          Container(
+            padding: EdgeInsets.all(isMobile ? 10 : 16),
+            width: double.infinity,
+            color: Colors.blueGrey,
+            child: Text(
+              'Current Order (${cart.length})',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+
+          /*
+          |--------------------------------------------------------------------------
+          | Cart Items
+          |--------------------------------------------------------------------------
+          */
+          Expanded(
+            child: cart.isEmpty
+                ? const Center(child: Text('No items added'))
+                : ListView.builder(
+                    itemCount: cart.length,
+                    itemBuilder: (context, index) {
+                      return cartItemCard(cart[index]);
+                    },
+                  ),
+          ),
+
+          /*
+          |--------------------------------------------------------------------------
+          | Cart Footer
+          |--------------------------------------------------------------------------
+          */
+          Container(
+            padding: EdgeInsets.all(isMobile ? 10 : 16),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      formatMoney(totalAmount),
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: ElevatedButton.icon(
+                    onPressed: cart.isEmpty ? null : sendOrderToKitchen,
+                    icon: const Icon(Icons.send),
+                    label: const Text('Send'),
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: OutlinedButton.icon(
+                    onPressed: activeOrderId == null ? null : requestBill,
+                    icon: const Icon(Icons.receipt_long),
+                    label: const Text('Request Bill'),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -614,328 +710,24 @@ class _OrderScreenState extends State<OrderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(title: Text(screenTitle())),
-      body: Row(
-        children: [
-          /*
-          |--------------------------------------------------------------------------
-          | Product Area
-          |--------------------------------------------------------------------------
-          */
-          Expanded(
-            flex: 2,
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : Column(
-                    children: [
-                      customerPanel(),
-
-                      /*
-                      |--------------------------------------------------------------------------
-                      | Category Bar
-                      |--------------------------------------------------------------------------
-                      */
-                      SizedBox(
-                        height: 135,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.all(8),
-                          children: [
-                            /*
-                            |--------------------------------------------------------------------------
-                            | All Categories
-                            |--------------------------------------------------------------------------
-                            */
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  selectedCategoryId = null;
-                                });
-                              },
-                              child: Container(
-                                height: 120,
-                                width: 115,
-                                margin: const EdgeInsets.only(right: 10),
-                                decoration: BoxDecoration(
-                                  color: selectedCategoryId == null ? Colors.orange.shade100 : Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: selectedCategoryId == null ? Colors.orange : Colors.grey.shade300, width: 1.5),
-                                ),
-                                child: const Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.restaurant_menu, size: 38, color: Colors.orange),
-                                    SizedBox(height: 4),
-                                    Text('All', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                                  ],
-                                ),
-                              ),
-                            ),
-
-                            ...categories.map(categoryCard),
-                          ],
-                        ),
-                      ),
-
-                      /*
-                      |--------------------------------------------------------------------------
-                      | Product Grid
-                      |--------------------------------------------------------------------------
-                      */
-                      Expanded(
-                        child: GridView.builder(
-                          padding: const EdgeInsets.all(12),
-                          itemCount: filteredProducts.length,
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 1.2,
-                          ),
-                          itemBuilder: (context, index) {
-                            final product = filteredProducts[index];
-
-                            return productCard(product);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-          ),
-
-          /*
-          |--------------------------------------------------------------------------
-          | Cart Panel
-          |--------------------------------------------------------------------------
-          */
-          Container(
-            width: 330,
-            color: Colors.grey.shade100,
-            child: Column(
+      body: isMobile
+          ? Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  width: double.infinity,
-                  color: Colors.blueGrey,
-                  child: Text(
-                    'Current Order',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                ),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Cart Items
-                |--------------------------------------------------------------------------
-                */
-                Expanded(
-                  child: cart.isEmpty
-                      ? const Center(child: Text('No items added'))
-                      : ListView.builder(
-                          itemCount: cart.length,
-                          itemBuilder: (context, index) {
-                            final item = cart[index];
-
-                            final isNewItem = newItems.any((newItem) => newItem['id'] == item['id']);
-
-                            final lineTotal = toMoneyDouble(item['quantity']) * toMoneyDouble(item['price']);
-
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-                              child: Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    /*
-                                    |--------------------------------------------------------------------------
-                                    | Item Name
-                                    |--------------------------------------------------------------------------
-                                    */
-                                    Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-
-                                    const SizedBox(height: 4),
-
-                                    /*
-                                    |--------------------------------------------------------------------------
-                                    | Quantity And Price
-                                    |--------------------------------------------------------------------------
-                                    */
-                                    Text('${item['quantity']} × ${formatMoney(item['price'])}'),
-
-                                    /*
-                                    |--------------------------------------------------------------------------
-                                    | Kitchen Notes
-                                    |--------------------------------------------------------------------------
-                                    */
-                                    if ((item['notes'] ?? '').toString().isNotEmpty)
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 4),
-                                        child: Text(
-                                          'Note: ${item['notes']}',
-                                          style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.orange),
-                                        ),
-                                      ),
-
-                                    const SizedBox(height: 8),
-
-                                    /*
-                                    |--------------------------------------------------------------------------
-                                    | Actions
-                                    |--------------------------------------------------------------------------
-                                    */
-                                    Row(
-                                      children: [
-                                        /*
-                                        |--------------------------------------------------------------------------
-                                        | Notes Button
-                                        |--------------------------------------------------------------------------
-                                        */
-                                        TextButton.icon(
-                                          onPressed: () async {
-                                            final controller = TextEditingController(text: item['notes'] ?? '');
-
-                                            final result = await showDialog<String>(
-                                              context: context,
-                                              builder: (_) => AlertDialog(
-                                                title: const Text('Kitchen Instructions'),
-                                                content: TextField(
-                                                  controller: controller,
-                                                  maxLines: 3,
-                                                  decoration: const InputDecoration(hintText: 'No chilli, extra cheese, less salt...'),
-                                                ),
-                                                actions: [
-                                                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-                                                  ElevatedButton(
-                                                    onPressed: () {
-                                                      Navigator.pop(context, controller.text);
-                                                    },
-                                                    child: const Text('Save'),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-
-                                            if (result != null) {
-                                              setState(() {
-                                                item['notes'] = result;
-
-                                                /*
-                                                |--------------------------------------------------------------------------
-                                                | Sync Notes To New Items
-                                                |--------------------------------------------------------------------------
-                                                */
-
-                                                final newItemIndex = newItems.indexWhere((newItem) => newItem['id'] == item['id']);
-
-                                                if (newItemIndex >= 0) {
-                                                  newItems[newItemIndex]['notes'] = result;
-                                                }
-                                              });
-
-                                              saveDraft();
-                                            }
-                                          },
-                                          icon: const Icon(Icons.edit_note),
-                                          label: const Text('Notes'),
-                                        ),
-
-                                        const Spacer(),
-
-                                        Text(formatMoney(lineTotal), style: const TextStyle(fontWeight: FontWeight.bold)),
-
-                                        const SizedBox(width: 8),
-
-                                        if (isNewItem)
-                                          IconButton(
-                                            icon: const Icon(Icons.remove_circle, color: Colors.red),
-                                            onPressed: () {
-                                              removeFromCart(item['id']);
-                                            },
-                                          )
-                                        else
-                                          const Icon(Icons.lock, color: Colors.grey),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Total And Send Button
-                |--------------------------------------------------------------------------
-                */
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Total', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                          Text(
-                            formatMoney(totalAmount),
-                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton.icon(
-                          onPressed: cart.isEmpty ? null : sendOrderToKitchen,
-                          icon: const Icon(Icons.send),
-                          label: const Text('Send to Kitchen'),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      /*
-                      |--------------------------------------------------------------------------
-                      | Request Bill Button
-                      |--------------------------------------------------------------------------
-                      | Allows the waiter to notify the cashier that the customer wants the bill.
-                      | Enabled only when an active order already exists.
-                      */
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: OutlinedButton.icon(
-                          onPressed: activeOrderId == null
-                              ? null
-                              : () async {
-                                  try {
-                                    await apiService.requestBill(orderId: activeOrderId!);
-
-                                    if (!mounted) return;
-
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bill requested successfully')));
-                                  } catch (e) {
-                                    if (!mounted) return;
-
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
-                                  }
-                                },
-                          icon: const Icon(Icons.receipt_long),
-                          label: const Text('Request Bill'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                Expanded(flex: 45, child: productArea(true)),
+                Expanded(flex: 55, child: cartArea(true)),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(flex: 2, child: productArea(false)),
+                SizedBox(width: 330, child: cartArea(false)),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 }
