@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Product;
 use App\Models\StockMovement;
+use App\Services\KitchenPrintService;
 
 
 class RestaurantOrderController extends Controller
@@ -991,50 +992,46 @@ class RestaurantOrderController extends Controller
     | Workflow:
     | draft → pending → preparing → ready → served
     */
-    public function sendDraftItemsToKitchen($orderId)
-    {
-        /*
-        |--------------------------------------------------------------------------
-        | Find Active Order
-        |--------------------------------------------------------------------------
-        */
-
-        $order = RestaurantOrder::findOrFail($orderId);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Convert Draft Items To Pending
-        |--------------------------------------------------------------------------
-        */
-
-        RestaurantOrderItem::where(
-                'restaurant_order_id',
-                $order->id
-            )
-            ->where('kitchen_status', 'draft')
-            ->update([
-                'kitchen_status' => 'pending',
-            ]);
-
-           // Send order to kitchen 
             
-            app(KitchenPrintService::class)->printOrder($order);
+   public function sendDraftItemsToKitchen($orderId)
+{
+    $order = RestaurantOrder::findOrFail($orderId);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Update Order Status
-        |--------------------------------------------------------------------------
-        */
-
-        $order->update([
-            'status' => 'sent_to_kitchen',
+    RestaurantOrderItem::where('restaurant_order_id', $order->id)
+        ->where('kitchen_status', 'draft')
+        ->update([
+            'kitchen_status' => 'pending',
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Items sent to kitchen successfully',
-        ]);
+    $order->update([
+        'status' => 'sent_to_kitchen',
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Auto Print - Safe
+    |--------------------------------------------------------------------------
+    */
+
+    try {
+        app(\App\Services\KitchenPrintService::class)->printOrder(
+            $order->fresh([
+                'table',
+                'items.product',
+            ])
+        );
+    } catch (\Throwable $e) {
+        \Log::error('Kitchen auto print failed: ' . $e->getMessage());
     }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Items sent to kitchen successfully',
+    ]);
+}
+   
+   
+   
     /*
     |--------------------------------------------------------------------------
     | Counter Order With Immediate Payment

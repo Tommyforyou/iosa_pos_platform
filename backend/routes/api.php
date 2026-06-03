@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\VatReportController;
 use App\Http\Controllers\Api\AccountsReceivableDashboardController;
 use App\Http\Controllers\Api\ProfitLossReportController;
 use App\Http\Controllers\Api\MobileAuthController;
+use App\Http\Controllers\Api\PrinterController;
 
 /*
 |--------------------------------------------------------------------------
@@ -774,8 +775,24 @@ use App\Http\Controllers\Api\AccountsPayableDashboardController;
                 [ RestaurantOrderController::class, 'requestBill' ]
             );
 
-        }
-    );
+        });
+     
+        /*
+    |--------------------------------------------------------------------------
+    | CRUD Printers
+    |--------------------------------------------------------------------------
+    */    
+
+        Route::get('/printers', [PrinterController::class, 'index']);
+        Route::post('/printers', [PrinterController::class, 'store']);
+        Route::put('/printers/{printer}', [PrinterController::class, 'update']);
+        Route::delete('/printers/{printer}', [PrinterController::class, 'destroy']);
+
+        Route::post(
+            '/printers/{printer}/test-print',
+            [PrinterController::class, 'testPrint']
+        );
+
 
     /*
     |--------------------------------------------------------------------------

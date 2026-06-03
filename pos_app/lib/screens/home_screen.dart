@@ -23,6 +23,7 @@ import 'accounts_receivable_dashboard_screen.dart';
 import 'vat_dashboard_screen.dart';
 import 'profit_loss_dashboard_screen.dart';
 import 'settings/server_qr_screen.dart';
+import 'printer_settings_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -76,23 +77,115 @@ class HomeScreen extends StatelessWidget {
             | Settings
             |--------------------------------------------------------------------------
             */
-                _HomeCard(
-                  title: 'Business Settings',
-                  subtitle: 'Company, VAT and MRA setup',
-                  icon: Icons.settings,
-                  onTap: () => openScreen(context, const BusinessSettingsScreen()),
-                ),
+                Container(
+                  margin: const EdgeInsets.only(bottom: 20),
 
-                /*
-                |--------------------------------------------------------------------------
-                | Server QR Code
-                |--------------------------------------------------------------------------
-                */
-                _HomeCard(
-                  title: 'Server QR',
-                  subtitle: 'Connect waiter phones',
-                  icon: Icons.qr_code_2,
-                  onTap: () => openScreen(context, const ServerQrScreen()),
+                  padding: const EdgeInsets.all(20),
+
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+
+                    borderRadius: BorderRadius.circular(28),
+
+                    border: Border.all(color: Colors.grey.shade200),
+
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+                  ),
+
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+
+                      children: [
+                        /*
+                  |--------------------------------------------------------------------------
+                  | Section Header
+                  |--------------------------------------------------------------------------
+                  */
+                        Row(
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+
+                              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
+
+                              child: const Icon(Icons.restaurant_sharp, color: Colors.orange, size: 28),
+                            ),
+
+                            const SizedBox(width: 14),
+
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+
+                                children: [
+                                  Text('Restaurant Dashboard', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+
+                                  SizedBox(height: 3),
+
+                                  Text('Dashboard, Sales History, DailyReport', style: TextStyle(color: Colors.grey)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        /*
+                      |--------------------------------------------------------------------------
+                      | Nested Cards
+                      |--------------------------------------------------------------------------
+                      */
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 1.1,
+                          children: [
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Business Settings
+                            |--------------------------------------------------------------------------
+                            */
+                            _MiniHomeCard(
+                              title: 'Business Settings',
+                              subtitle: 'Company, VAT and MRA setup',
+                              icon: Icons.settings,
+                              onTap: () => openScreen(context, const BusinessSettingsScreen()),
+                            ),
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Server QR Code
+                            |--------------------------------------------------------------------------
+                            */
+                            _MiniHomeCard(
+                              title: 'Server QR',
+                              subtitle: 'Connect waiter phones',
+                              icon: Icons.qr_code_2,
+                              onTap: () => openScreen(context, const ServerQrScreen()),
+                            ),
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Printer Settings
+                            |--------------------------------------------------------------------------
+                            */
+                            _MiniHomeCard(
+                              title: 'Printer Settings',
+                              subtitle: 'Kitchen printers',
+                              icon: Icons.print,
+                              onTap: () => openScreen(context, const PrinterSettingsScreen()),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
 
                 /*

@@ -74,16 +74,20 @@ class _TableScreenState extends State<TableScreen> {
     try {
       final data = await apiService.getRestaurantTables();
 
+      if (!mounted) return;
+
       setState(() {
         tables = data;
         isLoading = false;
       });
     } catch (e) {
-      debugPrint(e.toString());
+      if (!mounted) return;
 
       setState(() {
         isLoading = false;
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
     }
   }
 
@@ -137,69 +141,53 @@ class _TableScreenState extends State<TableScreen> {
     });
   }
 
+  /*
+|--------------------------------------------------------------------------
+| Build Screen
+|--------------------------------------------------------------------------
+*/
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      /*
-      |--------------------------------------------------------------------------
-      | Background Styling
-      |--------------------------------------------------------------------------
-      */
-      backgroundColor: const Color(0xFFF8FAFC),
+    /*
+  |--------------------------------------------------------------------------
+  | Responsive Layout
+  |--------------------------------------------------------------------------
+  | Windows/Desktop:
+  | - Large square table cards
+  |
+  | Android/Mobile:
+  | - Compact horizontal table rows
+  */
 
-      /*
-      |--------------------------------------------------------------------------
-      | App Bar
-      |--------------------------------------------------------------------------
-      */
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
+    return Scaffold(
       appBar: AppBar(
         title: const Text('Restaurant Tables'),
-
-        actions: [
-          /*
-          |--------------------------------------------------------------------------
-          | Manual Refresh Button
-          |--------------------------------------------------------------------------
-          | Reloads latest restaurant table statuses.
-          */
-          IconButton(
-            onPressed: () {
-              setState(() {
-                isLoading = true;
-              });
-
-              loadTables();
-            },
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
+        actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: loadTables)],
       ),
 
-      /*
-      |--------------------------------------------------------------------------
-      | Main Table Body
-      |--------------------------------------------------------------------------
-      */
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : tables.isEmpty
-          ? const Center(child: Text('No restaurant tables found', style: TextStyle(fontSize: 22)))
+          ? const Center(child: Text('No restaurant tables found'))
           : GridView.builder(
-              padding: const EdgeInsets.all(4),
+              padding: EdgeInsets.all(isMobile ? 8 : 12),
               itemCount: tables.length,
 
               /*
-              |--------------------------------------------------------------------------
-              | Table Grid Layout
-              |--------------------------------------------------------------------------
-              | Each card represents one restaurant table.
-              */
+                |--------------------------------------------------------------------------
+                | Responsive Table Grid
+                |--------------------------------------------------------------------------
+                */
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 1,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 5.5,
+                crossAxisCount: isMobile ? 1 : 4,
+                crossAxisSpacing: isMobile ? 8 : 12,
+                mainAxisSpacing: isMobile ? 8 : 12,
+                childAspectRatio: isMobile ? 5.5 : 1.1,
               ),
+
               itemBuilder: (context, index) {
                 final table = tables[index];
 
@@ -207,57 +195,100 @@ class _TableScreenState extends State<TableScreen> {
 
                 return Card(
                   elevation: 5,
-
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
 
                     /*
-                        |--------------------------------------------------------------------------
-                        | Open Table Order
-                        |--------------------------------------------------------------------------
-                        */
+                      |--------------------------------------------------------------------------
+                      | Open Table Order
+                      |--------------------------------------------------------------------------
+                      */
                     onTap: () => openTableOrder(table),
 
                     child: Container(
                       decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: tableColor(status)),
 
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.table_restaurant, size: 18, color: Colors.white),
-
-                            const SizedBox(width: 8),
-
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                      /*
+                        |--------------------------------------------------------------------------
+                        | Mobile Table Card
+                        |--------------------------------------------------------------------------
+                        */
+                      child: isMobile
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              child: Row(
                                 children: [
-                                  Text(
-                                    table['table_name'] ?? 'Table',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                  const Icon(Icons.table_restaurant, size: 18, color: Colors.white),
+
+                                  const SizedBox(width: 8),
+
+                                  Expanded(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          table['table_name'] ?? 'Table',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                        ),
+
+                                        if (table['capacity'] != null)
+                                          Text('${table['capacity']} seats', style: const TextStyle(color: Colors.white70, fontSize: 9)),
+                                      ],
+                                    ),
                                   ),
 
-                                  if (table['capacity'] != null)
-                                    Text('${table['capacity']} seats', style: const TextStyle(color: Colors.white70, fontSize: 9)),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.25), borderRadius: BorderRadius.circular(20)),
+                                    child: Text(
+                                      status == 'occupied' ? 'BUSY' : status.toUpperCase(),
+                                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          /*
+                            |--------------------------------------------------------------------------
+                            | Desktop Table Card
+                            |--------------------------------------------------------------------------
+                            */
+                          : Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.table_restaurant, size: 52, color: Colors.white),
+
+                                  const SizedBox(height: 16),
+
+                                  Text(
+                                    table['table_name'] ?? 'Table',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                                  ),
+
+                                  const SizedBox(height: 10),
+
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.20), borderRadius: BorderRadius.circular(20)),
+                                    child: Text(
+                                      status.toUpperCase(),
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+
+                                  if (table['capacity'] != null) ...[
+                                    const SizedBox(height: 10),
+                                    Text('Capacity: ${table['capacity']}', style: const TextStyle(color: Colors.white70)),
+                                  ],
                                 ],
                               ),
                             ),
-
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(color: Colors.white.withOpacity(0.25), borderRadius: BorderRadius.circular(20)),
-                              child: Text(
-                                status == 'occupied' ? 'BUSY' : status.toUpperCase(),
-                                style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ),
                   ),
                 );

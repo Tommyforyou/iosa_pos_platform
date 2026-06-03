@@ -783,16 +783,15 @@ class ApiService {
   | Gets dine-in table list and statuses.
   */
   Future<List<dynamic>> getRestaurantTables() async {
-    final baseUrl = await getBaseUrl();
-    final response = await http.get(Uri.parse('$baseUrl/restaurant-tables'), headers: {'Accept': 'application/json'});
+    final url = await apiUrl('restaurant-tables');
 
-    //final response = await http.get(Uri.parse('$baseUrl/restaurant-tables'));
+    final response = await http.get(Uri.parse(url), headers: {'Accept': 'application/json'});
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
 
-    throw Exception('Failed to load restaurant tables');
+    throw Exception('Failed to load restaurant tables: ${response.body}');
   }
 
   /*
@@ -915,13 +914,15 @@ class ApiService {
   | Gets all active orders that should appear on the kitchen display.
   */
   Future<List<dynamic>> getKitchenOrders() async {
-    final response = await http.get(Uri.parse('$baseUrl/kitchen-orders'));
+    final url = await apiUrl('kitchen-orders');
+
+    final response = await http.get(Uri.parse(url), headers: {'Accept': 'application/json'});
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
 
-    throw Exception('Failed to load kitchen orders');
+    throw Exception('Failed to load kitchen orders: ${response.body}');
   }
 
   /*
@@ -1044,13 +1045,15 @@ class ApiService {
   | Returns active restaurant orders that are ready for cashier billing.
   */
   Future<List<dynamic>> getBillableOrders() async {
-    final response = await http.get(Uri.parse('$baseUrl/billable-orders'));
+    final url = await apiUrl('billable-orders');
+
+    final response = await http.get(Uri.parse(url), headers: {'Accept': 'application/json'});
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
 
-    throw Exception('Failed to load billable orders');
+    throw Exception('Failed to load billable orders: ${response.body}');
   }
 
   /*
@@ -1097,14 +1100,17 @@ class ApiService {
   |--------------------------------------------------------------------------
   | Returns operational POS dashboard metrics.
   */
-  Future<Map<String, dynamic>> getDashboardStats() async {
-    final response = await http.get(Uri.parse('$baseUrl/dashboard-stats'));
+
+  Future<Map<String, dynamic>> getDashboardStatistics() async {
+    final url = await apiUrl('dashboard-stats');
+
+    final response = await http.get(Uri.parse(url), headers: {'Accept': 'application/json'});
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return Map<String, dynamic>.from(jsonDecode(response.body));
     }
 
-    throw Exception('Failed to load dashboard statistics');
+    throw Exception('Failed to load dashboard statistics: ${response.body}');
   }
 
   /*
@@ -1114,15 +1120,17 @@ class ApiService {
   */
 
   Future<List<dynamic>> getSalesHistory({String? from, String? to}) async {
-    final uri = Uri.parse('$baseUrl/sales-history').replace(queryParameters: {if (from != null) 'from': from, if (to != null) 'to': to});
+    final url = await apiUrl('sales-history');
 
-    final response = await http.get(uri);
+    final uri = Uri.parse(url).replace(queryParameters: {if (from != null) 'from': from, if (to != null) 'to': to});
+
+    final response = await http.get(uri, headers: {'Accept': 'application/json'});
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return List<dynamic>.from(jsonDecode(response.body));
     }
 
-    throw Exception('Failed to load sales history');
+    throw Exception('Failed to load sales history: ${response.body}');
   }
 
   /*
@@ -1495,6 +1503,95 @@ class ApiService {
   }
 
   /*
+|--------------------------------------------------------------------------
+| Get Printers
+|--------------------------------------------------------------------------
+*/
+
+  Future<List<dynamic>> getPrinters() async {
+    final url = await apiUrl('printers');
+
+    final response = await http.get(Uri.parse(url), headers: await authHeaders());
+
+    if (response.statusCode == 200) {
+      return List<dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load printers: ${response.body}');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Create Printer
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> createPrinter(Map<String, dynamic> data) async {
+    final url = await apiUrl('printers');
+
+    final response = await http.post(Uri.parse(url), headers: await authHeaders(), body: jsonEncode(data));
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to create printer: ${response.body}');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Update Printer
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> updatePrinter(int id, Map<String, dynamic> data) async {
+    final url = await apiUrl('printers/$id');
+
+    final response = await http.put(Uri.parse(url), headers: await authHeaders(), body: jsonEncode(data));
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to update printer: ${response.body}');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Delete Printer
+|--------------------------------------------------------------------------
+*/
+
+  Future<void> deletePrinter(int id) async {
+    final url = await apiUrl('printers/$id');
+
+    final response = await http.delete(Uri.parse(url), headers: await authHeaders());
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return;
+    }
+
+    throw Exception('Failed to delete printer: ${response.body}');
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Test Printer
+  |--------------------------------------------------------------------------
+  */
+
+  Future<void> testPrinter(int id) async {
+    final url = await apiUrl('printers/$id/test-print');
+
+    final response = await http.post(Uri.parse(url), headers: await authHeaders());
+
+    if (response.statusCode == 200) {
+      return;
+    }
+
+    throw Exception('Failed to send test print: ${response.body}');
+  }
+  /*
   |--------------------------------------------------------------------------
   | Upload Category Image
   |--------------------------------------------------------------------------
@@ -1705,16 +1802,22 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
+  /*
+|--------------------------------------------------------------------------
+| API URL Helper
+|--------------------------------------------------------------------------
+*/
+
   Future<String> apiUrl(String endpoint) async {
     final prefs = await SharedPreferences.getInstance();
 
     final serverUrl = prefs.getString('server_url');
 
-    if (serverUrl == null || serverUrl.isEmpty) {
-      throw Exception('Server URL not configured');
-    }
+    final effectiveServerUrl = Platform.isWindows
+        ? 'http://127.0.0.1:8000'
+        : (serverUrl == null || serverUrl.isEmpty ? 'http://127.0.0.1:8000' : serverUrl);
 
-    final cleanServerUrl = serverUrl.endsWith('/') ? serverUrl.substring(0, serverUrl.length - 1) : serverUrl;
+    final cleanServerUrl = effectiveServerUrl.endsWith('/') ? effectiveServerUrl.substring(0, effectiveServerUrl.length - 1) : effectiveServerUrl;
 
     final cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
 

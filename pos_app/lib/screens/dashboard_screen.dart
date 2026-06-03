@@ -62,7 +62,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> loadDashboard() async {
     try {
-      final response = await apiService.getDashboardStats();
+      final response = await apiService.getDashboardStatistics();
 
       setState(() {
         stats = response;
@@ -100,9 +100,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
 
       body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : GridView.count(
               padding: const EdgeInsets.all(20),
 
@@ -114,47 +112,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               childAspectRatio: 1.4,
 
               children: [
-                _DashboardCard(
-                  title: 'Today Sales',
-                  value:
-                      'Rs ${(stats['today_sales'] ?? 0).toString()}',
-                  icon: Icons.attach_money,
-                ),
+                _DashboardCard(title: 'Today Sales', value: 'Rs ${(stats['today_sales'] ?? 0).toString()}', icon: Icons.attach_money),
 
-                _DashboardCard(
-                  title: 'Completed Orders',
-                  value:
-                      '${stats['completed_orders'] ?? 0}',
-                  icon: Icons.receipt_long,
-                ),
+                _DashboardCard(title: 'Completed Orders', value: '${stats['completed_orders'] ?? 0}', icon: Icons.receipt_long),
 
-                _DashboardCard(
-                  title: 'Active Orders',
-                  value:
-                      '${stats['active_orders'] ?? 0}',
-                  icon: Icons.restaurant,
-                ),
+                _DashboardCard(title: 'Active Orders', value: '${stats['active_orders'] ?? 0}', icon: Icons.restaurant),
 
-                _DashboardCard(
-                  title: 'Occupied Tables',
-                  value:
-                      '${stats['occupied_tables'] ?? 0}',
-                  icon: Icons.table_restaurant,
-                ),
+                _DashboardCard(title: 'Occupied Tables', value: '${stats['occupied_tables'] ?? 0}', icon: Icons.table_restaurant),
 
-                _DashboardCard(
-                  title: 'Cash Payments',
-                  value:
-                      '${stats['cash_payments'] ?? 0}',
-                  icon: Icons.payments,
-                ),
+                _DashboardCard(title: 'Cash Payments', value: '${stats['cash_payments'] ?? 0}', icon: Icons.payments),
 
-                _DashboardCard(
-                  title: 'Card Payments',
-                  value:
-                      '${stats['card_payments'] ?? 0}',
-                  icon: Icons.credit_card,
-                ),
+                _DashboardCard(title: 'Card Payments', value: '${stats['card_payments'] ?? 0}', icon: Icons.credit_card),
               ],
             ),
     );
@@ -173,11 +141,7 @@ class _DashboardCard extends StatelessWidget {
   final String value;
   final IconData icon;
 
-  const _DashboardCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-  });
+  const _DashboardCard({required this.title, required this.value, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -191,31 +155,18 @@ class _DashboardCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
 
           children: [
-            Icon(
-              icon,
-              size: 48,
-              color: Colors.blueGrey,
-            ),
+            Icon(icon, size: 48, color: Colors.blueGrey),
 
             const SizedBox(height: 16),
 
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Text(value, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
 
             const SizedBox(height: 8),
 
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.grey,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
             ),
           ],
         ),

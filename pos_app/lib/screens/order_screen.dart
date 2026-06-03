@@ -254,38 +254,72 @@ class _OrderScreenState extends State<OrderScreen> {
         notes: null,
       );
 
-      if (result['success'] == true && result['order'] != null) {
-        activeOrderId = result['order']['id'];
+      debugPrint('SAVE DRAFT RESULT: $result');
+
+      if (result['order_id'] != null) {
+        activeOrderId = int.parse(result['order_id'].toString());
+      } else if (result['order'] != null) {
+        activeOrderId = int.parse(result['order']['id'].toString());
+      } else if (result['data'] != null) {
+        activeOrderId = int.parse(result['data']['id'].toString());
+      } else if (result['id'] != null) {
+        activeOrderId = int.parse(result['id'].toString());
       }
+
+      debugPrint('ACTIVE ORDER ID AFTER SAVE: $activeOrderId');
     } catch (e) {
       debugPrint(e.toString());
     }
   }
 
   /*
-  |--------------------------------------------------------------------------
-  | Send Order To Kitchen
-  |--------------------------------------------------------------------------
-  */
+|--------------------------------------------------------------------------
+| Send Order To Kitchen
+|--------------------------------------------------------------------------
+*/
+
+  /*
+|--------------------------------------------------------------------------
+| Send Order To Kitchen
+|--------------------------------------------------------------------------
+*/
 
   Future<void> sendOrderToKitchen() async {
+    debugPrint('SEND STEP 1: button pressed');
+
     if (activeOrderId == null) {
+      debugPrint('SEND STEP 2: activeOrderId null, saving draft');
       await saveDraft();
     }
 
     if (activeOrderId == null) {
+      debugPrint('SEND STEP 3: still no activeOrderId');
       return;
     }
 
     try {
-      /*
-      |--------------------------------------------------------------------------
-      | Send Draft Items To Kitchen
-      |--------------------------------------------------------------------------
-      | If your ApiService method name is different, rename this call only.
-      */
+      debugPrint('SEND STEP 4: calling API for order $activeOrderId');
 
-      await apiService.sendDraftItemsToKitchen(orderId: activeOrderId!);
+      final result = await apiService.sendDraftItemsToKitchen(orderId: activeOrderId!);
+
+      debugPrint('SEND STEP 5: API returned $result');
+
+      if (!mounted) {
+        debugPrint('SEND STEP 6: widget not mounted');
+        return;
+      }
+
+      setState(() {
+        newItems.clear();
+
+        for (final item in cart) {
+          if (item['kitchen_status'] == 'draft') {
+            item['kitchen_status'] = 'pending';
+          }
+        }
+      });
+
+      debugPrint('SEND STEP 7: cart updated');
 
       if (!mounted) return;
 
@@ -298,22 +332,15 @@ class _OrderScreenState extends State<OrderScreen> {
         ),
       );
 
-      setState(() {
-        newItems.clear();
-
-        for (final item in cart) {
-          if (item['kitchen_status'] == 'draft') {
-            item['kitchen_status'] = 'pending';
-          }
-        }
-      });
+      debugPrint('SEND STEP 8: dialog closed');
     } catch (e) {
+      debugPrint('SEND ERROR: $e');
+
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
     }
   }
-
   /*
   |--------------------------------------------------------------------------
   | Request Bill
@@ -365,7 +392,7 @@ class _OrderScreenState extends State<OrderScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.fastfood, size: 18, color: Colors.orange),
+            const Icon(Icons.restaurant, size: 18, color: Colors.orange),
             const SizedBox(height: 5),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 5),
@@ -384,13 +411,19 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   /*
-  |--------------------------------------------------------------------------
-  | Product Card
-  |--------------------------------------------------------------------------
-  */
+|--------------------------------------------------------------------------
+| Product Card
+|--------------------------------------------------------------------------
+*/
 
   Widget productCard(dynamic product) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     final price = product['selling_price'] ?? product['price'];
+
+    final productName = (product['name'] ?? 'Product').toString();
+
+    final displayName = isMobile && productName.length > 18 ? '${productName.substring(0, 18)}...' : productName;
 
     return Card(
       elevation: 3,
@@ -398,25 +431,26 @@ class _OrderScreenState extends State<OrderScreen> {
         onTap: () => addToCart(product),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(5),
+          padding: EdgeInsets.all(isMobile ? 5 : 6),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.restaurant, size: 10, color: Colors.blueGrey),
-              const SizedBox(height: 4),
+              Icon(Icons.fastfood, size: isMobile ? 10 : 18, color: Colors.blueGrey),
+              SizedBox(height: isMobile ? 2 : 4),
+
               Text(
-                (product['name'] ?? 'Product').toString().length > 18
-                    ? '${(product['name'] ?? 'Product').toString().substring(0, 18)}...'
-                    : product['name'] ?? 'Product',
-                textAlign: TextAlign.center,
-                maxLines: 2,
+                displayName,
+                textAlign: TextAlign.left,
+                maxLines: isMobile ? 2 : 3,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: isMobile ? 9 : 15, fontWeight: FontWeight.w600),
               ),
-              const SizedBox(height: 2),
+
+              SizedBox(height: isMobile ? 1 : 3),
+
               Text(
                 formatMoney(price),
-                style: const TextStyle(color: Colors.green, fontSize: 9, fontWeight: FontWeight.w600),
+                style: TextStyle(color: Colors.green, fontSize: isMobile ? 9 : 15, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -489,10 +523,10 @@ class _OrderScreenState extends State<OrderScreen> {
             padding: const EdgeInsets.all(10),
             itemCount: filteredProducts.length,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isMobile ? 3 : 2,
+              crossAxisCount: isMobile ? 3 : 4,
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
-              childAspectRatio: isMobile ? 1.45 : 1.2,
+              childAspectRatio: isMobile ? 1.45 : 2.2,
             ),
             itemBuilder: (context, index) {
               return productCard(filteredProducts[index]);
@@ -712,10 +746,10 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   /*
-  |--------------------------------------------------------------------------
-  | Build
-  |--------------------------------------------------------------------------
-  */
+|--------------------------------------------------------------------------
+| Build
+|--------------------------------------------------------------------------
+*/
 
   @override
   Widget build(BuildContext context) {
@@ -724,7 +758,16 @@ class _OrderScreenState extends State<OrderScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(title: Text(screenTitle())),
-      body: productArea(true),
+
+      body: isMobile
+          ? productArea(true)
+          : Row(
+              children: [
+                Expanded(flex: 2, child: productArea(false)),
+                SizedBox(width: 330, child: cartArea(false)),
+              ],
+            ),
+
       bottomNavigationBar: isMobile
           ? SafeArea(
               child: Container(

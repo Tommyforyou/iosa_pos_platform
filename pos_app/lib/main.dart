@@ -31,10 +31,11 @@ class IOSAPOSApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(colorSchemeSeed: Colors.blueGrey, useMaterial3: true),
-      //home: const HomeScreen(),
+      home: const HomeScreen(),
       //home: const WaiterHomeScreen(),
       //home: const LoginScreen(),
-      home: const SplashScreen(),
+
+      //home: const SplashScreen(),
     );
   }
 }
