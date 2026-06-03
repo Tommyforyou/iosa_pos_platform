@@ -398,23 +398,25 @@ class _OrderScreenState extends State<OrderScreen> {
         onTap: () => addToCart(product),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(5),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.restaurant, size: 14, color: Colors.blueGrey),
+              const Icon(Icons.restaurant, size: 10, color: Colors.blueGrey),
               const SizedBox(height: 4),
               Text(
-                product['name'] ?? 'Product',
+                (product['name'] ?? 'Product').toString().length > 18
+                    ? '${(product['name'] ?? 'Product').toString().substring(0, 18)}...'
+                    : product['name'] ?? 'Product',
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.normal),
               ),
               const SizedBox(height: 2),
               Text(
                 formatMoney(price),
-                style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w600),
+                style: const TextStyle(color: Colors.green, fontSize: 9, fontWeight: FontWeight.normal),
               ),
             ],
           ),
@@ -442,7 +444,7 @@ class _OrderScreenState extends State<OrderScreen> {
         |--------------------------------------------------------------------------
         */
         SizedBox(
-          height: isMobile ? 70 : 125,
+          height: isMobile ? 78 : 125,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.all(8),
@@ -454,8 +456,8 @@ class _OrderScreenState extends State<OrderScreen> {
                   });
                 },
                 child: Container(
-                  height: 100,
-                  width: 100,
+                  height: 56,
+                  width: 66,
                   margin: const EdgeInsets.only(right: 10),
                   decoration: BoxDecoration(
                     color: selectedCategoryId == null ? Colors.orange.shade100 : Colors.white,
@@ -465,9 +467,9 @@ class _OrderScreenState extends State<OrderScreen> {
                   child: const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.restaurant_menu, size: 30, color: Colors.orange),
+                      Icon(Icons.restaurant_menu, size: 15, color: Colors.orange),
                       SizedBox(height: 5),
-                      Text('All', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      Text('All', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 9)),
                     ],
                   ),
                 ),
@@ -487,10 +489,10 @@ class _OrderScreenState extends State<OrderScreen> {
             padding: const EdgeInsets.all(10),
             itemCount: filteredProducts.length,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isMobile ? 2 : 3,
+              crossAxisCount: isMobile ? 3 : 2,
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
-              childAspectRatio: isMobile ? 1.25 : 1.2,
+              childAspectRatio: isMobile ? 1.45 : 1.2,
             ),
             itemBuilder: (context, index) {
               return productCard(filteredProducts[index]);
@@ -507,7 +509,7 @@ class _OrderScreenState extends State<OrderScreen> {
   |--------------------------------------------------------------------------
   */
 
-  Widget cartItemCard(Map<String, dynamic> item) {
+  Widget cartItemCard(Map<String, dynamic> item, {StateSetter? refreshModal}) {
     final isNewItem = newItems.any((newItem) => newItem['id'] == item['id']);
 
     final lineTotal = toMoneyDouble(item['quantity']) * toMoneyDouble(item['price']);
@@ -597,6 +599,10 @@ class _OrderScreenState extends State<OrderScreen> {
                     icon: const Icon(Icons.remove_circle, color: Colors.red),
                     onPressed: () {
                       removeFromCart(item['id']);
+
+                      if (refreshModal != null) {
+                        refreshModal(() {});
+                      }
                     },
                   )
                 else
@@ -610,21 +616,21 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   /*
-  |--------------------------------------------------------------------------
-  | Cart Area
-  |--------------------------------------------------------------------------
-  */
+|--------------------------------------------------------------------------
+| Cart Area
+|--------------------------------------------------------------------------
+*/
 
-  Widget cartArea(bool isMobile) {
+  Widget cartArea(bool isMobile, {StateSetter? refreshModal}) {
     return Container(
       color: Colors.grey.shade100,
       child: Column(
         children: [
           /*
-          |--------------------------------------------------------------------------
-          | Cart Header
-          |--------------------------------------------------------------------------
-          */
+        |--------------------------------------------------------------------------
+        | Cart Header
+        |--------------------------------------------------------------------------
+        */
           Container(
             padding: EdgeInsets.all(isMobile ? 10 : 16),
             width: double.infinity,
@@ -636,65 +642,68 @@ class _OrderScreenState extends State<OrderScreen> {
           ),
 
           /*
-          |--------------------------------------------------------------------------
-          | Cart Items
-          |--------------------------------------------------------------------------
-          */
+        |--------------------------------------------------------------------------
+        | Cart Items
+        |--------------------------------------------------------------------------
+        */
           Expanded(
             child: cart.isEmpty
                 ? const Center(child: Text('No items added'))
                 : ListView.builder(
                     itemCount: cart.length,
                     itemBuilder: (context, index) {
-                      return cartItemCard(cart[index]);
+                      return cartItemCard(cart[index], refreshModal: refreshModal);
                     },
                   ),
           ),
 
           /*
-          |--------------------------------------------------------------------------
-          | Cart Footer
-          |--------------------------------------------------------------------------
-          */
-          Container(
-            padding: EdgeInsets.all(isMobile ? 10 : 16),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text(
-                      formatMoney(totalAmount),
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+        |--------------------------------------------------------------------------
+        | Cart Footer
+        |--------------------------------------------------------------------------
+        */
+          SafeArea(
+            top: false,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(isMobile ? 10 : 16, isMobile ? 8 : 16, isMobile ? 10 : 16, isMobile ? 16 : 16),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Total', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                        formatMoney(totalAmount),
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: ElevatedButton.icon(
+                      onPressed: cart.isEmpty ? null : sendOrderToKitchen,
+                      icon: const Icon(Icons.send),
+                      label: const Text('Send'),
                     ),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 44,
-                  child: ElevatedButton.icon(
-                    onPressed: cart.isEmpty ? null : sendOrderToKitchen,
-                    icon: const Icon(Icons.send),
-                    label: const Text('Send'),
                   ),
-                ),
 
-                const SizedBox(height: 8),
+                  const SizedBox(height: 8),
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 44,
-                  child: OutlinedButton.icon(
-                    onPressed: activeOrderId == null ? null : requestBill,
-                    icon: const Icon(Icons.receipt_long),
-                    label: const Text('Request Bill'),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: OutlinedButton.icon(
+                      onPressed: activeOrderId == null ? null : requestBill,
+                      icon: const Icon(Icons.receipt_long),
+                      label: const Text('Request Bill'),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -715,19 +724,37 @@ class _OrderScreenState extends State<OrderScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(title: Text(screenTitle())),
-      body: isMobile
-          ? Column(
-              children: [
-                Expanded(flex: 45, child: productArea(true)),
-                Expanded(flex: 55, child: cartArea(true)),
-              ],
+      body: productArea(true),
+      bottomNavigationBar: isMobile
+          ? SafeArea(
+              child: Container(
+                height: 60,
+                margin: const EdgeInsets.all(8),
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.shopping_cart),
+                  label: Text('Cart (${cart.length} items)    ${formatMoney(totalAmount)}'),
+                  onPressed: showCartBottomSheet,
+                ),
+              ),
             )
-          : Row(
-              children: [
-                Expanded(flex: 2, child: productArea(false)),
-                SizedBox(width: 330, child: cartArea(false)),
-              ],
-            ),
+          : null,
+    );
+  }
+
+  void showCartBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SizedBox(
+              height: MediaQuery.of(context).size.height * 0.82,
+              child: cartArea(true, refreshModal: setModalState),
+            );
+          },
+        );
+      },
     );
   }
 }
