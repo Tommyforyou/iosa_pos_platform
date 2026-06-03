@@ -365,13 +365,8 @@ class _OrderScreenState extends State<OrderScreen> {
     }
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Category Card
-  |--------------------------------------------------------------------------
-  */
-
   Widget categoryCard(dynamic category) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
     final isSelected = selectedCategoryId == category['id'];
 
     return GestureDetector(
@@ -381,9 +376,10 @@ class _OrderScreenState extends State<OrderScreen> {
         });
       },
       child: Container(
-        height: 60,
-        width: 70,
+        height: isMobile ? 60 : 90,
+        width: isMobile ? 75 : 140,
         margin: const EdgeInsets.only(right: 10),
+        padding: EdgeInsets.all(isMobile ? 4 : 10),
         decoration: BoxDecoration(
           color: isSelected ? Colors.orange.shade100 : Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -392,17 +388,16 @@ class _OrderScreenState extends State<OrderScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.restaurant, size: 18, color: Colors.orange),
-            const SizedBox(height: 5),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 5),
-              child: Text(
-                category['name'] ?? 'Category',
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
-              ),
+            Icon(Icons.restaurant, size: isMobile ? 16 : 28, color: Colors.orange),
+
+            SizedBox(height: isMobile ? 3 : 8),
+
+            Text(
+              category['name'] ?? 'Category',
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: isMobile ? 9 : 15),
             ),
           ],
         ),
@@ -478,7 +473,7 @@ class _OrderScreenState extends State<OrderScreen> {
         |--------------------------------------------------------------------------
         */
         SizedBox(
-          height: isMobile ? 78 : 125,
+          height: isMobile ? 78 : 110,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.all(8),
