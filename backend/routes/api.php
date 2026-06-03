@@ -54,15 +54,15 @@ use App\Http\Controllers\Api\AccountsPayableDashboardController;
     id}
     */
 
-    Route::apiResource(
-        'restaurant-tables',
-        RestaurantTableController::class
-    )->only( [
-        'index',
-        'show',
-    ] );
+Route::apiResource(
+    'restaurant-tables',
+    RestaurantTableController::class
+)->only([
+    'index',
+    'show',
+]);
 
-    /*
+/*
     |--------------------------------------------------------------------------
     | Product Categories API
     |--------------------------------------------------------------------------
@@ -79,15 +79,15 @@ use App\Http\Controllers\Api\AccountsPayableDashboardController;
         id}
         */
 
-        Route::apiResource(
-            'categories',
-            ProductCategoryController::class
-        )->only( [
-            'index',
-            'show',
-        ] );
+Route::apiResource(
+    'categories',
+    ProductCategoryController::class
+)->only([
+    'index',
+    'show',
+]);
 
-        /*
+/*
         |--------------------------------------------------------------------------
         | Products API
         |--------------------------------------------------------------------------
@@ -99,9 +99,9 @@ use App\Http\Controllers\Api\AccountsPayableDashboardController;
             id}
             */
 
-            Route::apiResource( 'products', ProductController::class );
+Route::apiResource('products', ProductController::class);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Store Restaurant Order
             |--------------------------------------------------------------------------
@@ -114,12 +114,12 @@ use App\Http\Controllers\Api\AccountsPayableDashboardController;
             | 'Send to Kitchen'
             */
 
-            Route::post(
-                'restaurant-orders',
-                [ RestaurantOrderController::class, 'store' ]
-            );
+Route::post(
+    'restaurant-orders',
+    [RestaurantOrderController::class, 'store']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Kitchen Orders API
             |--------------------------------------------------------------------------
@@ -130,12 +130,12 @@ use App\Http\Controllers\Api\AccountsPayableDashboardController;
             | - kitchen tablets
             */
 
-            Route::get(
-                'kitchen-orders',
-                [ RestaurantOrderController::class, 'kitchenOrders' ]
-            );
+Route::get(
+    'kitchen-orders',
+    [RestaurantOrderController::class, 'kitchenOrders']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Active Table Order API
             |--------------------------------------------------------------------------
@@ -146,12 +146,12 @@ use App\Http\Controllers\Api\AccountsPayableDashboardController;
             | - existing items
             */
 
-            Route::get(
-                'restaurant-tables/{tableId}/active-order',
-                [ RestaurantOrderController::class, 'activeOrderByTable' ]
-            );
+Route::get(
+    'restaurant-tables/{tableId}/active-order',
+    [RestaurantOrderController::class, 'activeOrderByTable']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Kitchen Item Status API
             |--------------------------------------------------------------------------
@@ -164,12 +164,12 @@ use App\Http\Controllers\Api\AccountsPayableDashboardController;
             | cancelled
             */
 
-            Route::patch(
-                'restaurant-order-items/{itemId}/kitchen-status',
-                [ RestaurantOrderController::class, 'updateKitchenItemStatus' ]
-            );
+Route::patch(
+    'restaurant-order-items/{itemId}/kitchen-status',
+    [RestaurantOrderController::class, 'updateKitchenItemStatus']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Billable Orders API
             |--------------------------------------------------------------------------
@@ -181,12 +181,12 @@ use App\Http\Controllers\Api\AccountsPayableDashboardController;
             | - delivery
             */
 
-            Route::get(
-                'billable-orders',
-                [ RestaurantOrderController::class, 'billableOrders' ]
-            );
+Route::get(
+    'billable-orders',
+    [RestaurantOrderController::class, 'billableOrders']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Process Restaurant Payment
             |--------------------------------------------------------------------------
@@ -198,59 +198,59 @@ use App\Http\Controllers\Api\AccountsPayableDashboardController;
             | - release dine-in table
             */
 
-            Route::post(
-                'restaurant-orders/{orderId}/payment',
-                [ RestaurantOrderController::class, 'processPayment' ]
-            );
+Route::post(
+    'restaurant-orders/{orderId}/payment',
+    [RestaurantOrderController::class, 'processPayment']
+);
 
-            Route::patch(
-                'restaurant-orders/{orderId}/request-bill',
-                [ RestaurantOrderController::class, 'requestBill' ]
-            );
+Route::patch(
+    'restaurant-orders/{orderId}/request-bill',
+    [RestaurantOrderController::class, 'requestBill']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Waiter Orders
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'waiter-orders',
-                [RestaurantOrderController::class, 'waiterOrders']
-            );
-            /*
+Route::get(
+    'waiter-orders',
+    [RestaurantOrderController::class, 'waiterOrders']
+);
+/*
             |--------------------------------------------------------------------------
             | Waiter Request Bill
             |--------------------------------------------------------------------------
             */
 
-            Route::patch(
-                'restaurant-orders/{orderId}/request-bill',
-                [ RestaurantOrderController::class, 'requestBill' ]
-            );
-            /*
+Route::patch(
+    'restaurant-orders/{orderId}/request-bill',
+    [RestaurantOrderController::class, 'requestBill']
+);
+/*
             |--------------------------------------------------------------------------
             | POS Dashboard Statistics
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'dashboard-stats',
-                [ RestaurantOrderController::class, 'dashboardStats' ]
-            );
+Route::get(
+    'dashboard-stats',
+    [RestaurantOrderController::class, 'dashboardStats']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Daily Sales Report
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'reports/daily-sales',
-                [ RestaurantOrderController::class, 'dailySalesReport' ]
-            );
+Route::get(
+    'reports/daily-sales',
+    [RestaurantOrderController::class, 'dailySalesReport']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Authenticated User API
             |--------------------------------------------------------------------------
@@ -263,543 +263,557 @@ use App\Http\Controllers\Api\AccountsPayableDashboardController;
             | - admin permissions
             */
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Void Restaurant Order Item
             |--------------------------------------------------------------------------
             */
 
-            Route::patch(
-                'restaurant-order-items/{itemId}/void',
-                [ RestaurantOrderController::class, 'voidOrderItem' ]
-            );
+Route::patch(
+    'restaurant-order-items/{itemId}/void',
+    [RestaurantOrderController::class, 'voidOrderItem']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Save Draft Restaurant Order
             |--------------------------------------------------------------------------
             | Saves order items as draft before sending to kitchen.
             */
-            Route::post(
-                'restaurant-orders/draft',
-                [ RestaurantOrderController::class, 'saveDraftOrder' ]
-            );
+Route::post(
+    'restaurant-orders/draft',
+    [RestaurantOrderController::class, 'saveDraftOrder']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Send Draft Items To Kitchen
             |--------------------------------------------------------------------------
             */
 
-            Route::patch(
-                'restaurant-orders/{orderId}/send-to-kitchen',
-                [ RestaurantOrderController::class, 'sendDraftItemsToKitchen' ]
-            );
+Route::patch(
+    'restaurant-orders/{orderId}/send-to-kitchen',
+    [RestaurantOrderController::class, 'sendDraftItemsToKitchen']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Counter POS Order Payment
             |--------------------------------------------------------------------------
             | Used for KFC-style fast counter ordering.
             */
 
-            Route::post(
-                'counter-orders',
-                [ RestaurantOrderController::class, 'counterOrderPayment' ]
-            );
+Route::post(
+    'counter-orders',
+    [RestaurantOrderController::class, 'counterOrderPayment']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Product / Category Image Uploads
             |--------------------------------------------------------------------------
             */
 
-            Route::post(
-                'products/{product}/image',
-                [ ProductController::class, 'uploadImage' ]
-            );
+Route::post(
+    'products/{product}/image',
+    [ProductController::class, 'uploadImage']
+);
 
-            Route::post(
-                'categories/{category}/image',
-                [ ProductCategoryController::class, 'uploadImage' ]
-            );
+Route::post(
+    'categories/{category}/image',
+    [ProductCategoryController::class, 'uploadImage']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Categories
             |--------------------------------------------------------------------------
             */
-            Route::apiResource( 'categories', ProductCategoryController::class );
+Route::apiResource('categories', ProductCategoryController::class);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Active Categories For POS
             |--------------------------------------------------------------------------
             | Used by ordering screens only.
             */
 
-            Route::get(
-                'active-categories',
-                [ ProductCategoryController::class, 'activeCategories' ]
-            );
+Route::get(
+    'active-categories',
+    [ProductCategoryController::class, 'activeCategories']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Kitchen Display System
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'kitchen/orders',
-                [ RestaurantOrderController::class, 'kitchenOrders' ]
-            );
+Route::get(
+    'kitchen/orders',
+    [RestaurantOrderController::class, 'kitchenOrders']
+);
 
-            Route::post(
-                'kitchen/orders/{restaurantOrder}/status',
-                [ RestaurantOrderController::class, 'updateKitchenStatus' ]
-            );
+Route::post(
+    'kitchen/orders/{restaurantOrder}/status',
+    [RestaurantOrderController::class, 'updateKitchenStatus']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Customers
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'customers/search-by-phone',
-                [ CustomerController::class, 'searchByPhone' ]
-            );
+Route::get(
+    'customers/search-by-phone',
+    [CustomerController::class, 'searchByPhone']
+);
 
-            Route::apiResource(
-                'customers',
-                CustomerController::class
-            )->only( [
-                'index',
-                'store',
-                'update',
-            ] );
+Route::apiResource(
+    'customers',
+    CustomerController::class
+)->only([
+    'index',
+    'store',
+    'update',
+]);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Purchase Receipt OCR
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'purchase-receipts',
-                [ PurchaseReceiptController::class, 'index' ]
-            );
+Route::get(
+    'purchase-receipts',
+    [PurchaseReceiptController::class, 'index']
+);
 
-            Route::post(
-                'purchase-receipts/upload',
-                [ PurchaseReceiptController::class, 'upload' ]
-            );
+Route::post(
+    'purchase-receipts/upload',
+    [PurchaseReceiptController::class, 'upload']
+);
 
-            Route::put(
-                'purchase-receipts/{purchaseReceipt}',
-                [ PurchaseReceiptController::class, 'update' ]
-            );
+Route::put(
+    'purchase-receipts/{purchaseReceipt}',
+    [PurchaseReceiptController::class, 'update']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Sales History and Reprint Invoice
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'sales-history',
-                [ RestaurantOrderController::class, 'salesHistory' ]
-            );
+Route::get(
+    'sales-history',
+    [RestaurantOrderController::class, 'salesHistory']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Purchase Receipts
             |--------------------------------------------------------------------------
             */
 
-            Route::post(
-                'purchase-receipts/{purchaseReceipt}/run-ocr',
-                [ PurchaseReceiptController::class, 'runOcr' ]
-            );
+Route::post(
+    'purchase-receipts/{purchaseReceipt}/run-ocr',
+    [PurchaseReceiptController::class, 'runOcr']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Delete Receipts
             |--------------------------------------------------------------------------
             */
 
-            Route::delete(
-                'purchase-receipts/{purchaseReceipt}',
-                [ PurchaseReceiptController::class, 'destroy' ]
-            );
+Route::delete(
+    'purchase-receipts/{purchaseReceipt}',
+    [PurchaseReceiptController::class, 'destroy']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Purchase Receipts
             |--------------------------------------------------------------------------
             */
-            Route::post(
-                'purchase-receipts/{purchaseReceipt}/convert-to-purchase',
-                [ PurchaseReceiptController::class, 'convertToPurchase' ]
-            );
+Route::post(
+    'purchase-receipts/{purchaseReceipt}/convert-to-purchase',
+    [PurchaseReceiptController::class, 'convertToPurchase']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Purchases
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'purchases',
-                [ PurchaseController::class, 'index' ]
-            );
+Route::get(
+    'purchases',
+    [PurchaseController::class, 'index']
+);
 
-            Route::get(
-                'purchases/{purchase}',
-                [ PurchaseController::class, 'show' ]
-            );
+Route::get(
+    'purchases/{purchase}',
+    [PurchaseController::class, 'show']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Suppliers
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'suppliers',
-                [ SupplierController::class, 'index' ]
-            );
+Route::get(
+    'suppliers',
+    [SupplierController::class, 'index']
+);
 
-            Route::post(
-                'suppliers',
-                [ SupplierController::class, 'store' ]
-            );
+Route::post(
+    'suppliers',
+    [SupplierController::class, 'store']
+);
 
-            Route::get(
-                'suppliers/{supplier}',
-                [ SupplierController::class, 'show' ]
-            );
+Route::get(
+    'suppliers/{supplier}',
+    [SupplierController::class, 'show']
+);
 
-            Route::put(
-                'suppliers/{supplier}',
-                [ SupplierController::class, 'update' ]
-            );
+Route::put(
+    'suppliers/{supplier}',
+    [SupplierController::class, 'update']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Stock Movement
             |--------------------------------------------------------------------------
             */
-            Route::get(
-                'stock-movements',
-                [ StockMovementController::class, 'index' ]
-            );
+Route::get(
+    'stock-movements',
+    [StockMovementController::class, 'index']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | quick-sales
             |--------------------------------------------------------------------------
             */
 
-            Route::post(
-                'quick-sales',
-                [ QuickSaleController::class, 'store' ]
-            );
+Route::post(
+    'quick-sales',
+    [QuickSaleController::class, 'store']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Z report
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'z-report/daily',
-                [ ZReportController::class, 'daily' ]
-            );
+Route::get(
+    'z-report/daily',
+    [ZReportController::class, 'daily']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Void Quick Sale
             |--------------------------------------------------------------------------
             | Cancels sale, restores stock and keeps audit trail.
             */
 
-            Route::post(
-                'quick-sales/{sale}/void',
-                [ QuickSaleVoidController::class, 'void' ]
-            );
+Route::post(
+    'quick-sales/{sale}/void',
+    [QuickSaleVoidController::class, 'void']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Business Settings
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'business-settings',
-                [ BusinessSettingController::class, 'show' ]
-            );
+Route::get(
+    'business-settings',
+    [BusinessSettingController::class, 'show']
+);
 
-            Route::post(
-                'business-settings',
-                [ BusinessSettingController::class, 'update' ]
-            );
-            /*
+Route::post(
+    'business-settings',
+    [BusinessSettingController::class, 'update']
+);
+/*
             |--------------------------------------------------------------------------
             | Business Logo Upload
             |--------------------------------------------------------------------------
             */
 
-            Route::post(
-                'business-settings/logo',
-                [ BusinessSettingController::class, 'uploadLogo' ]
-            );
-            /*
+Route::post(
+    'business-settings/logo',
+    [BusinessSettingController::class, 'uploadLogo']
+);
+/*
             |--------------------------------------------------------------------------
             | Quick Sales History
             |--------------------------------------------------------------------------
             */
 
-            Route::get( 'quick-sales-history', [ QuickSaleHistoryController::class, 'index' ] );
+Route::get('quick-sales-history', [QuickSaleHistoryController::class, 'index']);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | MRA Test Routes
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'mra/test-token',
-                [ MraTestController::class, 'token' ]
-            );
+Route::get(
+    'mra/test-token',
+    [MraTestController::class, 'token']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | MRA Test Invoice Transmission
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'mra/test-invoice',
-                [ MraTestController::class, 'submitTestInvoice' ]
-            );
+Route::get(
+    'mra/test-invoice',
+    [MraTestController::class, 'submitTestInvoice']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Submit Real Sale To MRA
             |--------------------------------------------------------------------------
             */
 
-            Route::post(
-                'sales/{sale}/submit-mra',
-                [ MraSaleController::class, 'submit' ]
-            );
+Route::post(
+    'sales/{sale}/submit-mra',
+    [MraSaleController::class, 'submit']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Retry Failed MRA Submission
             |--------------------------------------------------------------------------
             */
 
-            Route::post(
-                'sales/{sale}/retry-mra',
-                [ MraSaleController::class, 'retry' ]
-            );
+Route::post(
+    'sales/{sale}/retry-mra',
+    [MraSaleController::class, 'retry']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Customer Payments
             |--------------------------------------------------------------------------
             */
 
-            Route::post(
-                'customers/{customer}/payments',
-                [ CustomerPaymentController::class, 'store' ]
-            );
+Route::post(
+    'customers/{customer}/payments',
+    [CustomerPaymentController::class, 'store']
+);
 
-            Route::get(
-                'customers/{customer}/balance',
-                [ CustomerController::class, 'balance' ]
-            );
+Route::get(
+    'customers/{customer}/balance',
+    [CustomerController::class, 'balance']
+);
 
-            Route::get(
-                'customers/{customer}/transactions',
-                [ CustomerController::class, 'transactions' ]
-            );
+Route::get(
+    'customers/{customer}/transactions',
+    [CustomerController::class, 'transactions']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Customer OS Balance
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'customers/{customer}/outstanding-invoices',
-                [ CustomerController::class, 'outstandingInvoices' ]
-            );
+Route::get(
+    'customers/{customer}/outstanding-invoices',
+    [CustomerController::class, 'outstandingInvoices']
+);
 
-            Route::get(
-                'customers/{customer}/statement',
-                [ CustomerController::class, 'statement' ]
-            );
-            Route::get(
-                'customers/{customer}/aging',
-                [ CustomerController::class, 'aging' ]
-            );
+Route::get(
+    'customers/{customer}/statement',
+    [CustomerController::class, 'statement']
+);
+Route::get(
+    'customers/{customer}/aging',
+    [CustomerController::class, 'aging']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Supplier OS Balance
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'suppliers/{supplier}/balance',
-                [ SupplierController::class, 'balance' ]
-            );
+Route::get(
+    'suppliers/{supplier}/balance',
+    [SupplierController::class, 'balance']
+);
 
-            Route::get(
-                'suppliers/{supplier}/transactions',
-                [ SupplierController::class, 'transactions' ]
-            );
+Route::get(
+    'suppliers/{supplier}/transactions',
+    [SupplierController::class, 'transactions']
+);
 
-            Route::get(
-                'suppliers/{supplier}/outstanding-purchases',
-                [ SupplierController::class, 'outstandingPurchases' ]
-            );
+Route::get(
+    'suppliers/{supplier}/outstanding-purchases',
+    [SupplierController::class, 'outstandingPurchases']
+);
 
-            Route::get(
-                'suppliers/{supplier}/aging',
-                [ SupplierController::class, 'aging' ]
-            );
+Route::get(
+    'suppliers/{supplier}/aging',
+    [SupplierController::class, 'aging']
+);
 
-            Route::get(
-                'suppliers/{supplier}/statement',
-                [ SupplierController::class, 'statement' ]
-            );
+Route::get(
+    'suppliers/{supplier}/statement',
+    [SupplierController::class, 'statement']
+);
 
-            Route::post(
-                'suppliers/{supplier}/payments',
-                [ SupplierController::class, 'recordPayment' ]
-            );
+Route::post(
+    'suppliers/{supplier}/payments',
+    [SupplierController::class, 'recordPayment']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Accounts Payable Dashboard
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'accounts-payable/dashboard',
-                [ AccountsPayableDashboardController::class, 'index' ]
-            );
+Route::get(
+    'accounts-payable/dashboard',
+    [AccountsPayableDashboardController::class, 'index']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | VAT Report
             |--------------------------------------------------------------------------
             */
 
-            Route::get(
-                'reports/vat-summary',
-                [ VatReportController::class, 'summary' ]
-            );
+Route::get(
+    'reports/vat-summary',
+    [VatReportController::class, 'summary']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Accounts Receivable Dashboard
             |--------------------------------------------------------------------------
             */
-            Route::get(
-                'accounts-receivable/dashboard',
-                [ AccountsReceivableDashboardController::class, 'index' ]
-            );
+Route::get(
+    'accounts-receivable/dashboard',
+    [AccountsReceivableDashboardController::class, 'index']
+);
 
-            Route::get(
-                'reports/profit-loss',
-                [ ProfitLossReportController::class, 'summary' ]
-            );
+Route::get(
+    'reports/profit-loss',
+    [ProfitLossReportController::class, 'summary']
+);
 
-            /*
+/*
             |--------------------------------------------------------------------------
             | Mobile Waiter Authentication
             |--------------------------------------------------------------------------
             */
 
-            Route::post(
-                'mobile/login',
-                [ MobileAuthController::class, 'login' ]
-            );
+Route::post(
+    'mobile/login',
+    [MobileAuthController::class, 'login']
+);
 
-            Route::middleware( 'auth:sanctum' )->group( function () {
-                Route::post(
-                    'mobile/logout',
-                    [ MobileAuthController::class, 'logout' ]
-                );
-            }
+Route::middleware('auth:sanctum')->group(
+    function () {
+        Route::post(
+            'mobile/logout',
+            [MobileAuthController::class, 'logout']
         );
+    }
+);
 
-        /*
+/*
         |--------------------------------------------------------------------------
         | Mobile Auth Test
         |--------------------------------------------------------------------------
         */
 
-        Route::middleware( 'auth:sanctum' )->get(
-            '/mobile/me',
+Route::middleware('auth:sanctum')->get(
+    '/mobile/me',
 
-            function ( Illuminate\Http\Request $request ) {
+    function (Illuminate\Http\Request $request) {
 
-                return response()->json( [
-                    'id' => $request->user()->id,
-                    'name' => $request->user()->name,
-                    'email' => $request->user()->email,
-                ] );
-            }
-        );
+        return response()->json([
+            'id' => $request->user()->id,
+            'name' => $request->user()->name,
+            'email' => $request->user()->email,
+        ]);
+    }
+);
 
 
-        Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
 
-            Route::get(
-                'waiter-orders',
-                [RestaurantOrderController::class, 'waiterOrders']
-            );
+    Route::get(
+        'waiter-orders',
+        [RestaurantOrderController::class, 'waiterOrders']
+    );
+});
 
-        });
+Route::middleware('auth:sanctum')->group(function () {
 
-        Route::middleware( 'auth:sanctum' )->group( function () {
+    Route::post(
+        '/restaurant-orders/{order}/request-bill',
+        [RestaurantOrderController::class, 'requestBill']
+    );
+});
 
-            Route::post(
-                '/restaurant-orders/{order}/request-bill',
-                [ RestaurantOrderController::class, 'requestBill' ]
-            );
-
-        });
-     
-        /*
+/*
     |--------------------------------------------------------------------------
     | CRUD Printers
     |--------------------------------------------------------------------------
-    */    
+    */
 
-        Route::get('/printers', [PrinterController::class, 'index']);
-        Route::post('/printers', [PrinterController::class, 'store']);
-        Route::put('/printers/{printer}', [PrinterController::class, 'update']);
-        Route::delete('/printers/{printer}', [PrinterController::class, 'destroy']);
+Route::get('/printers', [PrinterController::class, 'index']);
+Route::post('/printers', [PrinterController::class, 'store']);
+Route::put('/printers/{printer}', [PrinterController::class, 'update']);
+Route::delete('/printers/{printer}', [PrinterController::class, 'destroy']);
 
-        Route::post(
-            '/printers/{printer}/test-print',
-            [PrinterController::class, 'testPrint']
-        );
+Route::post(
+    '/printers/{printer}/test-print',
+    [PrinterController::class, 'testPrint']
+);
+/*
+    |--------------------------------------------------------------------------
+    | Health Check
+    |--------------------------------------------------------------------------
+    */
 
+Route::get('/health', function () {
+    return response()->json([
+        'success' => true,
+        'app' => 'IOSA POS',
+        'version' => '1.0',
+        'server_time' => now(),
+    ]);
+});
 
-    /*
+/*
     |--------------------------------------------------------------------------
     | Authenticated User
     |--------------------------------------------------------------------------
     */
-    Route::get( '/user', function ( Request $request ) {
+Route::get(
+    '/user',
+    function (Request $request) {
         return $request->user();
     }
-)->middleware( 'auth:sanctum' );
+)->middleware('auth:sanctum');

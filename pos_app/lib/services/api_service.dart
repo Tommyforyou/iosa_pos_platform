@@ -60,7 +60,10 @@ class ApiService {
   */
 
   Future<Map<String, dynamic>> getBusinessSettings() async {
-    final response = await http.get(Uri.parse('$baseUrl/business-settings'), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse('$baseUrl/business-settings'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -75,11 +78,16 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
-  Future<Map<String, dynamic>> updateBusinessSettings({required Map<String, dynamic> data}) async {
+  Future<Map<String, dynamic>> updateBusinessSettings({
+    required Map<String, dynamic> data,
+  }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/business-settings'),
 
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
 
       body: jsonEncode(data),
     );
@@ -97,8 +105,13 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
-  Future<Map<String, dynamic>> uploadBusinessLogo({required String filePath}) async {
-    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/business-settings/logo'));
+  Future<Map<String, dynamic>> uploadBusinessLogo({
+    required String filePath,
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/business-settings/logo'),
+    );
 
     request.headers['Accept'] = 'application/json';
 
@@ -122,7 +135,10 @@ class ApiService {
 */
 
   Future<Map<String, dynamic>> getSupplierBalance(int supplierId) async {
-    final response = await http.get(Uri.parse('$baseUrl/suppliers/$supplierId/balance'), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse('$baseUrl/suppliers/$supplierId/balance'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -138,7 +154,10 @@ class ApiService {
 */
 
   Future<Map<String, dynamic>> getSupplierTransactions(int supplierId) async {
-    final response = await http.get(Uri.parse('$baseUrl/suppliers/$supplierId/transactions'), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse('$baseUrl/suppliers/$supplierId/transactions'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -153,8 +172,13 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
-  Future<Map<String, dynamic>> getSupplierOutstandingPurchases(int supplierId) async {
-    final response = await http.get(Uri.parse('$baseUrl/suppliers/$supplierId/outstanding-purchases'), headers: {'Accept': 'application/json'});
+  Future<Map<String, dynamic>> getSupplierOutstandingPurchases(
+    int supplierId,
+  ) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/suppliers/$supplierId/outstanding-purchases'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -170,7 +194,10 @@ class ApiService {
 */
 
   Future<Map<String, dynamic>> getSupplierAging(int supplierId) async {
-    final response = await http.get(Uri.parse('$baseUrl/suppliers/$supplierId/aging'), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse('$baseUrl/suppliers/$supplierId/aging'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -186,7 +213,10 @@ class ApiService {
 */
 
   Future<Map<String, dynamic>> getSupplierStatement(int supplierId) async {
-    final response = await http.get(Uri.parse('$baseUrl/suppliers/$supplierId/statement'), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse('$baseUrl/suppliers/$supplierId/statement'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -202,7 +232,10 @@ class ApiService {
 */
 
   Future<Map<String, dynamic>> getCustomerBalance(int customerId) async {
-    final response = await http.get(Uri.parse('$baseUrl/customers/$customerId/balance'), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse('$baseUrl/customers/$customerId/balance'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -218,7 +251,10 @@ class ApiService {
 */
 
   Future<Map<String, dynamic>> getCustomerTransactions(int customerId) async {
-    final response = await http.get(Uri.parse('$baseUrl/customers/$customerId/transactions'), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse('$baseUrl/customers/$customerId/transactions'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -243,8 +279,17 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/customers/$customerId/payments'),
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-      body: jsonEncode({'amount': amount, 'payment_method': paymentMethod, 'reference': reference, 'notes': notes, 'payment_date': paymentDate}),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'amount': amount,
+        'payment_method': paymentMethod,
+        'reference': reference,
+        'notes': notes,
+        'payment_date': paymentDate,
+      }),
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -270,8 +315,17 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/suppliers/$supplierId/payments'),
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-      body: jsonEncode({'amount': amount, 'payment_method': paymentMethod, 'reference': reference, 'notes': notes, 'payment_date': paymentDate}),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'amount': amount,
+        'payment_method': paymentMethod,
+        'reference': reference,
+        'notes': notes,
+        'payment_date': paymentDate,
+      }),
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -288,7 +342,10 @@ class ApiService {
   */
 
   Future<Map<String, dynamic>> retryMraSubmission(int saleId) async {
-    final response = await http.post(Uri.parse('$baseUrl/sales/$saleId/retry-mra'), headers: {'Accept': 'application/json'});
+    final response = await http.post(
+      Uri.parse('$baseUrl/sales/$saleId/retry-mra'),
+      headers: {'Accept': 'application/json'},
+    );
 
     return Map<String, dynamic>.from(jsonDecode(response.body));
   }
@@ -300,17 +357,26 @@ class ApiService {
 */
 
   Future<List<dynamic>> getProducts({String? search}) async {
-    final url = await apiUrl(search != null && search.isNotEmpty ? 'products?search=$search' : 'products');
+    final url = await apiUrl(
+      search != null && search.isNotEmpty
+          ? 'products?search=$search'
+          : 'products',
+    );
 
     debugPrint('PRODUCTS URL: $url');
 
-    final response = await http.get(Uri.parse(url), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
 
-    throw Exception('Failed to load products. Status: ${response.statusCode}. Body: ${response.body}');
+    throw Exception(
+      'Failed to load products. Status: ${response.statusCode}. Body: ${response.body}',
+    );
   }
 
   /*
@@ -319,11 +385,17 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
-  Future<Map<String, dynamic>> voidQuickSale({required int saleId, required String reason}) async {
+  Future<Map<String, dynamic>> voidQuickSale({
+    required int saleId,
+    required String reason,
+  }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/quick-sales/$saleId/void'),
 
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
 
       body: jsonEncode({'reason': reason}),
     );
@@ -350,9 +422,17 @@ class ApiService {
     final response = await http.post(
       Uri.parse('$baseUrl/quick-sales'),
 
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
 
-      body: jsonEncode({'customer_id': customerId, 'sale_type': saleType, 'payment_method': paymentMethod, 'items': items}),
+      body: jsonEncode({
+        'customer_id': customerId,
+        'sale_type': saleType,
+        'payment_method': paymentMethod,
+        'items': items,
+      }),
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -368,12 +448,23 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
-  Future<List<dynamic>> getQuickSalesHistory({String? from, String? to, String? search}) async {
-    final uri = Uri.parse(
-      '$baseUrl/quick-sales-history',
-    ).replace(queryParameters: {if (from != null) 'from': from, if (to != null) 'to': to, if (search != null && search.isNotEmpty) 'search': search});
+  Future<List<dynamic>> getQuickSalesHistory({
+    String? from,
+    String? to,
+    String? search,
+  }) async {
+    final uri = Uri.parse('$baseUrl/quick-sales-history').replace(
+      queryParameters: {
+        if (from != null) 'from': from,
+        if (to != null) 'to': to,
+        if (search != null && search.isNotEmpty) 'search': search,
+      },
+    );
 
-    final response = await http.get(uri, headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      uri,
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -389,9 +480,16 @@ class ApiService {
   */
 
   Future<List<dynamic>> getCustomers({String? search}) async {
-    final uri = Uri.parse('$baseUrl/customers').replace(queryParameters: {if (search != null && search.isNotEmpty) 'search': search});
+    final uri = Uri.parse('$baseUrl/customers').replace(
+      queryParameters: {
+        if (search != null && search.isNotEmpty) 'search': search,
+      },
+    );
 
-    final response = await http.get(uri, headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      uri,
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -416,8 +514,18 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/customers'),
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-      body: jsonEncode({'name': name, 'phone': phone, 'brn': brn, 'vat_number': vatNumber, 'email': email, 'address': address}),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'name': name,
+        'phone': phone,
+        'brn': brn,
+        'vat_number': vatNumber,
+        'email': email,
+        'address': address,
+      }),
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -445,9 +553,19 @@ class ApiService {
     final response = await http.put(
       Uri.parse('$baseUrl/customers/$customerId'),
 
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
 
-      body: jsonEncode({'name': name, 'phone': phone, 'email': email, 'address': address, 'brn': brn, 'vat_number': vatNumber}),
+      body: jsonEncode({
+        'name': name,
+        'phone': phone,
+        'email': email,
+        'address': address,
+        'brn': brn,
+        'vat_number': vatNumber,
+      }),
     );
 
     if (response.statusCode == 200) {
@@ -464,7 +582,10 @@ class ApiService {
 */
 
   Future<Map<String, dynamic>> getCustomerAging(int customerId) async {
-    final response = await http.get(Uri.parse('$baseUrl/customers/$customerId/aging'), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse('$baseUrl/customers/$customerId/aging'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -480,7 +601,10 @@ class ApiService {
 */
 
   Future<Map<String, dynamic>> getCustomerStatement(int customerId) async {
-    final response = await http.get(Uri.parse('$baseUrl/customers/$customerId/statement'), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse('$baseUrl/customers/$customerId/statement'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -496,7 +620,10 @@ class ApiService {
   */
 
   Future<Map<String, dynamic>> getOutstandingInvoices(int customerId) async {
-    final response = await http.get(Uri.parse('$baseUrl/customers/$customerId/outstanding-invoices'), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse('$baseUrl/customers/$customerId/outstanding-invoices'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -512,7 +639,10 @@ class ApiService {
   */
 
   Future<Map<String, dynamic>> getOutstandingPurchases(int supplierId) async {
-    final response = await http.get(Uri.parse('$baseUrl/suppliers/$supplierId/outstanding-purchases'), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse('$baseUrl/suppliers/$supplierId/outstanding-purchases'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -528,17 +658,26 @@ class ApiService {
   | Gets Stock movements
   */
 
-  Future<List<dynamic>> getStockMovements({String? product, String? movementType, String? from, String? to}) async {
+  Future<List<dynamic>> getStockMovements({
+    String? product,
+    String? movementType,
+    String? from,
+    String? to,
+  }) async {
     final uri = Uri.parse('$baseUrl/stock-movements').replace(
       queryParameters: {
         if (product != null && product.isNotEmpty) 'product': product,
-        if (movementType != null && movementType.isNotEmpty) 'movement_type': movementType,
+        if (movementType != null && movementType.isNotEmpty)
+          'movement_type': movementType,
         if (from != null) 'from': from,
         if (to != null) 'to': to,
       },
     );
 
-    final response = await http.get(uri, headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      uri,
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -569,11 +708,17 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
-  Future<Map<String, dynamic>> convertPurchaseReceiptToPurchase({required int receiptId, required String paymentStatus}) async {
+  Future<Map<String, dynamic>> convertPurchaseReceiptToPurchase({
+    required int receiptId,
+    required String paymentStatus,
+  }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/purchase-receipts/$receiptId/convert-to-purchase'),
 
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
 
       body: jsonEncode({'payment_status': paymentStatus}),
     );
@@ -591,9 +736,17 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
-  Future<List<dynamic>> getPurchases({String? from, String? to, String? supplier}) async {
+  Future<List<dynamic>> getPurchases({
+    String? from,
+    String? to,
+    String? supplier,
+  }) async {
     final uri = Uri.parse('$baseUrl/purchases').replace(
-      queryParameters: {if (from != null) 'from': from, if (to != null) 'to': to, if (supplier != null && supplier.isNotEmpty) 'supplier': supplier},
+      queryParameters: {
+        if (from != null) 'from': from,
+        if (to != null) 'to': to,
+        if (supplier != null && supplier.isNotEmpty) 'supplier': supplier,
+      },
     );
 
     final response = await http.get(uri);
@@ -612,7 +765,11 @@ class ApiService {
 */
 
   Future<List<dynamic>> getSuppliers({String? search}) async {
-    final uri = Uri.parse('$baseUrl/suppliers').replace(queryParameters: {if (search != null && search.isNotEmpty) 'search': search});
+    final uri = Uri.parse('$baseUrl/suppliers').replace(
+      queryParameters: {
+        if (search != null && search.isNotEmpty) 'search': search,
+      },
+    );
 
     final response = await http.get(uri);
 
@@ -640,7 +797,10 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/suppliers'),
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
       body: jsonEncode({
         'name': name,
         'brn': brn,
@@ -677,7 +837,10 @@ class ApiService {
   }) async {
     final response = await http.put(
       Uri.parse('$baseUrl/suppliers/$supplierId'),
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
       body: jsonEncode({
         'name': name,
         'brn': brn,
@@ -703,9 +866,14 @@ class ApiService {
 */
 
   Future<Map<String, dynamic>> getDailyZReport({String? date}) async {
-    final uri = Uri.parse('$baseUrl/z-report/daily').replace(queryParameters: {if (date != null) 'date': date});
+    final uri = Uri.parse(
+      '$baseUrl/z-report/daily',
+    ).replace(queryParameters: {if (date != null) 'date': date});
 
-    final response = await http.get(uri, headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      uri,
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -720,8 +888,12 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
-  Future<Map<String, dynamic>> getSupplierDetail({required int supplierId}) async {
-    final response = await http.get(Uri.parse('$baseUrl/suppliers/$supplierId'));
+  Future<Map<String, dynamic>> getSupplierDetail({
+    required int supplierId,
+  }) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/suppliers/$supplierId'),
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -736,8 +908,12 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
-  Future<Map<String, dynamic>> getPurchaseDetail({required int purchaseId}) async {
-    final response = await http.get(Uri.parse('$baseUrl/purchases/$purchaseId'));
+  Future<Map<String, dynamic>> getPurchaseDetail({
+    required int purchaseId,
+  }) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/purchases/$purchaseId'),
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -753,7 +929,10 @@ class ApiService {
 */
 
   Future<void> deletePurchaseReceipt({required int receiptId}) async {
-    final response = await http.delete(Uri.parse('$baseUrl/purchase-receipts/$receiptId'), headers: {'Accept': 'application/json'});
+    final response = await http.delete(
+      Uri.parse('$baseUrl/purchase-receipts/$receiptId'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode != 200) {
       throw Exception('Failed to delete purchase receipt: ${response.body}');
@@ -766,8 +945,13 @@ class ApiService {
   |--------------------------------------------------------------------------
   */
 
-  Future<Map<String, dynamic>> runPurchaseReceiptOcr({required int receiptId}) async {
-    final response = await http.post(Uri.parse('$baseUrl/purchase-receipts/$receiptId/run-ocr'), headers: {'Accept': 'application/json'});
+  Future<Map<String, dynamic>> runPurchaseReceiptOcr({
+    required int receiptId,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/purchase-receipts/$receiptId/run-ocr'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -785,7 +969,10 @@ class ApiService {
   Future<List<dynamic>> getRestaurantTables() async {
     final url = await apiUrl('restaurant-tables');
 
-    final response = await http.get(Uri.parse(url), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -816,8 +1003,13 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
-  Future<Map<String, dynamic>> uploadPurchaseReceipt({required String filePath}) async {
-    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/purchase-receipts/upload'));
+  Future<Map<String, dynamic>> uploadPurchaseReceipt({
+    required String filePath,
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/purchase-receipts/upload'),
+    );
 
     request.headers['Accept'] = 'application/json';
 
@@ -855,7 +1047,10 @@ class ApiService {
     final response = await http.put(
       Uri.parse('$baseUrl/purchase-receipts/$receiptId'),
 
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
 
       body: jsonEncode({
         'supplier_name': supplierName,
@@ -896,8 +1091,16 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/restaurant-orders'),
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-      body: jsonEncode({'restaurant_table_id': restaurantTableId, 'order_type': orderType, 'items': items, 'notes': notes}),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'restaurant_table_id': restaurantTableId,
+        'order_type': orderType,
+        'items': items,
+        'notes': notes,
+      }),
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -916,7 +1119,10 @@ class ApiService {
   Future<List<dynamic>> getKitchenOrders() async {
     final url = await apiUrl('kitchen-orders');
 
-    final response = await http.get(Uri.parse(url), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -936,7 +1142,10 @@ class ApiService {
 
     debugPrint('ACTIVE ORDER URL: $url');
 
-    final response = await http.get(Uri.parse(url), headers: await authHeaders());
+    final response = await http.get(
+      Uri.parse(url),
+      headers: await authHeaders(),
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -974,7 +1183,9 @@ class ApiService {
   */
 
   Future<Map<String, dynamic>?> searchCustomerByPhone(String phone) async {
-    final response = await http.get(Uri.parse('$baseUrl/customers/search-by-phone?phone=$phone'));
+    final response = await http.get(
+      Uri.parse('$baseUrl/customers/search-by-phone?phone=$phone'),
+    );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -997,11 +1208,17 @@ class ApiService {
   | -> served
   */
 
-  Future<void> updateKitchenOrderStatus({required int orderId, required String status}) async {
+  Future<void> updateKitchenOrderStatus({
+    required int orderId,
+    required String status,
+  }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/kitchen/orders/$orderId/status'),
 
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
 
       body: jsonEncode({'status': status}),
     );
@@ -1024,10 +1241,16 @@ class ApiService {
   | - served
   | - cancelled
   */
-  Future<Map<String, dynamic>> updateKitchenItemStatus({required int itemId, required String kitchenStatus}) async {
+  Future<Map<String, dynamic>> updateKitchenItemStatus({
+    required int itemId,
+    required String kitchenStatus,
+  }) async {
     final response = await http.patch(
       Uri.parse('$baseUrl/restaurant-order-items/$itemId/kitchen-status'),
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
       body: jsonEncode({'kitchen_status': kitchenStatus}),
     );
 
@@ -1047,7 +1270,10 @@ class ApiService {
   Future<List<dynamic>> getBillableOrders() async {
     final url = await apiUrl('billable-orders');
 
-    final response = await http.get(Uri.parse(url), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -1077,7 +1303,10 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/restaurant-orders/$orderId/payment'),
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
       body: jsonEncode({
         'payment_method': paymentMethod,
         'subtotal': subtotal,
@@ -1104,7 +1333,10 @@ class ApiService {
   Future<Map<String, dynamic>> getDashboardStatistics() async {
     final url = await apiUrl('dashboard-stats');
 
-    final response = await http.get(Uri.parse(url), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -1122,9 +1354,17 @@ class ApiService {
   Future<List<dynamic>> getSalesHistory({String? from, String? to}) async {
     final url = await apiUrl('sales-history');
 
-    final uri = Uri.parse(url).replace(queryParameters: {if (from != null) 'from': from, if (to != null) 'to': to});
+    final uri = Uri.parse(url).replace(
+      queryParameters: {
+        if (from != null) 'from': from,
+        if (to != null) 'to': to,
+      },
+    );
 
-    final response = await http.get(uri, headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      uri,
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return List<dynamic>.from(jsonDecode(response.body));
@@ -1198,12 +1438,17 @@ class ApiService {
 | Converts saved draft items into pending kitchen items.
 */
 
-  Future<Map<String, dynamic>> sendDraftItemsToKitchen({required int orderId}) async {
+  Future<Map<String, dynamic>> sendDraftItemsToKitchen({
+    required int orderId,
+  }) async {
     final url = await apiUrl('restaurant-orders/$orderId/send-to-kitchen');
 
     debugPrint('SEND TO KITCHEN URL: $url');
 
-    final response = await http.patch(Uri.parse(url), headers: await authHeaders());
+    final response = await http.patch(
+      Uri.parse(url),
+      headers: await authHeaders(),
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -1248,7 +1493,10 @@ class ApiService {
     final response = await http.post(
       Uri.parse('$baseUrl/counter-orders'),
 
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
 
       body: jsonEncode({
         'items': items,
@@ -1284,10 +1532,16 @@ class ApiService {
   | This does not delete the item from database.
   | It marks the item as voided for audit purposes.
   */
-  Future<Map<String, dynamic>> voidRestaurantOrderItem({required int itemId, required String voidReason}) async {
+  Future<Map<String, dynamic>> voidRestaurantOrderItem({
+    required int itemId,
+    required String voidReason,
+  }) async {
     final response = await http.patch(
       Uri.parse('$baseUrl/restaurant-order-items/$itemId/void'),
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
       body: jsonEncode({'void_reason': voidReason}),
     );
 
@@ -1304,13 +1558,24 @@ class ApiService {
   |--------------------------------------------------------------------------
   */
 
-  Future<void> createCategory({required String name, required int sortOrder, required bool isActive}) async {
+  Future<void> createCategory({
+    required String name,
+    required int sortOrder,
+    required bool isActive,
+  }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/categories'),
 
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
 
-      body: jsonEncode({'name': name, 'sort_order': sortOrder, 'is_active': isActive}),
+      body: jsonEncode({
+        'name': name,
+        'sort_order': sortOrder,
+        'is_active': isActive,
+      }),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
@@ -1324,13 +1589,25 @@ class ApiService {
   |--------------------------------------------------------------------------
   */
 
-  Future<void> updateCategory({required int categoryId, required String name, required int sortOrder, required bool isActive}) async {
+  Future<void> updateCategory({
+    required int categoryId,
+    required String name,
+    required int sortOrder,
+    required bool isActive,
+  }) async {
     final response = await http.put(
       Uri.parse('$baseUrl/categories/$categoryId'),
 
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
 
-      body: jsonEncode({'name': name, 'sort_order': sortOrder, 'is_active': isActive}),
+      body: jsonEncode({
+        'name': name,
+        'sort_order': sortOrder,
+        'is_active': isActive,
+      }),
     );
 
     if (response.statusCode != 200) {
@@ -1345,7 +1622,10 @@ class ApiService {
   */
 
   Future<void> deleteCategory(int categoryId) async {
-    final response = await http.delete(Uri.parse('$baseUrl/categories/$categoryId'), headers: {'Accept': 'application/json'});
+    final response = await http.delete(
+      Uri.parse('$baseUrl/categories/$categoryId'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode != 200) {
       throw Exception('Failed to delete category');
@@ -1363,13 +1643,18 @@ class ApiService {
 
     debugPrint('CATEGORIES URL: $url');
 
-    final response = await http.get(Uri.parse(url), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
 
-    throw Exception('Failed to load categories. Status: ${response.statusCode}. Body: ${response.body}');
+    throw Exception(
+      'Failed to load categories. Status: ${response.statusCode}. Body: ${response.body}',
+    );
   }
 
   /*
@@ -1396,7 +1681,10 @@ class ApiService {
     final response = await http.post(
       Uri.parse('$baseUrl/products'),
 
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
 
       body: jsonEncode({
         'product_category_id': categoryId,
@@ -1445,7 +1733,10 @@ class ApiService {
     final response = await http.put(
       Uri.parse('$baseUrl/products/$productId'),
 
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
 
       body: jsonEncode({
         'product_category_id': categoryId,
@@ -1476,7 +1767,10 @@ class ApiService {
   */
 
   Future<void> deleteProduct(int productId) async {
-    final response = await http.delete(Uri.parse('$baseUrl/products/$productId'), headers: {'Accept': 'application/json'});
+    final response = await http.delete(
+      Uri.parse('$baseUrl/products/$productId'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode != 200) {
       throw Exception('Failed to delete product');
@@ -1488,12 +1782,24 @@ class ApiService {
   |--------------------------------------------------------------------------
   */
 
-  Future<void> uploadProductImage({required int productId, required String filePath}) async {
-    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/products/$productId/image'));
+  Future<void> uploadProductImage({
+    required int productId,
+    required String filePath,
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/products/$productId/image'),
+    );
 
     request.headers['Accept'] = 'application/json';
 
-    request.files.add(await http.MultipartFile.fromPath('image', filePath, contentType: MediaType('image', 'jpeg')));
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'image',
+        filePath,
+        contentType: MediaType('image', 'jpeg'),
+      ),
+    );
 
     final response = await request.send();
 
@@ -1511,7 +1817,10 @@ class ApiService {
   Future<List<dynamic>> getPrinters() async {
     final url = await apiUrl('printers');
 
-    final response = await http.get(Uri.parse(url), headers: await authHeaders());
+    final response = await http.get(
+      Uri.parse(url),
+      headers: await authHeaders(),
+    );
 
     if (response.statusCode == 200) {
       return List<dynamic>.from(jsonDecode(response.body));
@@ -1529,7 +1838,11 @@ class ApiService {
   Future<Map<String, dynamic>> createPrinter(Map<String, dynamic> data) async {
     final url = await apiUrl('printers');
 
-    final response = await http.post(Uri.parse(url), headers: await authHeaders(), body: jsonEncode(data));
+    final response = await http.post(
+      Uri.parse(url),
+      headers: await authHeaders(),
+      body: jsonEncode(data),
+    );
 
     if (response.statusCode == 201 || response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -1544,10 +1857,17 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
-  Future<Map<String, dynamic>> updatePrinter(int id, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> updatePrinter(
+    int id,
+    Map<String, dynamic> data,
+  ) async {
     final url = await apiUrl('printers/$id');
 
-    final response = await http.put(Uri.parse(url), headers: await authHeaders(), body: jsonEncode(data));
+    final response = await http.put(
+      Uri.parse(url),
+      headers: await authHeaders(),
+      body: jsonEncode(data),
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -1565,7 +1885,10 @@ class ApiService {
   Future<void> deletePrinter(int id) async {
     final url = await apiUrl('printers/$id');
 
-    final response = await http.delete(Uri.parse(url), headers: await authHeaders());
+    final response = await http.delete(
+      Uri.parse(url),
+      headers: await authHeaders(),
+    );
 
     if (response.statusCode == 200 || response.statusCode == 204) {
       return;
@@ -1583,7 +1906,10 @@ class ApiService {
   Future<void> testPrinter(int id) async {
     final url = await apiUrl('printers/$id/test-print');
 
-    final response = await http.post(Uri.parse(url), headers: await authHeaders());
+    final response = await http.post(
+      Uri.parse(url),
+      headers: await authHeaders(),
+    );
 
     if (response.statusCode == 200) {
       return;
@@ -1597,12 +1923,24 @@ class ApiService {
   |--------------------------------------------------------------------------
   */
 
-  Future<void> uploadCategoryImage({required int categoryId, required String filePath}) async {
-    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/categories/$categoryId/image'));
+  Future<void> uploadCategoryImage({
+    required int categoryId,
+    required String filePath,
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/categories/$categoryId/image'),
+    );
 
     request.headers['Accept'] = 'application/json';
 
-    request.files.add(await http.MultipartFile.fromPath('image', filePath, contentType: MediaType('image', 'jpeg')));
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'image',
+        filePath,
+        contentType: MediaType('image', 'jpeg'),
+      ),
+    );
 
     final response = await request.send();
 
@@ -1618,7 +1956,10 @@ class ApiService {
 */
 
   Future<Map<String, dynamic>> getAccountsPayableDashboard() async {
-    final response = await http.get(Uri.parse('$baseUrl/accounts-payable/dashboard'), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse('$baseUrl/accounts-payable/dashboard'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -1633,8 +1974,14 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
-  Future<Map<String, dynamic>> getVatSummary({required String from, required String to}) async {
-    final response = await http.get(Uri.parse('$baseUrl/reports/vat-summary?from=$from&to=$to'), headers: {'Accept': 'application/json'});
+  Future<Map<String, dynamic>> getVatSummary({
+    required String from,
+    required String to,
+  }) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/reports/vat-summary?from=$from&to=$to'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -1650,7 +1997,10 @@ class ApiService {
 */
 
   Future<Map<String, dynamic>> getAccountsReceivableDashboard() async {
-    final response = await http.get(Uri.parse('$baseUrl/accounts-receivable/dashboard'), headers: {'Accept': 'application/json'});
+    final response = await http.get(
+      Uri.parse('$baseUrl/accounts-receivable/dashboard'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -1665,8 +2015,14 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
-  Future<Map<String, dynamic>> getProfitLoss({required String from, required String to}) async {
-    final response = await http.get(Uri.parse('$baseUrl/reports/profit-loss?from=$from&to=$to'), headers: {'Accept': 'application/json'});
+  Future<Map<String, dynamic>> getProfitLoss({
+    required String from,
+    required String to,
+  }) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/reports/profit-loss?from=$from&to=$to'),
+      headers: {'Accept': 'application/json'},
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -1693,7 +2049,10 @@ class ApiService {
 
     debugPrint('WAITER ORDERS URL: $url');
 
-    final response = await http.get(Uri.parse(url), headers: await authHeaders());
+    final response = await http.get(
+      Uri.parse(url),
+      headers: await authHeaders(),
+    );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -1718,7 +2077,10 @@ class ApiService {
 
     debugPrint('REQUEST BILL URL: $url');
 
-    final response = await http.patch(Uri.parse(url), headers: await authHeaders());
+    final response = await http.patch(
+      Uri.parse(url),
+      headers: await authHeaders(),
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -1737,12 +2099,18 @@ class ApiService {
   |--------------------------------------------------------------------------
   */
 
-  Future<Map<String, dynamic>> waiterLogin({required String email, required String password}) async {
+  Future<Map<String, dynamic>> waiterLogin({
+    required String email,
+    required String password,
+  }) async {
     try {
       final response = await http
           .post(
             Uri.parse(await apiUrl('mobile/login')),
-            headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
             body: jsonEncode({'email': email, 'password': password}),
           )
           .timeout(const Duration(seconds: 10));
@@ -1754,7 +2122,9 @@ class ApiService {
         return Map<String, dynamic>.from(jsonDecode(response.body));
       }
 
-      throw Exception('Login failed. Status: ${response.statusCode}. Body: ${response.body}');
+      throw Exception(
+        'Login failed. Status: ${response.statusCode}. Body: ${response.body}',
+      );
     } catch (e) {
       debugPrint('LOGIN ERROR: $e');
       rethrow;
@@ -1787,7 +2157,10 @@ class ApiService {
 */
 
   Future<Map<String, dynamic>> getCurrentUser() async {
-    final response = await http.get(Uri.parse('$baseUrl/mobile/me'), headers: await authHeaders());
+    final response = await http.get(
+      Uri.parse('$baseUrl/mobile/me'),
+      headers: await authHeaders(),
+    );
 
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
@@ -1802,29 +2175,55 @@ class ApiService {
 |--------------------------------------------------------------------------
 */
 
-  /*
-|--------------------------------------------------------------------------
-| API URL Helper
-|--------------------------------------------------------------------------
-*/
-
   Future<String> apiUrl(String endpoint) async {
     final prefs = await SharedPreferences.getInstance();
 
     final serverUrl = prefs.getString('server_url');
 
-    final effectiveServerUrl = Platform.isWindows
-        ? 'http://127.0.0.1:8000'
-        : (serverUrl == null || serverUrl.isEmpty ? 'http://127.0.0.1:8000' : serverUrl);
+    if (serverUrl == null || serverUrl.isEmpty) {
+      throw Exception(
+        'Server URL not configured. Please open Server Settings.',
+      );
+    }
 
-    final cleanServerUrl = effectiveServerUrl.endsWith('/') ? effectiveServerUrl.substring(0, effectiveServerUrl.length - 1) : effectiveServerUrl;
+    final cleanServerUrl = serverUrl.endsWith('/')
+        ? serverUrl.substring(0, serverUrl.length - 1)
+        : serverUrl;
 
-    final cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+    final cleanEndpoint = endpoint.startsWith('/')
+        ? endpoint.substring(1)
+        : endpoint;
 
     final url = '$cleanServerUrl/api/$cleanEndpoint';
 
     debugPrint('API URL: $url');
 
     return url;
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Test Server Connection
+|--------------------------------------------------------------------------
+*/
+
+  Future<bool> testConnection(String serverUrl) async {
+    try {
+      final cleanServerUrl = serverUrl.endsWith('/')
+          ? serverUrl.substring(0, serverUrl.length - 1)
+          : serverUrl;
+
+      final response = await http
+          .get(
+            Uri.parse('$cleanServerUrl/api/health'),
+            headers: {'Accept': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 5));
+
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('TEST CONNECTION ERROR: $e');
+      return false;
+    }
   }
 }

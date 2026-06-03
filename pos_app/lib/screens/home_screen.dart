@@ -24,6 +24,7 @@ import 'vat_dashboard_screen.dart';
 import 'profit_loss_dashboard_screen.dart';
 import 'settings/server_qr_screen.dart';
 import 'printer_settings_screen.dart';
+import 'server_settings_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -89,7 +90,13 @@ class HomeScreen extends StatelessWidget {
 
                     border: Border.all(color: Colors.grey.shade200),
 
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
 
                   child: SingleChildScrollView(
@@ -108,9 +115,16 @@ class HomeScreen extends StatelessWidget {
                               width: 52,
                               height: 52,
 
-                              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
 
-                              child: const Icon(Icons.restaurant_sharp, color: Colors.orange, size: 28),
+                              child: const Icon(
+                                Icons.restaurant_sharp,
+                                color: Colors.orange,
+                                size: 28,
+                              ),
                             ),
 
                             const SizedBox(width: 14),
@@ -120,11 +134,20 @@ class HomeScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
 
                                 children: [
-                                  Text('Restaurant Dashboard', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                                  Text(
+                                    'Restaurant Dashboard',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
 
                                   SizedBox(height: 3),
 
-                                  Text('Dashboard, Sales History, DailyReport', style: TextStyle(color: Colors.grey)),
+                                  Text(
+                                    'Dashboard, Sales History, DailyReport',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
                                 ],
                               ),
                             ),
@@ -155,7 +178,10 @@ class HomeScreen extends StatelessWidget {
                               title: 'Business Settings',
                               subtitle: 'Company, VAT and MRA setup',
                               icon: Icons.settings,
-                              onTap: () => openScreen(context, const BusinessSettingsScreen()),
+                              onTap: () => openScreen(
+                                context,
+                                const BusinessSettingsScreen(),
+                              ),
                             ),
 
                             /*
@@ -167,7 +193,8 @@ class HomeScreen extends StatelessWidget {
                               title: 'Server QR',
                               subtitle: 'Connect waiter phones',
                               icon: Icons.qr_code_2,
-                              onTap: () => openScreen(context, const ServerQrScreen()),
+                              onTap: () =>
+                                  openScreen(context, const ServerQrScreen()),
                             ),
 
                             /*
@@ -179,7 +206,20 @@ class HomeScreen extends StatelessWidget {
                               title: 'Printer Settings',
                               subtitle: 'Kitchen printers',
                               icon: Icons.print,
-                              onTap: () => openScreen(context, const PrinterSettingsScreen()),
+                              onTap: () => openScreen(
+                                context,
+                                const PrinterSettingsScreen(),
+                              ),
+                            ),
+
+                            _MiniHomeCard(
+                              title: 'Server Settings',
+                              subtitle: 'Configure API server',
+                              icon: Icons.dns,
+                              onTap: () => openScreen(
+                                context,
+                                const ServerSettingsScreen(),
+                              ),
                             ),
                           ],
                         ),
@@ -205,7 +245,13 @@ class HomeScreen extends StatelessWidget {
 
                     border: Border.all(color: Colors.grey.shade200),
 
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
 
                   child: SingleChildScrollView(
@@ -224,9 +270,16 @@ class HomeScreen extends StatelessWidget {
                               width: 52,
                               height: 52,
 
-                              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
 
-                              child: const Icon(Icons.restaurant_sharp, color: Colors.orange, size: 28),
+                              child: const Icon(
+                                Icons.restaurant_sharp,
+                                color: Colors.orange,
+                                size: 28,
+                              ),
                             ),
 
                             const SizedBox(width: 14),
@@ -236,11 +289,20 @@ class HomeScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
 
                                 children: [
-                                  Text('Restaurant Dashboard', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                                  Text(
+                                    'Restaurant Dashboard',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
 
                                   SizedBox(height: 3),
 
-                                  Text('Dashboard, Sales History, DailyReport', style: TextStyle(color: Colors.grey)),
+                                  Text(
+                                    'Dashboard, Sales History, DailyReport',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
                                 ],
                               ),
                             ),
@@ -266,28 +328,36 @@ class HomeScreen extends StatelessWidget {
                               title: 'Counter POS',
                               subtitle: 'Fast order and payment',
                               icon: Icons.fastfood,
-                              onTap: () => openScreen(context, const CounterPosScreen()),
+                              onTap: () =>
+                                  openScreen(context, const CounterPosScreen()),
                             ),
 
                             _MiniHomeCard(
                               title: 'Dashboard',
                               subtitle: 'Sales and operations overview',
                               icon: Icons.dashboard,
-                              onTap: () => openScreen(context, const DashboardScreen()),
+                              onTap: () =>
+                                  openScreen(context, const DashboardScreen()),
                             ),
 
                             _MiniHomeCard(
                               title: 'Sales History',
                               subtitle: 'View sales and reprint receipts',
                               icon: Icons.receipt_long,
-                              onTap: () => openScreen(context, const SalesHistoryScreen()),
+                              onTap: () => openScreen(
+                                context,
+                                const SalesHistoryScreen(),
+                              ),
                             ),
 
                             _MiniHomeCard(
                               title: 'Daily Report',
                               subtitle: 'Sales and payment report',
                               icon: Icons.bar_chart,
-                              onTap: () => openScreen(context, const DailySalesReportScreen()),
+                              onTap: () => openScreen(
+                                context,
+                                const DailySalesReportScreen(),
+                              ),
                             ),
                           ],
                         ),
@@ -313,7 +383,13 @@ class HomeScreen extends StatelessWidget {
 
                     border: Border.all(color: Colors.grey.shade200),
 
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
 
                   child: SingleChildScrollView(
@@ -332,9 +408,16 @@ class HomeScreen extends StatelessWidget {
                               width: 52,
                               height: 52,
 
-                              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
 
-                              child: const Icon(Icons.category, color: Colors.orange, size: 28),
+                              child: const Icon(
+                                Icons.category,
+                                color: Colors.orange,
+                                size: 28,
+                              ),
                             ),
 
                             const SizedBox(width: 14),
@@ -344,11 +427,20 @@ class HomeScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
 
                                 children: [
-                                  Text('Products', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                                  Text(
+                                    'Products',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
 
                                   SizedBox(height: 3),
 
-                                  Text('Categories, Products, Stock Movements', style: TextStyle(color: Colors.grey)),
+                                  Text(
+                                    'Categories, Products, Stock Movements',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
                                 ],
                               ),
                             ),
@@ -374,21 +466,30 @@ class HomeScreen extends StatelessWidget {
                               title: 'Categories',
                               subtitle: 'Manage product categories',
                               icon: Icons.category,
-                              onTap: () => openScreen(context, const CategoryManagementScreen()),
+                              onTap: () => openScreen(
+                                context,
+                                const CategoryManagementScreen(),
+                              ),
                             ),
 
                             _MiniHomeCard(
                               title: 'Products',
                               subtitle: 'Manage products and prices',
                               icon: Icons.inventory_2,
-                              onTap: () => openScreen(context, const ProductManagementScreen()),
+                              onTap: () => openScreen(
+                                context,
+                                const ProductManagementScreen(),
+                              ),
                             ),
 
                             _MiniHomeCard(
                               title: 'Stock Movements',
                               subtitle: 'Audit inventory in/out history',
                               icon: Icons.timeline,
-                              onTap: () => openScreen(context, const StockMovementScreen()),
+                              onTap: () => openScreen(
+                                context,
+                                const StockMovementScreen(),
+                              ),
                             ),
                           ],
                         ),
@@ -414,7 +515,13 @@ class HomeScreen extends StatelessWidget {
 
                     border: Border.all(color: Colors.grey.shade200),
 
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
 
                   child: SingleChildScrollView(
@@ -433,9 +540,16 @@ class HomeScreen extends StatelessWidget {
                               width: 52,
                               height: 52,
 
-                              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
 
-                              child: const Icon(Icons.restaurant, color: Colors.orange, size: 28),
+                              child: const Icon(
+                                Icons.restaurant,
+                                color: Colors.orange,
+                                size: 28,
+                              ),
                             ),
 
                             const SizedBox(width: 14),
@@ -445,11 +559,20 @@ class HomeScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
 
                                 children: [
-                                  Text('Restaurant Orders', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                                  Text(
+                                    'Restaurant Orders',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
 
                                   SizedBox(height: 3),
 
-                                  Text('Table Orders, Take Awaysm Deliveries, Billings, Kitchen Display', style: TextStyle(color: Colors.grey)),
+                                  Text(
+                                    'Table Orders, Take Awaysm Deliveries, Billings, Kitchen Display',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
                                 ],
                               ),
                             ),
@@ -475,41 +598,52 @@ class HomeScreen extends StatelessWidget {
                               title: 'Tables',
                               subtitle: 'Dine-in orders',
                               icon: Icons.table_restaurant,
-                              onTap: () => openScreen(context, const TableScreen()),
+                              onTap: () =>
+                                  openScreen(context, const TableScreen()),
                             ),
 
                             _MiniHomeCard(
                               title: 'Takeaway',
                               subtitle: 'Coming next',
                               icon: Icons.shopping_bag,
-                              onTap: () => openScreen(context, const OrderScreen(orderType: 'takeaway')),
+                              onTap: () => openScreen(
+                                context,
+                                const OrderScreen(orderType: 'takeaway'),
+                              ),
                             ),
                             _MiniHomeCard(
                               title: 'Delivery',
                               subtitle: 'Coming next',
                               icon: Icons.delivery_dining,
-                              onTap: () => openScreen(context, const OrderScreen(orderType: 'delivery')),
+                              onTap: () => openScreen(
+                                context,
+                                const OrderScreen(orderType: 'delivery'),
+                              ),
                             ),
 
                             _MiniHomeCard(
                               title: 'Billing',
                               subtitle: 'Cashier payment screen',
                               icon: Icons.point_of_sale,
-                              onTap: () => openScreen(context, const BillingScreen()),
+                              onTap: () =>
+                                  openScreen(context, const BillingScreen()),
                             ),
 
                             _MiniHomeCard(
                               title: 'Kitchen Display',
                               subtitle: 'Pending / preparing / ready',
                               icon: Icons.soup_kitchen,
-                              onTap: () => openScreen(context, const KitchenScreen()),
+                              onTap: () =>
+                                  openScreen(context, const KitchenScreen()),
                             ),
 
                             _MiniHomeCard(
                               title: 'Z-Report',
-                              subtitle: 'Daily sales closing and cash reconciliation',
+                              subtitle:
+                                  'Daily sales closing and cash reconciliation',
                               icon: Icons.summarize,
-                              onTap: () => openScreen(context, const ZReportScreen()),
+                              onTap: () =>
+                                  openScreen(context, const ZReportScreen()),
                             ),
                           ],
                         ),
@@ -535,7 +669,13 @@ class HomeScreen extends StatelessWidget {
 
                     border: Border.all(color: Colors.grey.shade200),
 
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
 
                   child: SingleChildScrollView(
@@ -554,9 +694,16 @@ class HomeScreen extends StatelessWidget {
                               width: 52,
                               height: 52,
 
-                              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
 
-                              child: const Icon(Icons.shop, color: Colors.orange, size: 28),
+                              child: const Icon(
+                                Icons.shop,
+                                color: Colors.orange,
+                                size: 28,
+                              ),
                             ),
 
                             const SizedBox(width: 14),
@@ -566,11 +713,20 @@ class HomeScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
 
                                 children: [
-                                  Text('Purchases', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                                  Text(
+                                    'Purchases',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
 
                                   SizedBox(height: 3),
 
-                                  Text('Purchase OCR, Purchases, Suppliers, Account Payable.', style: TextStyle(color: Colors.grey)),
+                                  Text(
+                                    'Purchase OCR, Purchases, Suppliers, Account Payable.',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
                                 ],
                               ),
                             ),
@@ -596,27 +752,35 @@ class HomeScreen extends StatelessWidget {
                               title: 'Purchase OCR',
                               subtitle: 'Scan receipts',
                               icon: Icons.document_scanner,
-                              onTap: () => openScreen(context, const PurchaseReceiptScreen()),
+                              onTap: () => openScreen(
+                                context,
+                                const PurchaseReceiptScreen(),
+                              ),
                             ),
 
                             _MiniHomeCard(
                               title: 'Purchases',
                               subtitle: 'Purchase list',
                               icon: Icons.shopping_cart_checkout,
-                              onTap: () => openScreen(context, const PurchaseScreen()),
+                              onTap: () =>
+                                  openScreen(context, const PurchaseScreen()),
                             ),
                             _MiniHomeCard(
                               title: 'Suppliers',
                               subtitle: 'Supplier records',
                               icon: Icons.business,
-                              onTap: () => openScreen(context, const SupplierScreen()),
+                              onTap: () =>
+                                  openScreen(context, const SupplierScreen()),
                             ),
 
                             _MiniHomeCard(
                               title: 'Accounts Payable',
                               subtitle: 'AP dashboard',
                               icon: Icons.account_balance,
-                              onTap: () => openScreen(context, const AccountsPayableDashboardScreen()),
+                              onTap: () => openScreen(
+                                context,
+                                const AccountsPayableDashboardScreen(),
+                              ),
                             ),
                           ],
                         ),
@@ -642,7 +806,13 @@ class HomeScreen extends StatelessWidget {
 
                     border: Border.all(color: Colors.grey.shade200),
 
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
 
                   child: SingleChildScrollView(
@@ -661,9 +831,16 @@ class HomeScreen extends StatelessWidget {
                               width: 52,
                               height: 52,
 
-                              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.12), borderRadius: BorderRadius.circular(16)),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
 
-                              child: const Icon(Icons.shop_2, color: Colors.orange, size: 28),
+                              child: const Icon(
+                                Icons.shop_2,
+                                color: Colors.orange,
+                                size: 28,
+                              ),
                             ),
 
                             const SizedBox(width: 14),
@@ -673,11 +850,20 @@ class HomeScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
 
                                 children: [
-                                  Text('Sales', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                                  Text(
+                                    'Sales',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
 
                                   SizedBox(height: 3),
 
-                                  Text('QuickSales, Customers and Sales History.', style: TextStyle(color: Colors.grey)),
+                                  Text(
+                                    'QuickSales, Customers and Sales History.',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
                                 ],
                               ),
                             ),
@@ -703,40 +889,56 @@ class HomeScreen extends StatelessWidget {
                               title: 'Quick Sale',
                               subtitle: 'Create invoice-style sale quickly',
                               icon: Icons.flash_on,
-                              onTap: () => openScreen(context, const QuickSaleScreen()),
+                              onTap: () =>
+                                  openScreen(context, const QuickSaleScreen()),
                             ),
 
                             _MiniHomeCard(
                               title: 'Sales History',
                               subtitle: 'Quick Sale History',
                               icon: Icons.shopping_cart_checkout,
-                              onTap: () => openScreen(context, const QuickSaleHistoryScreen()),
+                              onTap: () => openScreen(
+                                context,
+                                const QuickSaleHistoryScreen(),
+                              ),
                             ),
                             _MiniHomeCard(
                               title: 'Customers',
                               subtitle: 'Manage customers and repayments',
                               icon: Icons.people,
-                              onTap: () => openScreen(context, const CustomerManagementScreen()),
+                              onTap: () => openScreen(
+                                context,
+                                const CustomerManagementScreen(),
+                              ),
                             ),
 
                             _MiniHomeCard(
                               title: 'VAT Dashboard',
                               subtitle: 'Vat Collected and Paid',
                               icon: Icons.people,
-                              onTap: () => openScreen(context, const VatDashboardScreen()),
+                              onTap: () => openScreen(
+                                context,
+                                const VatDashboardScreen(),
+                              ),
                             ),
                             _MiniHomeCard(
                               title: 'Accounts Receivable',
                               subtitle: 'Customer balances',
                               icon: Icons.account_balance_wallet,
-                              onTap: () => openScreen(context, const AccountsReceivableDashboardScreen()),
+                              onTap: () => openScreen(
+                                context,
+                                const AccountsReceivableDashboardScreen(),
+                              ),
                             ),
 
                             _MiniHomeCard(
                               title: 'Profit & Loss',
                               subtitle: 'Financial performance',
                               icon: Icons.trending_up,
-                              onTap: () => openScreen(context, const ProfitLossDashboardScreen()),
+                              onTap: () => openScreen(
+                                context,
+                                const ProfitLossDashboardScreen(),
+                              ),
                             ),
                           ],
                         ),
@@ -767,7 +969,12 @@ class _HomeCard extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _HomeCard({required this.title, required this.subtitle, required this.icon, required this.onTap});
+  const _HomeCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -783,7 +990,13 @@ class _HomeCard extends StatelessWidget {
             children: [
               Icon(icon, size: 52, color: Colors.blueGrey),
               const SizedBox(height: 14),
-              Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 6),
               Text(
                 subtitle,
@@ -812,7 +1025,12 @@ class _MiniHomeCard extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _MiniHomeCard({required this.title, required this.subtitle, required this.icon, required this.onTap});
+  const _MiniHomeCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
