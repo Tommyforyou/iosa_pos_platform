@@ -1016,6 +1016,10 @@ class RestaurantOrderController extends Controller
                 'kitchen_status' => 'pending',
             ]);
 
+           // Send order to kitchen 
+            
+            app(KitchenPrintService::class)->printOrder($order);
+
         /*
         |--------------------------------------------------------------------------
         | Update Order Status
