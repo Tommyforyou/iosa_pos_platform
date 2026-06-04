@@ -29,6 +29,7 @@ import 'customer_orders_screen.dart';
 import 'table_qr_management_screen.dart';
 import '../services/api_service.dart';
 import 'dart:async';
+import 'kiosk/kiosk_home_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -380,6 +381,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           mainAxisSpacing: 16,
                           childAspectRatio: 1.1,
                           children: [
+                            _MiniHomeCard(
+                              title: 'Kiosk',
+                              subtitle: 'Self ordering terminal',
+                              icon: Icons.touch_app,
+                              onTap: () =>
+                                  openScreen(context, const KioskHomeScreen()),
+                            ),
+
                             _MiniHomeCard(
                               title: 'Counter POS',
                               subtitle: 'Fast order and payment',
