@@ -2288,4 +2288,27 @@ class ApiService {
 
     throw Exception('Failed to reject customer order: ${response.body}');
   }
+
+  /*
+|--------------------------------------------------------------------------
+| Get Customer Orders Count
+|--------------------------------------------------------------------------
+*/
+
+  Future<int> getCustomerOrdersCount() async {
+    final url = await apiUrl('customer-orders-count');
+
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      return data['count'] ?? 0;
+    }
+
+    return 0;
+  }
 }

@@ -1472,4 +1472,20 @@ class RestaurantOrderController extends Controller
             'message' => 'Order rejected.',
         ]);
     }
+
+    /*
+|--------------------------------------------------------------------------
+| Customer Orders Count
+|--------------------------------------------------------------------------
+*/
+
+    public function customerOrdersCount()
+    {
+        return response()->json([
+            'count' => RestaurantOrder::where(
+                'status',
+                'customer_pending'
+            )->count(),
+        ]);
+    }
 }

@@ -27,6 +27,8 @@ import 'printer_settings_screen.dart';
 import 'server_settings_screen.dart';
 import 'customer_orders_screen.dart';
 import 'table_qr_management_screen.dart';
+import '../services/api_service.dart';
+import 'dart:async';
 
 /*
 |--------------------------------------------------------------------------
@@ -44,8 +46,50 @@ import 'table_qr_management_screen.dart';
 | a different POS module.
 */
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final ApiService apiService = ApiService();
+  int customerOrdersCount = 0;
+  Timer? refreshTimer;
+
+  /*
+|--------------------------------------------------------------------------
+| Load Customer Orders Count
+|--------------------------------------------------------------------------
+*/
+
+  Future<void> loadCustomerOrdersCount() async {
+    try {
+      final count = await apiService.getCustomerOrdersCount();
+
+      if (!mounted) return;
+
+      setState(() {
+        customerOrdersCount = count;
+      });
+    } catch (_) {}
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    refreshTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => loadCustomerOrdersCount(),
+    );
+  }
+
+  @override
+  void dispose() {
+    refreshTimer?.cancel();
+    super.dispose();
+  }
 
   /*
   |--------------------------------------------------------------------------
@@ -650,9 +694,16 @@ class HomeScreen extends StatelessWidget {
                             ),
 
                             _MiniHomeCard(
-                              title: 'QR Orders',
-                              subtitle: 'Approve customer orders',
+                              title: customerOrdersCount > 0
+                                  ? 'QR Orders ($customerOrdersCount)'
+                                  : 'QR Orders',
+
+                              subtitle: customerOrdersCount > 0
+                                  ? '$customerOrdersCount waiting approval'
+                                  : 'Approve customer orders',
+
                               icon: Icons.qr_code_2,
+
                               onTap: () => openScreen(
                                 context,
                                 const CustomerOrdersScreen(),
