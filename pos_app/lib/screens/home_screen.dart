@@ -25,6 +25,7 @@ import 'profit_loss_dashboard_screen.dart';
 import 'settings/server_qr_screen.dart';
 import 'printer_settings_screen.dart';
 import 'server_settings_screen.dart';
+import 'customer_orders_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -637,6 +638,15 @@ class HomeScreen extends StatelessWidget {
                                   openScreen(context, const KitchenScreen()),
                             ),
 
+                            _MiniHomeCard(
+                              title: 'QR Orders',
+                              subtitle: 'Approve customer orders',
+                              icon: Icons.qr_code_2,
+                              onTap: () => openScreen(
+                                context,
+                                const CustomerOrdersScreen(),
+                              ),
+                            ),
                             _MiniHomeCard(
                               title: 'Z-Report',
                               subtitle:

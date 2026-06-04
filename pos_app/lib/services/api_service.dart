@@ -2226,4 +2226,66 @@ class ApiService {
       return false;
     }
   }
+  /*
+|--------------------------------------------------------------------------
+| Get Customer QR Orders
+|--------------------------------------------------------------------------
+*/
+
+  Future<List<dynamic>> getCustomerOrders() async {
+    final url = await apiUrl('customer-orders');
+
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return List<dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load customer orders: ${response.body}');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Approve Customer QR Order
+|--------------------------------------------------------------------------
+*/
+
+  Future<void> approveCustomerOrder(int orderId) async {
+    final url = await apiUrl('customer-orders/$orderId/approve');
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return;
+    }
+
+    throw Exception('Failed to approve customer order: ${response.body}');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Reject Customer QR Order
+|--------------------------------------------------------------------------
+*/
+
+  Future<void> rejectCustomerOrder(int orderId) async {
+    final url = await apiUrl('customer-orders/$orderId/reject');
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return;
+    }
+
+    throw Exception('Failed to reject customer order: ${response.body}');
+  }
 }

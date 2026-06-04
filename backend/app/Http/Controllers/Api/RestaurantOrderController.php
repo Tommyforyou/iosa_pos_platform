@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Services\KitchenPrintService;
+use Illuminate\Support\Facades\Log;
 
 
 class RestaurantOrderController extends Controller
@@ -155,7 +156,6 @@ class RestaurantOrderController extends Controller
                 'message' => 'Order sent to kitchen successfully',
                 'order_id' => $order->id,
             ]);
-
         } catch (\Exception $e) {
             /*
             |--------------------------------------------------------------------------
@@ -181,37 +181,37 @@ class RestaurantOrderController extends Controller
     public function salesHistory(Request $request)
     {
         $query = RestaurantOrder::with([
-                'table',
-                'customer',
-                'items',
-            ])
+            'table',
+            'customer',
+            'items',
+        ])
             ->whereIn('payment_status', [
                 'paid',
             ]);
-            
-            if ($request->filled('from')) {
-                $from = \Carbon\Carbon::parse($request->from, 'Indian/Mauritius')
-                    ->startOfDay()
-                    ->timezone('UTC');
 
-                $query->where('paid_at', '>=', $from);
-            }
+        if ($request->filled('from')) {
+            $from = \Carbon\Carbon::parse($request->from, 'Indian/Mauritius')
+                ->startOfDay()
+                ->timezone('UTC');
 
-            if ($request->filled('to')) {
-                $to = \Carbon\Carbon::parse($request->to, 'Indian/Mauritius')
-                    ->endOfDay()
-                    ->timezone('UTC');
+            $query->where('paid_at', '>=', $from);
+        }
 
-                $query->where('paid_at', '<=', $to);
-            }
+        if ($request->filled('to')) {
+            $to = \Carbon\Carbon::parse($request->to, 'Indian/Mauritius')
+                ->endOfDay()
+                ->timezone('UTC');
+
+            $query->where('paid_at', '<=', $to);
+        }
 
         return $query
             ->latest('paid_at')
             ->limit(500)
             ->get();
     }
-    
-    
+
+
     /*
     |--------------------------------------------------------------------------
     | Kitchen Orders
@@ -251,9 +251,9 @@ class RestaurantOrderController extends Controller
     public function activeOrderByTable($tableId)
     {
         $order = RestaurantOrder::with([
-                'table',
-                'items.product',
-            ])
+            'table',
+            'items.product',
+        ])
             ->where('restaurant_table_id', $tableId)
             ->whereIn('status', ['open', 'sent_to_kitchen', 'preparing'])
             ->latest()
@@ -333,7 +333,7 @@ class RestaurantOrderController extends Controller
             ->latest()
             ->get();
     }
-    
+
     /*
     |--------------------------------------------------------------------------
     | Process Payment
@@ -450,7 +450,6 @@ class RestaurantOrderController extends Controller
                 'success' => true,
                 'message' => 'Payment processed successfully',
             ]);
-
         } catch (\Exception $e) {
 
             DB::rollBack();
@@ -503,9 +502,9 @@ class RestaurantOrderController extends Controller
             */
 
             $alreadyDeducted = StockMovement::where(
-                    'remarks',
-                    'Restaurant sale - ' . $order->order_number
-                )
+                'remarks',
+                'Restaurant sale - ' . $order->order_number
+            )
                 ->where('product_id', $product->id)
                 ->where('movement_type', 'sale')
                 ->exists();
@@ -552,8 +551,8 @@ class RestaurantOrderController extends Controller
                 'remarks' => 'Restaurant sale - ' . $order->order_number,
             ]);
         }
-    }    
-   
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Update Kitchen Status
@@ -580,8 +579,8 @@ class RestaurantOrderController extends Controller
             'success' => true,
             'message' => 'Kitchen status updated',
         ]);
-    }    
-    
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Sales Dashboard
@@ -613,8 +612,8 @@ class RestaurantOrderController extends Controller
             'payment_status',
             'paid'
         )
-        ->whereDate('paid_at', today())
-        ->count();
+            ->whereDate('paid_at', today())
+            ->count();
 
         /*
         |--------------------------------------------------------------------------
@@ -626,8 +625,8 @@ class RestaurantOrderController extends Controller
             'payment_status',
             'paid'
         )
-        ->whereDate('paid_at', today())
-        ->sum('total_amount');
+            ->whereDate('paid_at', today())
+            ->sum('total_amount');
 
         /*
         |--------------------------------------------------------------------------
@@ -665,15 +664,15 @@ class RestaurantOrderController extends Controller
             'payment_method',
             'cash'
         )
-        ->whereDate('paid_at', today())
-        ->count();
+            ->whereDate('paid_at', today())
+            ->count();
 
         $cardPayments = RestaurantOrder::where(
             'payment_method',
             'card'
         )
-        ->whereDate('paid_at', today())
-        ->count();
+            ->whereDate('paid_at', today())
+            ->count();
 
         return response()->json([
 
@@ -711,9 +710,9 @@ class RestaurantOrderController extends Controller
         */
 
         $orders = RestaurantOrder::with([
-                'table',
-                'items',
-            ])
+            'table',
+            'items',
+        ])
             ->where('payment_status', 'paid')
             ->whereDate('paid_at', today())
             ->latest()
@@ -895,9 +894,9 @@ class RestaurantOrderController extends Controller
                 !empty($validated['restaurant_table_id'])
             ) {
                 $order = RestaurantOrder::where(
-                        'restaurant_table_id',
-                        $validated['restaurant_table_id']
-                    )
+                    'restaurant_table_id',
+                    $validated['restaurant_table_id']
+                )
                     ->whereIn('status', [
                         'open',
                         'sent_to_kitchen',
@@ -972,7 +971,6 @@ class RestaurantOrderController extends Controller
                 'message' => 'Draft order saved successfully',
                 'order_id' => $order->id,
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -992,46 +990,48 @@ class RestaurantOrderController extends Controller
     | Workflow:
     | draft → pending → preparing → ready → served
     */
-            
-   public function sendDraftItemsToKitchen($orderId)
-{
-    $order = RestaurantOrder::findOrFail($orderId);
 
-    RestaurantOrderItem::where('restaurant_order_id', $order->id)
-        ->where('kitchen_status', 'draft')
-        ->update([
-            'kitchen_status' => 'pending',
+    public function sendDraftItemsToKitchen($orderId)
+    {
+        $order = RestaurantOrder::findOrFail($orderId);
+
+        RestaurantOrderItem::where('restaurant_order_id', $order->id)
+            ->where('kitchen_status', 'draft')
+            ->update([
+                'kitchen_status' => 'pending',
+            ]);
+
+        $order->update([
+            'status' => 'sent_to_kitchen',
         ]);
 
-    $order->update([
-        'status' => 'sent_to_kitchen',
-    ]);
-
-    /*
+        /*
     |--------------------------------------------------------------------------
     | Auto Print - Safe
     |--------------------------------------------------------------------------
     */
 
-    try {
-        app(\App\Services\KitchenPrintService::class)->printOrder(
-            $order->fresh([
-                'table',
-                'items.product',
-            ])
-        );
-    } catch (\Throwable $e) {
-        \Log::error('Kitchen auto print failed: ' . $e->getMessage());
+        try {
+            app(\App\Services\KitchenPrintService::class)->printOrder(
+                $order->fresh([
+                    'table',
+                    'items.product',
+                ])
+            );
+        } catch (\Throwable $e) {
+            Log::error(
+                'Kitchen auto print failed: ' . $e->getMessage()
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Items sent to kitchen successfully',
+        ]);
     }
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Items sent to kitchen successfully',
-    ]);
-}
-   
-   
-   
+
+
     /*
     |--------------------------------------------------------------------------
     | Counter Order With Immediate Payment
@@ -1075,7 +1075,7 @@ class RestaurantOrderController extends Controller
             'total_amount' => ['required', 'numeric'],
 
             'notes' => ['nullable', 'string'],
-            'buzzer_number' => ['nullable','string','max:50', ],
+            'buzzer_number' => ['nullable', 'string', 'max:50',],
         ]);
 
         DB::beginTransaction();
@@ -1150,7 +1150,6 @@ class RestaurantOrderController extends Controller
                 'message' => 'Counter order paid and sent to kitchen',
                 'order' => $order->fresh(['table', 'customer', 'items']),
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -1161,7 +1160,7 @@ class RestaurantOrderController extends Controller
         }
     }
 
-   /*
+    /*
 |--------------------------------------------------------------------------
 | Deduct Stock For Paid Order
 |--------------------------------------------------------------------------
@@ -1178,233 +1177,299 @@ class RestaurantOrderController extends Controller
 | - fast food
 | - hybrid inventory models
 */
-private function olddeductStockForOrder(RestaurantOrder $order): void
-{
-    $order->load('items');
+    private function olddeductStockForOrder(RestaurantOrder $order): void
+    {
+        $order->load('items');
 
-    foreach ($order->items as $item) {
+        foreach ($order->items as $item) {
 
-        /*
+            /*
         |--------------------------------------------------------------------------
         | Skip Voided Items
         |--------------------------------------------------------------------------
         */
 
-        if ($item->is_voided) {
-            continue;
-        }
+            if ($item->is_voided) {
+                continue;
+            }
 
-        /*
+            /*
         |--------------------------------------------------------------------------
         | Find Product
         |--------------------------------------------------------------------------
         */
 
-        $product = \App\Models\Product::with('recipes.ingredient')
-            ->find($item->product_id);
+            $product = \App\Models\Product::with('recipes.ingredient')
+                ->find($item->product_id);
 
-        if (!$product) {
-            continue;
-        }
+            if (!$product) {
+                continue;
+            }
 
-        /*
+            /*
         |--------------------------------------------------------------------------
         | Recipe / BOM Inventory Deduction
         |--------------------------------------------------------------------------
         */
 
-        if ($product->recipes->count() > 0) {
+            if ($product->recipes->count() > 0) {
 
-            foreach ($product->recipes as $recipe) {
+                foreach ($product->recipes as $recipe) {
 
-                $ingredient = $recipe->ingredient;
+                    $ingredient = $recipe->ingredient;
 
-                if (!$ingredient) {
-                    continue;
-                }
+                    if (!$ingredient) {
+                        continue;
+                    }
 
-                /*
+                    /*
                 |--------------------------------------------------------------------------
                 | Calculate Ingredient Consumption
                 |--------------------------------------------------------------------------
                 */
 
-                $quantityToDeduct =
-                    $recipe->quantity_required * $item->quantity;
+                    $quantityToDeduct =
+                        $recipe->quantity_required * $item->quantity;
 
-                $beforeQuantity =
-                    $ingredient->stock_quantity;
+                    $beforeQuantity =
+                        $ingredient->stock_quantity;
 
-                $afterQuantity =
-                    $beforeQuantity - $quantityToDeduct;
+                    $afterQuantity =
+                        $beforeQuantity - $quantityToDeduct;
 
-                /*
+                    /*
                 |--------------------------------------------------------------------------
                 | Update Ingredient Stock
                 |--------------------------------------------------------------------------
                 */
 
-                $ingredient->update([
-                    'stock_quantity' => $afterQuantity,
-                ]);
+                    $ingredient->update([
+                        'stock_quantity' => $afterQuantity,
+                    ]);
 
-                /*
+                    /*
                 |--------------------------------------------------------------------------
                 | Ingredient Stock Movement
                 |--------------------------------------------------------------------------
                 */
 
-                \App\Models\StockMovement::create([
-                    'product_id' => $product->id,
-                    'user_id' => null,
-                    'movement_type' => 'ingredient_consumption',
-                    'quantity' => $quantityToDeduct,
-                    'before_quantity' => $beforeQuantity,
-                    'after_quantity' => $afterQuantity,
-                    'remarks' =>
+                    \App\Models\StockMovement::create([
+                        'product_id' => $product->id,
+                        'user_id' => null,
+                        'movement_type' => 'ingredient_consumption',
+                        'quantity' => $quantityToDeduct,
+                        'before_quantity' => $beforeQuantity,
+                        'after_quantity' => $afterQuantity,
+                        'remarks' =>
                         'Ingredient deduction for product ' .
-                        $product->name .
-                        ' from order ' .
-                        $order->order_number,
-                ]);
-            }
+                            $product->name .
+                            ' from order ' .
+                            $order->order_number,
+                    ]);
+                }
+            } else {
 
-        } else {
-
-            /*
+                /*
             |--------------------------------------------------------------------------
             | Fallback Finished Product Deduction
             |--------------------------------------------------------------------------
             | Used when no BOM/recipe exists.
             */
 
-            $beforeQuantity = $product->stock_quantity;
+                $beforeQuantity = $product->stock_quantity;
 
-            $afterQuantity =
-                $beforeQuantity - $item->quantity;
+                $afterQuantity =
+                    $beforeQuantity - $item->quantity;
 
-            $product->update([
-                'stock_quantity' => $afterQuantity,
-            ]);
+                $product->update([
+                    'stock_quantity' => $afterQuantity,
+                ]);
 
-            /*
+                /*
             |--------------------------------------------------------------------------
             | Finished Product Stock Movement
             |--------------------------------------------------------------------------
             */
 
-            \App\Models\StockMovement::create([
-                'product_id' => $product->id,
-                'user_id' => null,
-                'movement_type' => 'sale',
-                'quantity' => $item->quantity,
-                'before_quantity' => $beforeQuantity,
-                'after_quantity' => $afterQuantity,
-                'remarks' =>
-                'Stock deducted from restaurant order ' .
-                $order->order_number,
-            ]);
+                \App\Models\StockMovement::create([
+                    'product_id' => $product->id,
+                    'user_id' => null,
+                    'movement_type' => 'sale',
+                    'quantity' => $item->quantity,
+                    'before_quantity' => $beforeQuantity,
+                    'after_quantity' => $afterQuantity,
+                    'remarks' =>
+                    'Stock deducted from restaurant order ' .
+                        $order->order_number,
+                ]);
+            }
         }
     }
-}  
 
-/**
- * --------------------------------------------------------------------------
- * Request Bill
- * --------------------------------------------------------------------------
- * Called by waiter mobile application when customer requests the bill.
- * Records the request timestamp and the waiter responsible.
- */
+    /**
+     * --------------------------------------------------------------------------
+     * Request Bill
+     * --------------------------------------------------------------------------
+     * Called by waiter mobile application when customer requests the bill.
+     * Records the request timestamp and the waiter responsible.
+     */
 
 
-public function requestBill(Request $request, $orderId)
-{
-    /*
+    public function requestBill(Request $request, $orderId)
+    {
+        /*
     |--------------------------------------------------------------------------
     | Find Order
     |--------------------------------------------------------------------------
     */
 
-    $order = RestaurantOrder::findOrFail($orderId);
+        $order = RestaurantOrder::findOrFail($orderId);
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | Mark Bill Requested
     |--------------------------------------------------------------------------
     */
 
-    $order->update([
-        'bill_requested_at' => now(),
-        'bill_requested_by' => $request->user()?->id,
-    ]);
+        $order->update([
+            'bill_requested_at' => now(),
+            'bill_requested_by' => $request->user()?->id,
+        ]);
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | Return Response
     |--------------------------------------------------------------------------
     */
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Bill requested successfully.',
-    ]);
-}
-/**
- * --------------------------------------------------------------------------
- * Waiter Active Orders
- * --------------------------------------------------------------------------
- * Returns all active restaurant orders that are still being processed.
- * Used by the waiter mobile application to monitor order progress.
- *
- * Included Relationships:
- * - Table Information
- * - Order Items
- * - Product Details
- * - Assigned Waiter
- */
-public function waiterOrders(Request $request)
-{
-    $orders = RestaurantOrder::with([
-        'table',
-        'items.product',
-        'waiter',
-    ])
-    ->whereNotNull('restaurant_table_id')
-    ->whereIn('status', [
-        'open',
-        'sent_to_kitchen',
-        'preparing',
-        'ready',
-    ])
-    ->latest()
-    ->get();
+        return response()->json([
+            'success' => true,
+            'message' => 'Bill requested successfully.',
+        ]);
+    }
+    /**
+     * --------------------------------------------------------------------------
+     * Waiter Active Orders
+     * --------------------------------------------------------------------------
+     * Returns all active restaurant orders that are still being processed.
+     * Used by the waiter mobile application to monitor order progress.
+     *
+     * Included Relationships:
+     * - Table Information
+     * - Order Items
+     * - Product Details
+     * - Assigned Waiter
+     */
+    public function waiterOrders(Request $request)
+    {
+        $orders = RestaurantOrder::with([
+            'table',
+            'items.product',
+            'waiter',
+        ])
+            ->whereNotNull('restaurant_table_id')
+            ->whereIn('status', [
+                'open',
+                'sent_to_kitchen',
+                'preparing',
+                'ready',
+            ])
+            ->latest()
+            ->get();
 
-    return response()->json([
-        'success' => true,
-        'data' => $orders,
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'data' => $orders,
+        ]);
+    }
 
-/**
- * --------------------------------------------------------------------------
- * Get Pending Bill Requests
- * --------------------------------------------------------------------------
- */
-public function pendingBillRequests()
-{
-    $orders = RestaurantOrder::with([
-        'table',
-        'waiter'
-    ])
-    ->whereNotNull('bill_requested_at')
-    ->where('status', 'open')
-    ->latest('bill_requested_at')
-    ->get();
+    /**
+     * --------------------------------------------------------------------------
+     * Get Pending Bill Requests
+     * --------------------------------------------------------------------------
+     */
+    public function pendingBillRequests()
+    {
+        $orders = RestaurantOrder::with([
+            'table',
+            'waiter'
+        ])
+            ->whereNotNull('bill_requested_at')
+            ->where('status', 'open')
+            ->latest('bill_requested_at')
+            ->get();
 
-    return response()->json([
-        'success' => true,
-        'data' => $orders,
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'data' => $orders,
+        ]);
+    }
 
+
+    /*
+|--------------------------------------------------------------------------
+| Customer Orders
+|--------------------------------------------------------------------------
+*/
+    public function customerOrders()
+    {
+        return RestaurantOrder::with([
+            'table',
+            'items'
+        ])
+            ->where('status', 'customer_pending')
+            ->latest()
+            ->get();
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| Approve Customer Order
+|--------------------------------------------------------------------------
+*/
+
+    public function approveCustomerOrder(
+        RestaurantOrder $order
+    ) {
+        RestaurantOrderItem::where(
+            'restaurant_order_id',
+            $order->id
+        )
+            ->update([
+                'kitchen_status' => 'pending',
+            ]);
+
+
+        /*
+    |--------------------------------------------------------------------------
+    | Update Order Status
+    |--------------------------------------------------------------------------
+    */
+        $order->update([
+            'status' => 'sent_to_kitchen',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order approved.',
+        ]);
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| Reject Customer Order
+|--------------------------------------------------------------------------
+*/
+    public function rejectCustomerOrder(
+        RestaurantOrder $order
+    ) {
+        $order->update([
+            'status' => 'rejected',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order rejected.',
+        ]);
+    }
 }

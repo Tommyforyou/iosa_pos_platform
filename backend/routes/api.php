@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\ProfitLossReportController;
 use App\Http\Controllers\Api\MobileAuthController;
 use App\Http\Controllers\Api\PrinterController;
 
+
 /*
 |--------------------------------------------------------------------------
 | API Controllers
@@ -805,6 +806,27 @@ Route::get('/health', function () {
         'server_time' => now(),
     ]);
 });
+/*
+|--------------------------------------------------------------------------
+| QR Customer Orders
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/customer-orders',
+    [RestaurantOrderController::class, 'customerOrders']
+);
+
+Route::post(
+    '/customer-orders/{order}/approve',
+    [RestaurantOrderController::class, 'approveCustomerOrder']
+);
+
+Route::post(
+    '/customer-orders/{order}/reject',
+    [RestaurantOrderController::class, 'rejectCustomerOrder']
+);
+
 
 /*
     |--------------------------------------------------------------------------
