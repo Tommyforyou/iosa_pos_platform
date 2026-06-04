@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'order_screen.dart';
+import 'table_qr_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -87,7 +89,9 @@ class _TableScreenState extends State<TableScreen> {
         isLoading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -165,7 +169,9 @@ class _TableScreenState extends State<TableScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Restaurant Tables'),
-        actions: [IconButton(icon: const Icon(Icons.refresh), onPressed: loadTables)],
+        actions: [
+          IconButton(icon: const Icon(Icons.refresh), onPressed: loadTables),
+        ],
       ),
 
       body: isLoading
@@ -206,7 +212,10 @@ class _TableScreenState extends State<TableScreen> {
                     onTap: () => openTableOrder(table),
 
                     child: Container(
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: tableColor(status)),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: tableColor(status),
+                      ),
 
                       /*
                         |--------------------------------------------------------------------------
@@ -215,37 +224,68 @@ class _TableScreenState extends State<TableScreen> {
                         */
                       child: isMobile
                           ? Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.table_restaurant, size: 18, color: Colors.white),
+                                  const Icon(
+                                    Icons.table_restaurant,
+                                    size: 18,
+                                    color: Colors.white,
+                                  ),
 
                                   const SizedBox(width: 8),
 
                                   Expanded(
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           table['table_name'] ?? 'Table',
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
 
                                         if (table['capacity'] != null)
-                                          Text('${table['capacity']} seats', style: const TextStyle(color: Colors.white70, fontSize: 9)),
+                                          Text(
+                                            '${table['capacity']} seats',
+                                            style: const TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: 9,
+                                            ),
+                                          ),
                                       ],
                                     ),
                                   ),
 
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.25), borderRadius: BorderRadius.circular(20)),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.25),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
                                     child: Text(
-                                      status == 'occupied' ? 'BUSY' : status.toUpperCase(),
-                                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                                      status == 'occupied'
+                                          ? 'BUSY'
+                                          : status.toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -261,31 +301,91 @@ class _TableScreenState extends State<TableScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.table_restaurant, size: 52, color: Colors.white),
+                                  const Icon(
+                                    Icons.table_restaurant,
+                                    size: 52,
+                                    color: Colors.white,
+                                  ),
 
                                   const SizedBox(height: 16),
 
                                   Text(
                                     table['table_name'] ?? 'Table',
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
 
                                   const SizedBox(height: 10),
 
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.20), borderRadius: BorderRadius.circular(20)),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.20),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
                                     child: Text(
                                       status.toUpperCase(),
-                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
 
                                   if (table['capacity'] != null) ...[
                                     const SizedBox(height: 10),
-                                    Text('Capacity: ${table['capacity']}', style: const TextStyle(color: Colors.white70)),
+                                    Text(
+                                      'Capacity: ${table['capacity']}',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                      ),
+                                    ),
                                   ],
+
+                                  /*
+                                  |--------------------------------------------------------------------------
+                                  | QR Code Button
+                                  |--------------------------------------------------------------------------
+                                  */
+                                  const SizedBox(height: 4),
+
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 28,
+                                    child: ElevatedButton.icon(
+                                      icon: const Icon(Icons.qr_code, size: 14),
+                                      label: const Text(
+                                        'QR',
+                                        style: TextStyle(fontSize: 10),
+                                      ),
+                                      onPressed: () async {
+                                        final prefs =
+                                            await SharedPreferences.getInstance();
+
+                                        final serverUrl =
+                                            prefs.getString('server_url') ?? '';
+
+                                        if (!context.mounted) return;
+
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => TableQrScreen(
+                                              table: table,
+                                              serverUrl: serverUrl,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
