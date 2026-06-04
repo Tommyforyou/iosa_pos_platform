@@ -26,6 +26,7 @@ import 'settings/server_qr_screen.dart';
 import 'printer_settings_screen.dart';
 import 'server_settings_screen.dart';
 import 'customer_orders_screen.dart';
+import 'table_qr_management_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -136,7 +137,7 @@ class HomeScreen extends StatelessWidget {
 
                                 children: [
                                   Text(
-                                    'Restaurant Dashboard',
+                                    'Settings',
                                     style: TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.bold,
@@ -146,7 +147,7 @@ class HomeScreen extends StatelessWidget {
                                   SizedBox(height: 3),
 
                                   Text(
-                                    'Dashboard, Sales History, DailyReport',
+                                    'Business, Server, Table, Printers',
                                     style: TextStyle(color: Colors.grey),
                                   ),
                                 ],
@@ -196,6 +197,16 @@ class HomeScreen extends StatelessWidget {
                               icon: Icons.qr_code_2,
                               onTap: () =>
                                   openScreen(context, const ServerQrScreen()),
+                            ),
+
+                            _MiniHomeCard(
+                              title: 'Table QR Codes',
+                              subtitle: 'Print customer menu QR',
+                              icon: Icons.qr_code_2,
+                              onTap: () => openScreen(
+                                context,
+                                const TableQrManagementScreen(),
+                              ),
                             ),
 
                             /*
