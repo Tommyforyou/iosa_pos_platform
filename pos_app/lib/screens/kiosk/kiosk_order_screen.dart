@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../services/api_service.dart';
+import 'kiosk_success_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -438,7 +439,7 @@ class _KioskOrderScreenState extends State<KioskOrderScreen> {
                     height: 70,
 
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: confirmOrder,
 
                       child: const Text(
                         'CONFIRM ORDER',
@@ -587,5 +588,66 @@ class _KioskOrderScreenState extends State<KioskOrderScreen> {
     setState(() {
       cart.clear();
     });
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Confirm Order
+|--------------------------------------------------------------------------
+*/
+
+  Future<void> confirmOrder() async {
+    if (cart.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please add at least one item')),
+      );
+      return;
+    }
+
+    try {
+      final result = await apiService.saveRestaurantOrder(
+        orderType: widget.orderType,
+        items: cart,
+        notes: 'Kiosk Order',
+      );
+      print('KIOSK ORDER RESULT: $result');
+
+      if (!mounted) return;
+
+      final orderId = result['id'] ?? result['order_id'];
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => KioskSuccessScreen(orderId: orderId)),
+      );
+
+      setState(() {
+        cart.clear();
+      });
+
+      if (!mounted) return;
+    } catch (e, stackTrace) {
+      print('====================================');
+      print('KIOSK ORDER ERROR');
+      print(e.toString());
+      print(stackTrace);
+      print('====================================');
+
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Order Error'),
+          content: SingleChildScrollView(child: Text(e.toString())),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }

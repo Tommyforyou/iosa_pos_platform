@@ -1103,6 +1103,8 @@ class ApiService {
       }),
     );
 
+    print('SAVE ORDER STATUS: ${response.statusCode}');
+    print('SAVE ORDER BODY: ${response.body}');
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body);
     }
