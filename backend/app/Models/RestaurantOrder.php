@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class RestaurantOrder extends Model {
+class RestaurantOrder extends Model
+{
     protected $fillable = [
 
         /*
@@ -26,6 +27,7 @@ class RestaurantOrder extends Model {
         'waiter_id',
         'bill_requested_at',
         'bill_requested_by',
+        'order_source',
 
         /*
         |--------------------------------------------------------------------------
@@ -42,31 +44,38 @@ class RestaurantOrder extends Model {
         'paid_at',
     ];
 
-    public function business(): BelongsTo {
-        return $this->belongsTo( Business::class );
+    public function business(): BelongsTo
+    {
+        return $this->belongsTo(Business::class);
     }
 
-    public function table(): BelongsTo {
-        return $this->belongsTo( RestaurantTable::class, 'restaurant_table_id' );
+    public function table(): BelongsTo
+    {
+        return $this->belongsTo(RestaurantTable::class, 'restaurant_table_id');
     }
 
-    public function user(): BelongsTo {
-        return $this->belongsTo( User::class );
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
-    public function waiter(): BelongsTo {
-        return $this->belongsTo( User::class, 'waiter_id' );
+    public function waiter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'waiter_id');
     }
 
-    public function billRequestedBy(): BelongsTo {
-        return $this->belongsTo( User::class, 'bill_requested_by' );
+    public function billRequestedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'bill_requested_by');
     }
 
-    public function items(): HasMany {
-        return $this->hasMany( RestaurantOrderItem::class );
+    public function items(): HasMany
+    {
+        return $this->hasMany(RestaurantOrderItem::class);
     }
 
-    public function customer() {
-        return $this->belongsTo( Customer::class );
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 }

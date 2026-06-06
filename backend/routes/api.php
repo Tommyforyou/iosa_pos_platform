@@ -840,6 +840,36 @@ Route::get(
 );
 
 /*
+
+/*
+|--------------------------------------------------------------------------
+| Kiosk Orders
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/kiosk-orders',
+    [RestaurantOrderController::class, 'storeKioskOrder']
+);
+
+/*
+|--------------------------------------------------------------------------
+| Kiosk Pending Payments
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/kiosk-pending-orders',
+    [RestaurantOrderController::class, 'kioskPendingOrders']
+);
+
+Route::post(
+    '/kiosk-orders/{order}/pay',
+    [RestaurantOrderController::class, 'payKioskOrder']
+);
+
+
+/*
     |--------------------------------------------------------------------------
     | Authenticated User
     |--------------------------------------------------------------------------

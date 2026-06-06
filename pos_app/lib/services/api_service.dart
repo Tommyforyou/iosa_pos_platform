@@ -2313,4 +2313,86 @@ class ApiService {
 
     return 0;
   }
+
+  /*
+|--------------------------------------------------------------------------
+| Create Kiosk Order
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> createKioskOrder({
+    required String orderType,
+    required List<Map<String, dynamic>> items,
+    String? notes,
+  }) async {
+    final url = await apiUrl('kiosk-orders');
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'order_type': orderType,
+        'items': items,
+        'notes': notes,
+      }),
+    );
+
+    print('KIOSK ORDER STATUS: ${response.statusCode}');
+    print('KIOSK ORDER BODY: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to create kiosk order: ${response.body}');
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Get Pending Kiosk Orders
+|--------------------------------------------------------------------------
+*/
+
+  Future<List<dynamic>> getPendingKioskOrders() async {
+    final url = await apiUrl('kiosk-pending-orders');
+
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to load kiosk orders');
+  }
+  /*
+|--------------------------------------------------------------------------
+| Receive Kiosk Payment
+|--------------------------------------------------------------------------
+*/
+
+  Future<void> payKioskOrder({
+    required int orderId,
+    required String paymentMethod,
+  }) async {
+    final url = await apiUrl('kiosk-orders/$orderId/pay');
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({'payment_method': paymentMethod}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to receive payment');
+    }
+  }
 }

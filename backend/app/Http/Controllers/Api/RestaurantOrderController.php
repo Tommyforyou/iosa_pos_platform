@@ -94,7 +94,7 @@ class RestaurantOrderController extends Controller
                     'order_type' => $validated['order_type'],
                     'status' => 'sent_to_kitchen',
                     'notes' => $validated['notes'] ?? null,
-                    'waiter_id' => $request->user()?->id,
+                    //'waiter_id' => $request->user()?->id,
                 ]);
             } else {
                 /*
@@ -123,7 +123,7 @@ class RestaurantOrderController extends Controller
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['price'],
                     'kitchen_status' => 'pending',
-                    'waiter_id' => $request->user()?->id,
+                    //'waiter_id' => $request->user()?->id,
                     'notes' => $item['notes'] ?? null,
                 ]);
             }
@@ -1486,6 +1486,186 @@ class RestaurantOrderController extends Controller
                 'status',
                 'customer_pending'
             )->count(),
+        ]);
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| Store Kiosk Order
+|--------------------------------------------------------------------------
+| Kiosk orders are created as payment pending.
+| They must be paid at cashier before being sent to kitchen.
+*/
+
+    public function storeKioskOrder(Request $request)
+    {
+        /*
+    |--------------------------------------------------------------------------
+    | Validate Request
+    |--------------------------------------------------------------------------
+    */
+
+        $validated = $request->validate([
+            'order_type' => ['required', 'string'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.id' => ['required', 'integer'],
+            'items.*.name' => ['required', 'string'],
+            'items.*.price' => ['required', 'numeric'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        /*
+    |--------------------------------------------------------------------------
+    | Calculate Total
+    |--------------------------------------------------------------------------
+    */
+
+        $subtotal = collect($validated['items'])->sum(function ($item) {
+            return $item['price'] * $item['quantity'];
+        });
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Generate Kiosk Order Number
+        |--------------------------------------------------------------------------
+        */
+
+        $orderNumber = 'K-' . now()->format('YmdHis') . '-' . rand(100, 999);
+
+        /*
+    |--------------------------------------------------------------------------
+    | Create Kiosk Order
+    |--------------------------------------------------------------------------
+    */
+
+        $order = RestaurantOrder::create([
+            'business_id' => 1,
+            'restaurant_table_id' => null,
+            'order_number' => $orderNumber,
+            'order_type' => $validated['order_type'],
+            'status' => 'kiosk_payment_pending',
+            'order_source' => 'kiosk',
+            'subtotal' => $subtotal,
+            'total_amount' => $subtotal,
+            'notes' => $validated['notes'] ?? 'Kiosk Order',
+        ]);
+
+        /*
+    |--------------------------------------------------------------------------
+    | Create Draft Items
+    |--------------------------------------------------------------------------
+    | Kitchen status remains draft until cashier receives payment.
+    */
+
+        foreach ($validated['items'] as $item) {
+            RestaurantOrderItem::create([
+                'restaurant_order_id' => $order->id,
+                'product_id' => $item['id'],
+                'product_name' => $item['name'],
+                'quantity' => $item['quantity'],
+                'unit_price' => $item['price'],
+                'kitchen_status' => 'draft',
+                'notes' => null,
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Return Response
+        |--------------------------------------------------------------------------
+        */
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kiosk order created. Please pay at cashier.',
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'total_amount' => $order->total_amount,
+        ]);
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| Kiosk Pending Orders
+|--------------------------------------------------------------------------
+*/
+
+    public function kioskPendingOrders()
+    {
+        return RestaurantOrder::with([
+            'items',
+        ])
+            ->where('status', 'kiosk_payment_pending')
+            ->where('order_source', 'kiosk')
+            ->latest()
+            ->get();
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| Pay Kiosk Order
+|--------------------------------------------------------------------------
+| Once paid, the order is sent to kitchen.
+*/
+
+    public function payKioskOrder(
+        Request $request,
+        RestaurantOrder $order
+    ) {
+        /*
+    |--------------------------------------------------------------------------
+    | Validate Request
+    |--------------------------------------------------------------------------
+    */
+
+        $validated = $request->validate([
+            'payment_method' => [
+                'required',
+                'string',
+                'in:cash,card,juice,bank_transfer',
+            ],
+        ]);
+
+        /*
+    |--------------------------------------------------------------------------
+    | Mark Order As Paid And Send To Kitchen
+    |--------------------------------------------------------------------------
+    */
+
+        $order->update([
+            'status' => 'sent_to_kitchen',
+            'payment_status' => 'paid',
+            'payment_method' => $validated['payment_method'],
+            'paid_at' => now(),
+        ]);
+
+        /*
+    |--------------------------------------------------------------------------
+    | Send Draft Items To Kitchen
+    |--------------------------------------------------------------------------
+    */
+
+        RestaurantOrderItem::where(
+            'restaurant_order_id',
+            $order->id
+        )
+            ->where('kitchen_status', 'draft')
+            ->update([
+                'kitchen_status' => 'pending',
+            ]);
+
+        /*
+    |--------------------------------------------------------------------------
+    | Return Response
+    |--------------------------------------------------------------------------
+    */
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kiosk order paid and sent to kitchen.',
+            'order_id' => $order->id,
         ]);
     }
 }

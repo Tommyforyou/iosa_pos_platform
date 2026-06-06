@@ -30,6 +30,7 @@ import 'table_qr_management_screen.dart';
 import '../services/api_service.dart';
 import 'dart:async';
 import 'kiosk/kiosk_home_screen.dart';
+import 'kiosk/kiosk_pending_payments_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -389,6 +390,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                   openScreen(context, const KioskHomeScreen()),
                             ),
 
+                            _MiniHomeCard(
+                              title: 'Kiosk Payments',
+                              subtitle: 'Receive kiosk payments',
+                              icon: Icons.payments,
+                              onTap: () => openScreen(
+                                context,
+                                const KioskPendingPaymentsScreen(),
+                              ),
+                            ),
                             _MiniHomeCard(
                               title: 'Counter POS',
                               subtitle: 'Fast order and payment',

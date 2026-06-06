@@ -605,7 +605,7 @@ class _KioskOrderScreenState extends State<KioskOrderScreen> {
     }
 
     try {
-      final result = await apiService.saveRestaurantOrder(
+      final result = await apiService.createKioskOrder(
         orderType: widget.orderType,
         items: cart,
         notes: 'Kiosk Order',
