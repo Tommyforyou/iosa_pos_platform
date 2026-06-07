@@ -870,10 +870,31 @@ Route::post(
 
 
 /*
-    |--------------------------------------------------------------------------
-    | Authenticated User
-    |--------------------------------------------------------------------------
-    */
+|--------------------------------------------------------------------------
+| Purchase Receipt Lines
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/purchase-receipts/{purchaseReceipt}/lines',
+    [PurchaseReceiptController::class, 'storeLine']
+);
+
+Route::put(
+    '/purchase-receipt-lines/{line}',
+    [PurchaseReceiptController::class, 'updateLine']
+);
+
+Route::delete(
+    '/purchase-receipt-lines/{line}',
+    [PurchaseReceiptController::class, 'deleteLine']
+);
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated User
+|--------------------------------------------------------------------------
+*/
 Route::get(
     '/user',
     function (Request $request) {

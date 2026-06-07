@@ -10,6 +10,7 @@ use App\Models\Supplier;
 use App\Models\Purchase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\PurchaseReceiptLine;
 
 
 class PurchaseReceiptController extends Controller
@@ -769,5 +770,74 @@ class PurchaseReceiptController extends Controller
         }
 
         return is_numeric($value) ? (float) $value : null;
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| Store Receipt Line
+|--------------------------------------------------------------------------
+*/
+
+    public function storeLine(
+        Request $request,
+        PurchaseReceipt $purchaseReceipt
+    ) {
+        $validated = $request->validate([
+            'description' => ['required', 'string', 'max:255'],
+            'quantity' => ['required', 'numeric', 'min:0.001'],
+            'unit_price' => ['required', 'numeric', 'min:0'],
+            'line_total' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $line = $purchaseReceipt->lines()->create($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Line added successfully.',
+            'line' => $line,
+        ]);
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| Update Receipt Line
+|--------------------------------------------------------------------------
+*/
+
+    public function updateLine(
+        Request $request,
+        PurchaseReceiptLine $line
+    ) {
+        $validated = $request->validate([
+            'description' => ['required', 'string', 'max:255'],
+            'quantity' => ['required', 'numeric', 'min:0.001'],
+            'unit_price' => ['required', 'numeric', 'min:0'],
+            'line_total' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $line->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Line updated successfully.',
+            'line' => $line,
+        ]);
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| Delete Receipt Line
+|--------------------------------------------------------------------------
+*/
+
+    public function deleteLine(
+        PurchaseReceiptLine $line
+    ) {
+        $line->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Line deleted successfully.',
+        ]);
     }
 }

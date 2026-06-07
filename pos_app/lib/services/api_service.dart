@@ -2395,4 +2395,81 @@ class ApiService {
       throw Exception('Failed to receive payment');
     }
   }
+  /*
+|--------------------------------------------------------------------------
+| Add Purchase Receipt Line
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> addPurchaseReceiptLine({
+    required int receiptId,
+    required String description,
+    required double quantity,
+    required double unitPrice,
+    required double lineTotal,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/purchase-receipts/$receiptId/lines'),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'description': description,
+        'quantity': quantity,
+        'unit_price': unitPrice,
+        'line_total': lineTotal,
+      }),
+    );
+
+    return jsonDecode(response.body);
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Update Purchase Receipt Line
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> updatePurchaseReceiptLine({
+    required int lineId,
+    required String description,
+    required double quantity,
+    required double unitPrice,
+    required double lineTotal,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/purchase-receipt-lines/$lineId'),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'description': description,
+        'quantity': quantity,
+        'unit_price': unitPrice,
+        'line_total': lineTotal,
+      }),
+    );
+
+    return jsonDecode(response.body);
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Delete Purchase Receipt Line
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> deletePurchaseReceiptLine(int lineId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/purchase-receipt-lines/$lineId'),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    return jsonDecode(response.body);
+  }
 }

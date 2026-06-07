@@ -37,6 +37,7 @@ class _PurchaseReceiptReviewScreenState
   */
 
   final ApiService apiService = ApiService();
+  List<dynamic> receiptLines = [];
 
   /*
   |--------------------------------------------------------------------------
@@ -102,6 +103,21 @@ class _PurchaseReceiptReviewScreenState
     totalController = TextEditingController(
       text: widget.receipt['total_incl_vat']?.toString() ?? '0',
     );
+    loadReceiptLines();
+  }
+
+  Future<void> loadReceiptLines() async {
+    try {
+      final lines = widget.receipt['lines'];
+
+      if (lines != null) {
+        setState(() {
+          receiptLines = lines;
+        });
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
   }
 
   /*
@@ -122,6 +138,34 @@ class _PurchaseReceiptReviewScreenState
     totalController.dispose();
 
     super.dispose();
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | OCR Difference
+  |--------------------------------------------------------------------------
+  */
+
+  double get ocrDifference {
+    final subtotal = double.tryParse(subtotalController.text.trim()) ?? 0;
+
+    return subtotal - ocrLinesTotal;
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | OCR Line Total
+  |--------------------------------------------------------------------------
+  */
+
+  double get ocrLinesTotal {
+    double total = 0;
+
+    for (final line in receiptLines) {
+      total += double.tryParse(line['line_total'].toString()) ?? 0;
+    }
+
+    return total;
   }
 
   /*
@@ -307,6 +351,172 @@ class _PurchaseReceiptReviewScreenState
   }
 
   /*
+|--------------------------------------------------------------------------
+| Show Line Dialog
+|--------------------------------------------------------------------------
+*/
+
+  Future<void> showLineDialog({Map<String, dynamic>? line}) async {
+    final descriptionController = TextEditingController(
+      text: line?['description'] ?? '',
+    );
+
+    final quantityController = TextEditingController(
+      text: line?['quantity']?.toString() ?? '1',
+    );
+
+    final unitPriceController = TextEditingController(
+      text: line?['unit_price']?.toString() ?? '0',
+    );
+
+    final lineTotalController = TextEditingController();
+    /*
+    |--------------------------------------------------------------------------
+    | Auto Calculate Line Total
+    |--------------------------------------------------------------------------
+    */
+    void recalculateTotal() {
+      final qty = double.tryParse(quantityController.text.trim()) ?? 0;
+
+      final unitPrice = double.tryParse(unitPriceController.text.trim()) ?? 0;
+
+      lineTotalController.text = (qty * unitPrice).toStringAsFixed(2);
+    }
+
+    quantityController.addListener(recalculateTotal);
+    unitPriceController.addListener(recalculateTotal);
+
+    recalculateTotal();
+
+    await showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: Text(line == null ? 'Add OCR Line' : 'Edit OCR Line'),
+          content: SizedBox(
+            width: 420,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                inputField(
+                  label: 'Description',
+                  controller: descriptionController,
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: inputField(
+                        label: 'Quantity',
+                        controller: quantityController,
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    Expanded(
+                      child: inputField(
+                        label: 'Unit Price',
+                        controller: unitPriceController,
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                  ],
+                ),
+                TextField(
+                  controller: lineTotalController,
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: 'Line Total',
+                    prefixIcon: const Icon(Icons.calculate),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final description = descriptionController.text.trim();
+
+                final quantity =
+                    double.tryParse(quantityController.text.trim()) ?? 0;
+
+                final unitPrice =
+                    double.tryParse(unitPriceController.text.trim()) ?? 0;
+
+                final lineTotal =
+                    double.tryParse(lineTotalController.text.trim()) ?? 0;
+
+                if (description.isEmpty || quantity <= 0) {
+                  return;
+                }
+
+                if (line == null) {
+                  final result = await apiService.addPurchaseReceiptLine(
+                    receiptId: widget.receipt['id'],
+                    description: description,
+                    quantity: quantity,
+                    unitPrice: unitPrice,
+                    lineTotal: lineTotal,
+                  );
+
+                  setState(() {
+                    receiptLines.add(result['line']);
+                  });
+                } else {
+                  final result = await apiService.updatePurchaseReceiptLine(
+                    lineId: line['id'],
+                    description: description,
+                    quantity: quantity,
+                    unitPrice: unitPrice,
+                    lineTotal: lineTotal,
+                  );
+
+                  setState(() {
+                    final index = receiptLines.indexWhere(
+                      (item) => item['id'] == line['id'],
+                    );
+
+                    if (index >= 0) {
+                      receiptLines[index] = result['line'];
+                    }
+                  });
+                }
+
+                if (!mounted) return;
+
+                Navigator.pop(context);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /*
+|--------------------------------------------------------------------------
+| Delete Receipt Line
+|--------------------------------------------------------------------------
+*/
+
+  Future<void> deleteReceiptLine(Map<String, dynamic> line) async {
+    await apiService.deletePurchaseReceiptLine(line['id']);
+
+    setState(() {
+      receiptLines.removeWhere((item) => item['id'] == line['id']);
+    });
+  }
+  /*
   |--------------------------------------------------------------------------
   | Review Form
   |--------------------------------------------------------------------------
@@ -462,6 +672,140 @@ class _PurchaseReceiptReviewScreenState
                     controller: totalController,
                     keyboardType: TextInputType.number,
                     icon: Icons.add_circle_outline,
+                  ),
+
+                  /*
+                  |--------------------------------------------------------------------------
+                  | OCR Detected Items
+                  |--------------------------------------------------------------------------
+                  */
+                  sectionHeader(
+                    title: 'OCR Detected Items',
+                    icon: Icons.inventory_2,
+                  ),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: sectionHeader(
+                          title: 'OCR Detected Items',
+                          icon: Icons.inventory_2,
+                        ),
+                      ),
+                      TextButton.icon(
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Line'),
+                        onPressed: () => showLineDialog(),
+                      ),
+                    ],
+                  ),
+
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: receiptLines.isEmpty
+                        ? const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Text(
+                              'No line items detected.',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              for (final line in receiptLines)
+                                ListTile(
+                                  leading: const Icon(Icons.shopping_cart),
+                                  title: Text(
+                                    line['description'] ?? '',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    'Qty: ${line['quantity']} × Rs ${line['unit_price']}',
+                                  ),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Rs ${line['line_total']}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.green,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.edit),
+                                        onPressed: () =>
+                                            showLineDialog(line: line),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.delete,
+                                          color: Colors.red,
+                                        ),
+                                        onPressed: () =>
+                                            deleteReceiptLine(line),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                  ),
+
+                  /*
+|--------------------------------------------------------------------------
+| OCR Validation
+|--------------------------------------------------------------------------
+*/
+                  const SizedBox(height: 16),
+
+                  sectionHeader(title: 'OCR Validation', icon: Icons.verified),
+
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: ocrDifference.abs() < 0.01
+                          ? Colors.green.shade50
+                          : Colors.orange.shade50,
+
+                      border: Border.all(
+                        color: ocrDifference.abs() < 0.01
+                            ? Colors.green
+                            : Colors.orange,
+                      ),
+
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'OCR Lines Total: Rs ${ocrLinesTotal.toStringAsFixed(2)}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+
+                        const SizedBox(height: 6),
+
+                        Text('Invoice Subtotal: Rs ${subtotalController.text}'),
+
+                        const SizedBox(height: 6),
+
+                        Text(
+                          'Difference: Rs ${ocrDifference.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            color: ocrDifference.abs() < 0.01
+                                ? Colors.green
+                                : Colors.orange,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 16),
