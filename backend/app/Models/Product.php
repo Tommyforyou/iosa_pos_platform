@@ -91,7 +91,8 @@ class Product extends Model
             return null;
         }
 
-        return asset('storage/' . $this->image_path);
-    }
+        $host = request()->getSchemeAndHttpHost();
 
+        return $host . '/storage/' . $this->image_path;
+    }
 }
