@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'kiosk_order_screen.dart';
+import 'dart:io';
+import 'package:window_manager/window_manager.dart';
+import '../../widgets/kiosk_exit_dialog.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -13,12 +16,26 @@ class KioskHomeScreen extends StatelessWidget {
   const KioskHomeScreen({super.key});
 
   /*
+|--------------------------------------------------------------------------
+| Enter Full Screen Kiosk Mode
+|--------------------------------------------------------------------------
+*/
+
+  Future<void> enterFullScreen() async {
+    if (Platform.isWindows) {
+      await windowManager.setFullScreen(true);
+    }
+  }
+
+  /*
   |--------------------------------------------------------------------------
   | Open Kiosk Order
   |--------------------------------------------------------------------------
   */
 
-  void openKioskOrder(BuildContext context, String orderType) {
+  void openKioskOrder(BuildContext context, String orderType) async {
+    await enterFullScreen();
+
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => KioskOrderScreen(orderType: orderType)),
@@ -33,81 +50,122 @@ class KioskHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text('Self Ordering Kiosk'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close),
-            tooltip: 'Exit Kiosk',
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1000),
-          child: Padding(
-            padding: const EdgeInsets.all(40),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.restaurant_menu,
-                  size: 90,
-                  color: Colors.orange,
-                ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (Platform.isWindows) {
+          await windowManager.setFullScreen(false);
+          await windowManager.unmaximize();
+          await windowManager.setSize(const Size(1600, 950));
+          await windowManager.center();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: AppBar(
+          title: const Text('Self Ordering Kiosk'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.close),
 
-                const SizedBox(height: 20),
+              onPressed: () async {
+                final allowExit =
+                    await showDialog<bool>(
+                      context: context,
+                      builder: (_) => const KioskExitDialog(),
+                    ) ??
+                    false;
 
-                const Text(
-                  'IOSA RESTAURANT',
-                  style: TextStyle(fontSize: 42, fontWeight: FontWeight.bold),
-                ),
+                if (!allowExit) {
+                  return;
+                }
 
-                const SizedBox(height: 8),
+                await exitFullScreen();
 
-                const Text(
-                  'Please choose how you would like to order',
-                  style: TextStyle(fontSize: 22, color: Colors.grey),
-                ),
+                if (!context.mounted) return;
 
-                const SizedBox(height: 60),
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1000),
+            child: Padding(
+              padding: const EdgeInsets.all(40),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.restaurant_menu,
+                    size: 90,
+                    color: Colors.orange,
+                  ),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: _KioskOptionCard(
-                        title: 'DINE IN',
-                        subtitle: 'Eat at restaurant',
-                        icon: Icons.table_restaurant,
-                        color: Colors.orange,
-                        onTap: () => openKioskOrder(context, 'dine_in'),
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    'IOSA RESTAURANT',
+                    style: TextStyle(fontSize: 42, fontWeight: FontWeight.bold),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  const Text(
+                    'Please choose how you would like to order',
+                    style: TextStyle(fontSize: 22, color: Colors.grey),
+                  ),
+
+                  const SizedBox(height: 60),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _KioskOptionCard(
+                          title: 'DINE IN',
+                          subtitle: 'Eat at restaurant',
+                          icon: Icons.table_restaurant,
+                          color: Colors.orange,
+                          onTap: () => openKioskOrder(context, 'dine_in'),
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(width: 32),
+                      const SizedBox(width: 32),
 
-                    Expanded(
-                      child: _KioskOptionCard(
-                        title: 'TAKEAWAY',
-                        subtitle: 'Collect at counter',
-                        icon: Icons.shopping_bag,
-                        color: Colors.green,
-                        onTap: () => openKioskOrder(context, 'takeaway'),
+                      Expanded(
+                        child: _KioskOptionCard(
+                          title: 'TAKEAWAY',
+                          subtitle: 'Collect at counter',
+                          icon: Icons.shopping_bag,
+                          color: Colors.green,
+                          onTap: () => openKioskOrder(context, 'takeaway'),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Exit Full Screen Kiosk Mode
+|--------------------------------------------------------------------------
+*/
+
+Future<void> exitFullScreen() async {
+  if (Platform.isWindows) {
+    await windowManager.setFullScreen(false);
+    await windowManager.unmaximize();
+    await windowManager.setSize(const Size(1600, 950));
+    await windowManager.center();
   }
 }
 

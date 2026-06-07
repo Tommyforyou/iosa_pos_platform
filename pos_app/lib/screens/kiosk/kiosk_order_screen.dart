@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../services/api_service.dart';
 import 'kiosk_success_screen.dart';
+import 'dart:io';
+import 'package:window_manager/window_manager.dart';
+
+import '../../widgets/kiosk_exit_dialog.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -92,6 +96,36 @@ class _KioskOrderScreenState extends State<KioskOrderScreen> {
   }
 
   /*
+|--------------------------------------------------------------------------
+| Exit Kiosk Mode
+|--------------------------------------------------------------------------
+*/
+
+  Future<void> exitKioskMode() async {
+    final allowExit =
+        await showDialog<bool>(
+          context: context,
+          builder: (_) => const KioskExitDialog(),
+        ) ??
+        false;
+
+    if (!allowExit) {
+      return;
+    }
+
+    if (Platform.isWindows) {
+      await windowManager.setFullScreen(false);
+      await windowManager.unmaximize();
+      await windowManager.setSize(const Size(1600, 950));
+      await windowManager.center();
+    }
+
+    if (!mounted) return;
+
+    Navigator.popUntil(context, (route) => route.isFirst);
+  }
+
+  /*
   |--------------------------------------------------------------------------
   | Build Screen
   |--------------------------------------------------------------------------
@@ -110,6 +144,13 @@ class _KioskOrderScreenState extends State<KioskOrderScreen> {
         title: Text(
           widget.orderType == 'dine_in' ? 'Dine In Order' : 'Takeaway Order',
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close),
+            tooltip: 'Exit Kiosk',
+            onPressed: exitKioskMode,
+          ),
+        ],
       ),
 
       body: Row(
@@ -188,10 +229,10 @@ class _KioskOrderScreenState extends State<KioskOrderScreen> {
 
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
+                          crossAxisCount: 3,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
-                          childAspectRatio: 1.1,
+                          childAspectRatio: 0.85,
                         ),
 
                     itemCount: filteredProducts.length,
@@ -214,19 +255,41 @@ class _KioskOrderScreenState extends State<KioskOrderScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
 
                             children: [
-                              const Icon(
-                                Icons.fastfood,
-                                size: 60,
-                                color: Colors.orange,
-                              ),
+                              product['image_url'] != null &&
+                                      product['image_url'].toString().isNotEmpty
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.network(
+                                        product['image_url'],
+                                        height: 120,
+                                        width: 120,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return const Icon(
+                                                Icons.fastfood,
+                                                size: 80,
+                                                color: Colors.orange,
+                                              );
+                                            },
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.fastfood,
+                                      size: 80,
+                                      color: Colors.orange,
+                                    ),
 
                               const SizedBox(height: 12),
 
                               Text(
                                 product['name'] ?? '',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
                                   fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
 
