@@ -31,6 +31,7 @@ import '../services/api_service.dart';
 import 'dart:async';
 import 'kiosk/kiosk_home_screen.dart';
 import 'kiosk/kiosk_pending_payments_screen.dart';
+import 'order_status_display_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -728,6 +729,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const CustomerOrdersScreen(),
                               ),
                             ),
+
+                            _MiniHomeCard(
+                              title: 'Order Status',
+                              subtitle: 'Waiting hall display',
+                              icon: Icons.tv,
+                              onTap: () => openScreen(
+                                context,
+                                const OrderStatusDisplayScreen(),
+                              ),
+                            ),
+
                             _MiniHomeCard(
                               title: 'Z-Report',
                               subtitle:

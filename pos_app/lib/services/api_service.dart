@@ -2472,4 +2472,25 @@ class ApiService {
 
     return jsonDecode(response.body);
   }
+
+  /*
+|--------------------------------------------------------------------------
+| Order Status Display
+|--------------------------------------------------------------------------
+*/
+
+  Future<Map<String, dynamic>> getOrderStatusDisplay() async {
+    final url = await apiUrl('order-status-display');
+
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body));
+    }
+
+    throw Exception('Failed to load order status display');
+  }
 }

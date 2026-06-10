@@ -94,6 +94,7 @@ class RestaurantOrderController extends Controller
                     'order_type' => $validated['order_type'],
                     'status' => 'sent_to_kitchen',
                     'notes' => $validated['notes'] ?? null,
+                    'daily_order_number' => $this->generateDailyOrderNumber(),
                     //'waiter_id' => $request->user()?->id,
                 ]);
             } else {
@@ -917,6 +918,7 @@ class RestaurantOrderController extends Controller
                     'customer_id' => $validated['customer_id'] ?? null,
                     'waiter_id' => $request->user()?->id,
                     'notes' => $item['notes'] ?? null,
+                    'daily_order_number' => $this->generateDailyOrderNumber(),
                 ]);
             }
 
@@ -1096,6 +1098,7 @@ class RestaurantOrderController extends Controller
                 'status' => 'sent_to_kitchen',
                 'notes' => $validated['notes'] ?? null,
                 'buzzer_number' => $validated['buzzer_number'] ?? null,
+                'daily_order_number' => $this->generateDailyOrderNumber(),
 
                 /*
                 |--------------------------------------------------------------------------
@@ -1539,7 +1542,7 @@ class RestaurantOrderController extends Controller
     | Create Kiosk Order
     |--------------------------------------------------------------------------
     */
-
+        $dailyOrderNumber = $this->generateDailyOrderNumber();
         $order = RestaurantOrder::create([
             'business_id' => 1,
             'restaurant_table_id' => null,
@@ -1550,7 +1553,12 @@ class RestaurantOrderController extends Controller
             'subtotal' => $subtotal,
             'total_amount' => $subtotal,
             'notes' => $validated['notes'] ?? 'Kiosk Order',
+
         ]);
+
+        $order->daily_order_number = $dailyOrderNumber;
+        $order->save();
+
 
         /*
     |--------------------------------------------------------------------------
@@ -1667,5 +1675,56 @@ class RestaurantOrderController extends Controller
             'message' => 'Kiosk order paid and sent to kitchen.',
             'order_id' => $order->id,
         ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Order Status Display
+    |--------------------------------------------------------------------------
+    */
+
+    public function orderStatusDisplay()
+    {
+        $received = RestaurantOrder::whereHas('items', function ($query) {
+            $query->where('kitchen_status', 'pending');
+        })
+            ->with('items')
+            ->latest()
+            ->get();
+
+        $preparing = RestaurantOrder::whereHas('items', function ($query) {
+            $query->where('kitchen_status', 'preparing');
+        })
+            ->with('items')
+            ->latest()
+            ->get();
+
+        $ready = RestaurantOrder::whereHas('items', function ($query) {
+            $query->where('kitchen_status', 'ready');
+        })
+            ->with('items')
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'received' => $received,
+            'preparing' => $preparing,
+            'ready' => $ready,
+        ]);
+    }
+    /*
+    |--------------------------------------------------------------------------
+    | Generate Daily Order Number
+    |--------------------------------------------------------------------------
+    */
+
+    private function generateDailyOrderNumber(): int
+    {
+        $lastNumber = RestaurantOrder::whereDate(
+            'created_at',
+            today()
+        )->max('daily_order_number');
+
+        return ((int) $lastNumber) + 1;
     }
 }

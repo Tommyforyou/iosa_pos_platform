@@ -890,6 +890,14 @@ Route::delete(
     [PurchaseReceiptController::class, 'deleteLine']
 );
 
+
+Route::get(
+    '/order-status-display',
+    [RestaurantOrderController::class, 'orderStatusDisplay']
+);
+
+
+
 /*
 |--------------------------------------------------------------------------
 | Authenticated User

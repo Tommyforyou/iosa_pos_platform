@@ -28,6 +28,8 @@ class RestaurantOrder extends Model
         'bill_requested_at',
         'bill_requested_by',
         'order_source',
+        'daily_order_number',
+
 
         /*
         |--------------------------------------------------------------------------
