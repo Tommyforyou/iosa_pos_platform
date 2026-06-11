@@ -32,6 +32,7 @@ import 'dart:async';
 import 'kiosk/kiosk_home_screen.dart';
 import 'kiosk/kiosk_pending_payments_screen.dart';
 import 'order_status_display_screen.dart';
+import 'pharmacy_batch_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -123,10 +124,10 @@ class _HomeScreenState extends State<HomeScreen> {
               childAspectRatio: 1.4,
               children: [
                 /*
-            |--------------------------------------------------------------------------
-            | Settings
-            |--------------------------------------------------------------------------
-            */
+              |--------------------------------------------------------------------------
+              | Settings
+              |--------------------------------------------------------------------------
+              */
                 Container(
                   margin: const EdgeInsets.only(bottom: 20),
 
@@ -278,6 +279,122 @@ class _HomeScreenState extends State<HomeScreen> {
                               onTap: () => openScreen(
                                 context,
                                 const ServerSettingsScreen(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                /*
+              |--------------------------------------------------------------------------
+              | Pharmacy
+              |--------------------------------------------------------------------------
+              */
+                Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+
+                  padding: const EdgeInsets.all(20),
+
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+
+                    borderRadius: BorderRadius.circular(28),
+
+                    border: Border.all(color: Colors.grey.shade200),
+
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+
+                      children: [
+                        /*
+                  |--------------------------------------------------------------------------
+                  | Section Header
+                  |--------------------------------------------------------------------------
+                  */
+                        Row(
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+
+                              child: const Icon(
+                                Icons.restaurant_sharp,
+                                color: Colors.orange,
+                                size: 28,
+                              ),
+                            ),
+
+                            const SizedBox(width: 14),
+
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+
+                                children: [
+                                  Text(
+                                    'Pharmacy',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+
+                                  SizedBox(height: 3),
+
+                                  Text(
+                                    'Batches ',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        /*
+                      |--------------------------------------------------------------------------
+                      | Nested Cards
+                      |--------------------------------------------------------------------------
+                      */
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 1.1,
+                          children: [
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Pharmacy Batches
+                            |--------------------------------------------------------------------------
+                            */
+                            _MiniHomeCard(
+                              title: 'Batches',
+                              subtitle: 'Drugs batches',
+                              icon: Icons.settings,
+                              onTap: () => openScreen(
+                                context,
+                                const PharmacyBatchScreen(),
                               ),
                             ),
                           ],

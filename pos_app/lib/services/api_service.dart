@@ -2516,4 +2516,60 @@ class ApiService {
 
     throw Exception('Failed to load kitchen performance dashboard');
   }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Product Batches
+  |--------------------------------------------------------------------------
+  */
+
+  Future<List<dynamic>> getProductBatches() async {
+    final url = Uri.parse('$baseUrl/product-batches');
+
+    debugPrint('API URL: $url');
+
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to load product batches');
+  }
+
+  Future<Map<String, dynamic>> createProductBatch({
+    required int productId,
+    required String batchNumber,
+    required String expiryDate,
+    required double quantity,
+    required double costPrice,
+    required double sellingPrice,
+  }) async {
+    final url = Uri.parse('$baseUrl/product-batches');
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'product_id': productId,
+        'batch_number': batchNumber,
+        'expiry_date': expiryDate,
+        'quantity': quantity,
+        'cost_price': costPrice,
+        'selling_price': sellingPrice,
+      }),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to create product batch: ${response.body}');
+  }
 }

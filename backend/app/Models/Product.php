@@ -95,4 +95,14 @@ class Product extends Model
 
         return $host . '/storage/' . $this->image_path;
     }
+    /*
+    |--------------------------------------------------------------------------
+    | Product Batches
+    |--------------------------------------------------------------------------
+*/
+
+    public function batches(): HasMany
+    {
+        return $this->hasMany(ProductBatch::class);
+    }
 }

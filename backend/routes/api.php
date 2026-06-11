@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\AccountsReceivableDashboardController;
 use App\Http\Controllers\Api\ProfitLossReportController;
 use App\Http\Controllers\Api\MobileAuthController;
 use App\Http\Controllers\Api\PrinterController;
+use App\Http\Controllers\ProductBatchController;
 
 
 /*
@@ -911,7 +912,36 @@ Route::get(
     ]
 );
 
+/*
+|--------------------------------------------------------------------------
+| Pharmacy Product Batch Routes
+|--------------------------------------------------------------------------
+*/
 
+Route::get(
+    '/product-batches',
+    [ProductBatchController::class, 'index']
+);
+
+Route::post(
+    '/product-batches',
+    [ProductBatchController::class, 'store']
+);
+
+Route::put(
+    '/product-batches/{productBatch}',
+    [ProductBatchController::class, 'update']
+);
+
+Route::delete(
+    '/product-batches/{productBatch}',
+    [ProductBatchController::class, 'destroy']
+);
+
+Route::get(
+    '/products/{product}/batches',
+    [ProductBatchController::class, 'byProduct']
+);
 
 /*
 |--------------------------------------------------------------------------
