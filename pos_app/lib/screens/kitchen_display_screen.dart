@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
+import 'package:flutter/foundation.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -28,8 +29,7 @@ class KitchenDisplayScreen extends StatefulWidget {
   const KitchenDisplayScreen({super.key});
 
   @override
-  State<KitchenDisplayScreen> createState() =>
-      _KitchenDisplayScreenState();
+  State<KitchenDisplayScreen> createState() => _KitchenDisplayScreenState();
 }
 
 class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
@@ -88,9 +88,7 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
   |--------------------------------------------------------------------------
   */
 
-  Future<void> loadKitchenOrders({
-    bool silent = false,
-  }) async {
+  Future<void> loadKitchenOrders({bool silent = false}) async {
     try {
       final data = await apiService.getKitchenDisplayOrders();
 
@@ -132,10 +130,7 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     }
   }
@@ -219,9 +214,7 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
   */
 
   String orderAge(dynamic order) {
-    final createdAt = DateTime.tryParse(
-      order['created_at'].toString(),
-    );
+    final createdAt = DateTime.tryParse(order['created_at'].toString());
 
     if (createdAt == null) {
       return '-';
@@ -252,10 +245,7 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
     if (status == 'sent_to_kitchen') {
       return ElevatedButton.icon(
         onPressed: () {
-          updateOrderStatus(
-            orderId: order['id'],
-            status: 'preparing',
-          );
+          updateOrderStatus(orderId: order['id'], status: 'preparing');
         },
         icon: const Icon(Icons.restaurant),
         label: const Text('Start Preparing'),
@@ -265,10 +255,7 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
     if (status == 'preparing') {
       return ElevatedButton.icon(
         onPressed: () {
-          updateOrderStatus(
-            orderId: order['id'],
-            status: 'ready',
-          );
+          updateOrderStatus(orderId: order['id'], status: 'ready');
         },
         icon: const Icon(Icons.check_circle),
         label: const Text('Mark Ready'),
@@ -278,10 +265,7 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
     if (status == 'ready') {
       return ElevatedButton.icon(
         onPressed: () {
-          updateOrderStatus(
-            orderId: order['id'],
-            status: 'served',
-          );
+          updateOrderStatus(orderId: order['id'], status: 'served');
         },
         icon: const Icon(Icons.done_all),
         label: const Text('Mark Served'),
@@ -319,171 +303,156 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
       ),
 
       body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : orders.isEmpty
-              ? const Center(
-                  child: Text(
-                    'No kitchen orders',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )
-              : GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: orders.length,
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.82,
-                  ),
-                  itemBuilder: (context, index) {
-                    final order = orders[index];
-                    final items = order['items'] as List<dynamic>;
-                    final status = order['status'];
+          ? const Center(
+              child: Text(
+                'No kitchen orders',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+            )
+          : GridView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: orders.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.82,
+              ),
+              itemBuilder: (context, index) {
+                final order = orders[index];
+                final items = order['items'] as List<dynamic>;
+                final status = order['status'];
 
-                    return Card(
-                      elevation: 5,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          /*
+                return Card(
+                  elevation: 5,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      /*
                           |--------------------------------------------------------------------------
                           | Order Header
                           |--------------------------------------------------------------------------
                           */
-
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(14),
-                            color: statusColor(status),
-                            child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  orderLabel(order),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${order['order_number']} • ${orderAge(order)}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        color: statusColor(status),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              order.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 4),
 
-                          /*
+                            Text(
+                              'Order ${order['daily_order_number'] ?? order['order_number']} • ${orderAge(order)}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      /*
                           |--------------------------------------------------------------------------
                           | Status Badge
                           |--------------------------------------------------------------------------
                           */
-
-                          Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: statusColor(status)
-                                    .withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                statusLabel(status),
-                                style: TextStyle(
-                                  color: statusColor(status),
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor(status).withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            statusLabel(status),
+                            style: TextStyle(
+                              color: statusColor(status),
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
+                        ),
+                      ),
 
-                          /*
+                      /*
                           |--------------------------------------------------------------------------
                           | Item List
                           |--------------------------------------------------------------------------
                           */
+                      Expanded(
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          itemCount: items.length,
+                          itemBuilder: (context, itemIndex) {
+                            final item = items[itemIndex];
 
-                          Expanded(
-                            child: ListView.builder(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              itemCount: items.length,
-                              itemBuilder: (context, itemIndex) {
-                                final item = items[itemIndex];
+                            if (item['is_voided'] == true) {
+                              return const SizedBox.shrink();
+                            }
 
-                                if (item['is_voided'] == true) {
-                                  return const SizedBox.shrink();
-                                }
-
-                                return Padding(
-                                  padding:
-                                      const EdgeInsets.only(bottom: 10),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 15,
-                                        child: Text(
-                                          item['quantity']
-                                              .toString()
-                                              .split('.')
-                                              .first,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          item['product_name'],
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 15,
+                                    child: Text(
+                                      item['quantity']
+                                          .toString()
+                                          .split('.')
+                                          .first,
+                                    ),
                                   ),
-                                );
-                              },
-                            ),
-                          ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      item['product_name'],
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
 
-                          /*
+                      /*
                           |--------------------------------------------------------------------------
                           | Action Button
                           |--------------------------------------------------------------------------
                           */
-
-                          Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: SizedBox(
-                              width: double.infinity,
-                              height: 48,
-                              child: actionButton(order),
-                            ),
-                          ),
-                        ],
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: actionButton(order),
+                        ),
                       ),
-                    );
-                  },
-                ),
+                    ],
+                  ),
+                );
+              },
+            ),
     );
   }
 }

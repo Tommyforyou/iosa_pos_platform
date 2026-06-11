@@ -127,7 +127,7 @@ class _KioskPendingPaymentsScreenState
           builder: (context, setDialogState) {
             return AlertDialog(
               title: Text(
-                'Receive Payment - ${order['order_number'] ?? order['id']}',
+                'Receive Payment - Order ${(order['daily_order_number'] ?? order['order_number'] ?? order['id']).toString()}',
               ),
               content: SizedBox(
                 width: 420,
@@ -253,7 +253,7 @@ class _KioskPendingPaymentsScreenState
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                order['order_number'] ?? 'K-${order['id']}',
+                                'Order: ${(order['daily_order_number'] ?? order['order_number'] ?? order['id']).toString()}',
                                 style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,

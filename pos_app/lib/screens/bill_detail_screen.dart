@@ -25,14 +25,10 @@ import 'receipt_screen.dart';
 class BillDetailScreen extends StatefulWidget {
   final Map<String, dynamic> order;
 
-  BillDetailScreen({
-    super.key,
-    required this.order,
-  });
+  BillDetailScreen({super.key, required this.order});
 
   @override
-  State<BillDetailScreen> createState() =>
-      _BillDetailScreenState();
+  State<BillDetailScreen> createState() => _BillDetailScreenState();
 }
 
 class _BillDetailScreenState extends State<BillDetailScreen> {
@@ -61,14 +57,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
     'complimentary',
   ];
 
-  final List<double> discountOptions = [
-    0,
-    5,
-    10,
-    15,
-    50,
-    100,
-  ];
+  final List<double> discountOptions = [0, 5, 10, 15, 50, 100];
 
   /*
   |--------------------------------------------------------------------------
@@ -101,9 +90,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
 
   List<dynamic> activeItems() {
     return (widget.order['items'] as List<dynamic>)
-        .where(
-          (item) => item['is_voided'] != true,
-        )
+        .where((item) => item['is_voided'] != true)
         .toList();
   }
 
@@ -137,9 +124,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
     setState(() {
       final items = widget.order['items'] as List<dynamic>;
 
-      final index = items.indexWhere(
-        (item) => item['id'] == itemId,
-      );
+      final index = items.indexWhere((item) => item['id'] == itemId);
 
       if (index >= 0) {
         items[index]['is_voided'] = true;
@@ -167,9 +152,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
             children: [
               Text(
                 item['product_name'],
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               TextField(
@@ -229,19 +212,14 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Item voided successfully'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Item voided successfully')));
     } catch (e) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     }
   }
@@ -272,10 +250,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            result['message'] ??
-                'Payment processed successfully',
-          ),
+          content: Text(result['message'] ?? 'Payment processed successfully'),
         ),
       );
 
@@ -296,16 +271,19 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final displayOrderNumber =
+        (widget.order['daily_order_number'] ??
+                widget.order['order_number'] ??
+                widget.order['id'])
+            .toString();
+
     final items = activeItems();
 
     final subtotalAmount = subtotal();
@@ -325,7 +303,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: Text('Bill - ${orderLabel()}'),
+        title: Text('Bill - Order $displayOrderNumber (${orderLabel()})'),
       ),
       body: Row(
         children: [
@@ -344,9 +322,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                   child: ListTile(
                     title: Text(
                       item['product_name'],
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(
                       '${quantity.toStringAsFixed(0)} × ${formatMoney(price)}',
@@ -356,9 +332,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                       children: [
                         Text(
                           formatMoney(lineTotal),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         IconButton(
                           icon: const Icon(
@@ -393,18 +367,14 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  widget.order['order_number'],
-                  style: const TextStyle(
-                    color: Colors.grey,
-                  ),
+                  'Order ${(widget.order['daily_order_number'] ?? widget.order['order_number'] ?? widget.order['id']).toString()}',
+                  style: const TextStyle(color: Colors.grey),
                 ),
                 const Divider(height: 32),
 
                 const Text(
                   'Discount',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
 
@@ -413,9 +383,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                   runSpacing: 8,
                   children: discountOptions.map((discount) {
                     return ChoiceChip(
-                      label: Text(
-                        '${discount.toStringAsFixed(0)}%',
-                      ),
+                      label: Text('${discount.toStringAsFixed(0)}%'),
                       selected: discountPercentage == discount,
                       onSelected: (_) {
                         setState(() {
@@ -434,9 +402,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
 
                 const Text(
                   'Payment Method',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
 
@@ -467,8 +433,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                   value: formatMoney(subtotalAmount),
                 ),
                 _SummaryRow(
-                  label:
-                      'Discount (${discountPercentage.toStringAsFixed(0)}%)',
+                  label: 'Discount (${discountPercentage.toStringAsFixed(0)}%)',
                   value: '- ${formatMoney(discountAmount)}',
                 ),
                 _SummaryRow(
@@ -491,11 +456,11 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                     onPressed: items.isEmpty
                         ? null
                         : () => processPayment(
-                              subtotalAmount: subtotalAmount,
-                              discountAmount: discountAmount,
-                              vatIncluded: vatIncluded,
-                              finalTotal: finalTotal,
-                            ),
+                            subtotalAmount: subtotalAmount,
+                            discountAmount: discountAmount,
+                            vatIncluded: vatIncluded,
+                            finalTotal: finalTotal,
+                          ),
                     icon: const Icon(Icons.payments),
                     label: Text(
                       paymentMethod == 'complimentary'

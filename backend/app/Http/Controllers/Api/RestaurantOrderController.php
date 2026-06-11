@@ -1590,6 +1590,7 @@ class RestaurantOrderController extends Controller
             'message' => 'Kiosk order created. Please pay at cashier.',
             'order_id' => $order->id,
             'order_number' => $order->order_number,
+            'daily_order_number' => $order->daily_order_number,
             'total_amount' => $order->total_amount,
         ]);
     }
@@ -1612,21 +1613,21 @@ class RestaurantOrderController extends Controller
     }
 
     /*
-|--------------------------------------------------------------------------
-| Pay Kiosk Order
-|--------------------------------------------------------------------------
-| Once paid, the order is sent to kitchen.
-*/
+    |--------------------------------------------------------------------------
+    | Pay Kiosk Order
+    |--------------------------------------------------------------------------
+    | Once paid, the order is sent to kitchen.
+    */
 
     public function payKioskOrder(
         Request $request,
         RestaurantOrder $order
     ) {
         /*
-    |--------------------------------------------------------------------------
-    | Validate Request
-    |--------------------------------------------------------------------------
-    */
+        |--------------------------------------------------------------------------
+        | Validate Request
+        |--------------------------------------------------------------------------
+        */
 
         $validated = $request->validate([
             'payment_method' => [
@@ -1637,10 +1638,10 @@ class RestaurantOrderController extends Controller
         ]);
 
         /*
-    |--------------------------------------------------------------------------
-    | Mark Order As Paid And Send To Kitchen
-    |--------------------------------------------------------------------------
-    */
+        |--------------------------------------------------------------------------
+        | Mark Order As Paid And Send To Kitchen
+        |--------------------------------------------------------------------------
+        */
 
         $order->update([
             'status' => 'sent_to_kitchen',
@@ -1650,10 +1651,10 @@ class RestaurantOrderController extends Controller
         ]);
 
         /*
-    |--------------------------------------------------------------------------
-    | Send Draft Items To Kitchen
-    |--------------------------------------------------------------------------
-    */
+        |--------------------------------------------------------------------------
+        | Send Draft Items To Kitchen
+        |--------------------------------------------------------------------------
+        */
 
         RestaurantOrderItem::where(
             'restaurant_order_id',
@@ -1665,15 +1666,17 @@ class RestaurantOrderController extends Controller
             ]);
 
         /*
-    |--------------------------------------------------------------------------
-    | Return Response
-    |--------------------------------------------------------------------------
-    */
+        |--------------------------------------------------------------------------
+        | Return Response
+        |--------------------------------------------------------------------------
+        */
 
         return response()->json([
             'success' => true,
             'message' => 'Kiosk order paid and sent to kitchen.',
             'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'daily_order_number' => $order->daily_order_number,
         ]);
     }
 

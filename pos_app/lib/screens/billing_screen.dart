@@ -142,57 +142,58 @@ class _BillingScreenState extends State<BillingScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : orders.isEmpty
-              ? const Center(
-                  child: Text(
-                    'No billable orders',
-                    style: TextStyle(fontSize: 22),
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: orders.length,
-                  itemBuilder: (context, index) {
-                    final order = orders[index];
-                    final total = calculateTotal(order);
+          ? const Center(
+              child: Text('No billable orders', style: TextStyle(fontSize: 22)),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: orders.length,
+              itemBuilder: (context, index) {
+                final order = orders[index];
+                final total = calculateTotal(order);
+                final displayOrderNumber =
+                    (order['daily_order_number'] ??
+                            order['order_number'] ??
+                            order['id'])
+                        .toString();
 
-                    return Card(
-                      elevation: 4,
-                      margin: const EdgeInsets.only(bottom: 14),
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          child: Icon(Icons.receipt_long),
-                        ),
-                        title: Text(
-                          orderLabel(order),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                        subtitle: Text(
-                          '${order['order_number']} • ${order['order_type']}',
-                        ),
-                        trailing: Text(
-                          'Rs ${currencyFormatter.format(total)}',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            color: Colors.green,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BillDetailScreen(order: order),
-                            ),
-                          );
-                        },
+                return Card(
+                  elevation: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  child: ListTile(
+                    leading: const CircleAvatar(
+                      child: Icon(Icons.receipt_long),
+                    ),
+                    title: Text(
+                      orderLabel(order),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
                       ),
-                    );
-                  },
-                ),
+                    ),
+                    subtitle: Text(
+                      'Order $displayOrderNumber • ${order['order_type']}',
+                    ),
+                    trailing: Text(
+                      'Rs ${currencyFormatter.format(total)}',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BillDetailScreen(order: order),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
     );
   }
- 
 }

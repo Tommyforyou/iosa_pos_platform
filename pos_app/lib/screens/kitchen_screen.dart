@@ -86,9 +86,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
   |--------------------------------------------------------------------------
   */
 
-  Future<void> loadOrders({
-    bool silent = false,
-  }) async {
+  Future<void> loadOrders({bool silent = false}) async {
     try {
       final data = await apiService.getKitchenOrders();
 
@@ -163,9 +161,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
   */
 
   String orderAge(dynamic order) {
-    final createdAt = DateTime.tryParse(
-      order['created_at'].toString(),
-    );
+    final createdAt = DateTime.tryParse(order['created_at'].toString());
 
     if (createdAt == null) {
       return '-';
@@ -224,10 +220,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     }
   }
@@ -259,7 +252,6 @@ class _KitchenScreenState extends State<KitchenScreen> {
           | Table / Order Type
           |--------------------------------------------------------------------------
           */
-
           Text(
             tableName(order),
             style: const TextStyle(
@@ -276,9 +268,8 @@ class _KitchenScreenState extends State<KitchenScreen> {
           | Order Number And Age
           |--------------------------------------------------------------------------
           */
-
           Text(
-            '${order['order_number']} • ${orderAge(order)}',
+            'Order: ${order['daily_order_number'] ?? order['order_number']} • ${orderAge(order)}',
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w600,
@@ -290,7 +281,6 @@ class _KitchenScreenState extends State<KitchenScreen> {
           | Food Court Buzzer Number
           |--------------------------------------------------------------------------
           */
-
           if (order['buzzer_number'] != null &&
               order['buzzer_number'].toString().isNotEmpty)
             Padding(
@@ -340,7 +330,6 @@ class _KitchenScreenState extends State<KitchenScreen> {
           | Quantity Badge
           |--------------------------------------------------------------------------
           */
-
           CircleAvatar(
             radius: 14,
             child: Text(
@@ -359,16 +348,13 @@ class _KitchenScreenState extends State<KitchenScreen> {
           | Product Details
           |--------------------------------------------------------------------------
           */
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   item['product_name'],
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
 
                 const SizedBox(height: 3),
@@ -389,9 +375,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       item['notes'],
-                      style: const TextStyle(
-                        color: Colors.red,
-                      ),
+                      style: const TextStyle(color: Colors.red),
                     ),
                   ),
               ],
@@ -409,24 +393,19 @@ class _KitchenScreenState extends State<KitchenScreen> {
   */
 
   Widget buildKitchenActions(List<dynamic> items) {
-    final activeItems = items.where(
-      (item) => item['is_voided'] != true,
-    );
+    final activeItems = items.where((item) => item['is_voided'] != true);
 
-    final allPreparing = activeItems.isNotEmpty &&
-        activeItems.every(
-          (item) => item['kitchen_status'] == 'preparing',
-        );
+    final allPreparing =
+        activeItems.isNotEmpty &&
+        activeItems.every((item) => item['kitchen_status'] == 'preparing');
 
-    final allReady = activeItems.isNotEmpty &&
-        activeItems.every(
-          (item) => item['kitchen_status'] == 'ready',
-        );
+    final allReady =
+        activeItems.isNotEmpty &&
+        activeItems.every((item) => item['kitchen_status'] == 'ready');
 
-    final allServed = activeItems.isNotEmpty &&
-        activeItems.every(
-          (item) => item['kitchen_status'] == 'served',
-        );
+    final allServed =
+        activeItems.isNotEmpty &&
+        activeItems.every((item) => item['kitchen_status'] == 'served');
 
     return Column(
       children: [
@@ -435,7 +414,6 @@ class _KitchenScreenState extends State<KitchenScreen> {
         | Set Preparing
         |--------------------------------------------------------------------------
         */
-
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
@@ -463,22 +441,16 @@ class _KitchenScreenState extends State<KitchenScreen> {
         | Mark Ready
         |--------------------------------------------------------------------------
         */
-
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: allReady || allServed
                 ? null
                 : () async {
-                    await updateAllItems(
-                      items: items,
-                      kitchenStatus: 'ready',
-                    );
+                    await updateAllItems(items: items, kitchenStatus: 'ready');
                   },
             icon: const Icon(Icons.check_circle_outline),
-            label: Text(
-              allReady || allServed ? 'Ready' : 'Mark Ready',
-            ),
+            label: Text(allReady || allServed ? 'Ready' : 'Mark Ready'),
           ),
         ),
 
@@ -489,22 +461,16 @@ class _KitchenScreenState extends State<KitchenScreen> {
         | Mark Served
         |--------------------------------------------------------------------------
         */
-
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: allServed
                 ? null
                 : () async {
-                    await updateAllItems(
-                      items: items,
-                      kitchenStatus: 'served',
-                    );
+                    await updateAllItems(items: items, kitchenStatus: 'served');
                   },
             icon: const Icon(Icons.done_all),
-            label: Text(
-              allServed ? 'Served' : 'Mark Served',
-            ),
+            label: Text(allServed ? 'Served' : 'Mark Served'),
           ),
         ),
       ],
@@ -527,7 +493,6 @@ class _KitchenScreenState extends State<KitchenScreen> {
       | App Bar
       |--------------------------------------------------------------------------
       */
-
       appBar: AppBar(
         title: const Text('Kitchen Display'),
         actions: [
@@ -549,102 +514,84 @@ class _KitchenScreenState extends State<KitchenScreen> {
       | Body
       |--------------------------------------------------------------------------
       */
-
       body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : orders.isEmpty
-              ? const Center(
-                  child: Text(
-                    'No kitchen orders',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )
-              : GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: orders.length,
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.85,
-                  ),
-                  itemBuilder: (context, index) {
-                    final order = orders[index];
+          ? const Center(
+              child: Text(
+                'No kitchen orders',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+            )
+          : GridView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: orders.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.85,
+              ),
+              itemBuilder: (context, index) {
+                final order = orders[index];
 
-                    final items =
-                        (order['items'] as List<dynamic>? ?? [])
-                            .where(
-                              (item) => item['is_voided'] != true,
-                            )
-                            .toList();
+                final items = (order['items'] as List<dynamic>? ?? [])
+                    .where((item) => item['is_voided'] != true)
+                    .toList();
 
-                    return Card(
-                      elevation: 5,
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            /*
+                return Card(
+                  elevation: 5,
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        /*
                             |--------------------------------------------------------------------------
                             | Order Header
                             |--------------------------------------------------------------------------
                             */
+                        buildOrderHeader(order: order, items: items),
 
-                            buildOrderHeader(
-                              order: order,
-                              items: items,
-                            ),
+                        const Divider(height: 24),
 
-                            const Divider(height: 24),
-
-                            /*
+                        /*
                             |--------------------------------------------------------------------------
                             | Kitchen Item List
                             |--------------------------------------------------------------------------
                             */
+                        Expanded(
+                          child: items.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    'No active items',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  itemCount: items.length,
+                                  itemBuilder: (context, itemIndex) {
+                                    final item = items[itemIndex];
 
-                            Expanded(
-                              child: items.isEmpty
-                                  ? const Center(
-                                      child: Text(
-                                        'No active items',
-                                        style: TextStyle(
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    )
-                                  : ListView.builder(
-                                      itemCount: items.length,
-                                      itemBuilder: (context, itemIndex) {
-                                        final item = items[itemIndex];
+                                    return buildKitchenItem(item);
+                                  },
+                                ),
+                        ),
 
-                                        return buildKitchenItem(item);
-                                      },
-                                    ),
-                            ),
+                        const SizedBox(height: 8),
 
-                            const SizedBox(height: 8),
-
-                            /*
+                        /*
                             |--------------------------------------------------------------------------
                             | Kitchen Action Buttons
                             |--------------------------------------------------------------------------
                             */
-
-                            buildKitchenActions(items),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                        buildKitchenActions(items),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 }

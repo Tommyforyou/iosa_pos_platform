@@ -677,7 +677,11 @@ class _KioskOrderScreenState extends State<KioskOrderScreen> {
 
       if (!mounted) return;
 
-      final orderId = result['id'] ?? result['order_id'];
+      final orderId =
+          result['daily_order_number'] ??
+          result['order']?['daily_order_number'] ??
+          result['id'] ??
+          result['order_id'];
 
       Navigator.pushReplacement(
         context,
