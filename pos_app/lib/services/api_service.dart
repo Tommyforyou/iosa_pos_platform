@@ -2493,4 +2493,27 @@ class ApiService {
 
     throw Exception('Failed to load order status display');
   }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Kitchen Performance Dashboard
+  |--------------------------------------------------------------------------
+  */
+
+  Future<Map<String, dynamic>> getKitchenPerformanceDashboard() async {
+    final url = Uri.parse('$baseUrl/kitchen-performance-dashboard');
+
+    debugPrint('API URL: $url');
+
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed to load kitchen performance dashboard');
+  }
 }

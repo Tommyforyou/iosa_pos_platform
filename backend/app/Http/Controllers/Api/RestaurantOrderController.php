@@ -1730,4 +1730,165 @@ class RestaurantOrderController extends Controller
 
         return ((int) $lastNumber) + 1;
     }
+    /*
+    |--------------------------------------------------------------------------
+    | Kitchen Performance Dashboard
+    |--------------------------------------------------------------------------
+    | Provides real-time kitchen metrics for management and supervisors.
+    |
+    | Metrics:
+    | - Orders received today
+    | - Pending items
+    | - Items being prepared
+    | - Ready items
+    | - Longest waiting order
+    | - Delayed orders (> 15 minutes)
+    |--------------------------------------------------------------------------
+    */
+
+    public function kitchenPerformanceDashboard()
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Today's Date
+        |--------------------------------------------------------------------------
+        */
+
+        $today = today();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Orders Received Today
+        |--------------------------------------------------------------------------
+        */
+
+        $ordersToday = RestaurantOrder::whereDate(
+            'created_at',
+            $today
+        )->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Pending Kitchen Items
+        |--------------------------------------------------------------------------
+        */
+
+        $pendingItems = RestaurantOrderItem::where(
+            'kitchen_status',
+            'pending'
+        )
+            ->whereDate('created_at', $today)
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Currently Preparing Items
+        |--------------------------------------------------------------------------
+        */
+
+        $currentlyPreparing = RestaurantOrderItem::where(
+            'kitchen_status',
+            'preparing'
+        )
+            ->whereDate('created_at', $today)
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Ready Items
+        |--------------------------------------------------------------------------
+        */
+
+        $readyItems = RestaurantOrderItem::where(
+            'kitchen_status',
+            'ready'
+        )
+            ->whereDate('created_at', $today)
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Longest Waiting Active Order
+        |--------------------------------------------------------------------------
+        */
+
+        $longestWaitingOrder = RestaurantOrder::whereHas(
+            'items',
+            function ($query) {
+                $query->whereIn('kitchen_status', [
+                    'pending',
+                    'preparing',
+                ]);
+            }
+        )
+            ->whereDate('created_at', $today)
+            ->oldest()
+            ->first();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Waiting Time In Minutes
+        |--------------------------------------------------------------------------
+        */
+
+        $longestWaitingMinutes = $longestWaitingOrder
+            ? $longestWaitingOrder
+            ->created_at
+            ->diffInMinutes(now())
+            : 0;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delayed Orders
+        |--------------------------------------------------------------------------
+        | Orders waiting more than 15 minutes.
+        |--------------------------------------------------------------------------
+    */
+
+        $delayedOrders = RestaurantOrder::whereHas(
+            'items',
+            function ($query) {
+                $query->whereIn('kitchen_status', [
+                    'pending',
+                    'preparing',
+                ]);
+            }
+        )
+            ->whereDate('created_at', $today)
+            ->where(
+                'created_at',
+                '<=',
+                now()->subMinutes(15)
+            )
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | API Response
+        |--------------------------------------------------------------------------
+        */
+
+        return response()->json([
+            'orders_today' => $ordersToday,
+            'pending_items' => $pendingItems,
+            'currently_preparing' => $currentlyPreparing,
+            'ready_items' => $readyItems,
+            'longest_waiting_minutes' => $longestWaitingMinutes,
+            'delayed_orders' => $delayedOrders,
+
+            'longest_waiting_order' => $longestWaitingOrder
+                ? [
+                    'id' => $longestWaitingOrder->id,
+                    'daily_order_number' =>
+                    $longestWaitingOrder->daily_order_number,
+                    'order_number' =>
+                    $longestWaitingOrder->order_number,
+                    'order_type' =>
+                    $longestWaitingOrder->order_type,
+                    'created_at' =>
+                    $longestWaitingOrder->created_at,
+                ]
+                : null,
+        ]);
+    }
 }

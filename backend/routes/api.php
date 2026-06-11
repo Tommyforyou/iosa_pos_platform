@@ -897,6 +897,21 @@ Route::get(
 );
 
 
+/*
+|--------------------------------------------------------------------------
+| Kitchen Performance Dashboard
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/kitchen-performance-dashboard',
+    [
+        RestaurantOrderController::class,
+        'kitchenPerformanceDashboard',
+    ]
+);
+
+
 
 /*
 |--------------------------------------------------------------------------

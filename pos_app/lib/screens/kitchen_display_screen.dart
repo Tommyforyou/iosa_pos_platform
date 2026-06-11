@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
 import 'package:flutter/foundation.dart';
+import 'kitchen_performance_dashboard_screen.dart';
 
 /*
 |--------------------------------------------------------------------------
@@ -289,6 +290,29 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
       appBar: AppBar(
         title: const Text('Kitchen Display System'),
         actions: [
+          /*
+          |--------------------------------------------------------------------------
+          | Kitchen Dashboard
+          |--------------------------------------------------------------------------
+          */
+          IconButton(
+            tooltip: 'Kitchen Dashboard',
+            icon: const Icon(Icons.analytics),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const KitchenPerformanceDashboardScreen(),
+                ),
+              );
+            },
+          ),
+
+          /*
+          |--------------------------------------------------------------------------
+          | Refresh
+          |--------------------------------------------------------------------------
+          */
           IconButton(
             onPressed: () {
               setState(() {
@@ -301,7 +325,6 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
           ),
         ],
       ),
-
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : orders.isEmpty
